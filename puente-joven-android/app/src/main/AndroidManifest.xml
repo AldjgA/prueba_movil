@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Puente Joven La Paz — MVP Android.
+
+        SIN PERMISOS DE RED: la app no se conecta a ningún backend todavía.
+        Cuando se aprueben proveedor, autenticación y contratos, se añadirá
+        únicamente el permiso necesario (previsiblemente INTERNET) y se justificará.
+    -->
+
+    <application
+        android:name=".PuenteJovenApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.PuenteJoven">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.PuenteJoven">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Galería interna del design system: solo para revisión visual en debug.
+             No se exporta y no es accesible para el joven. -->
+        <activity
+            android:name=".debug.DesignSystemGalleryActivity"
+            android:exported="false"
+            android:label="Galería del design system"
+            android:theme="@style/Theme.PuenteJoven" />
+
+    </application>
+
+</manifest>

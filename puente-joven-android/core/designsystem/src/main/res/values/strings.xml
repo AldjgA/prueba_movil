@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Nombres de la app y textos de accesibilidad del design system.
+         Ningún texto aquí contiene datos personales. -->
+
+    <string name="puente_app_name">Puente Joven</string>
+    <string name="puente_app_tagline">No diagnostica · No reemplaza profesionales</string>
+
+    <!-- Accesibilidad: estados de prioridad preliminar de revisión.
+         SIEMPRE acompañan al color; nunca se usa solo el color (guardrail #4). -->
+    <string name="puente_attention_green_label">Prioridad preliminar: verde</string>
+    <string name="puente_attention_yellow_label">Prioridad preliminar: amarilla</string>
+    <string name="puente_attention_red_label">Prioridad preliminar: roja</string>
+
+    <string name="puente_attention_green_accessibility">Prioridad preliminar de revisión: verde. Se puede trabajar paso a paso.</string>
+    <string name="puente_attention_yellow_accessibility">Prioridad preliminar de revisión: amarilla. Conviene involucrar a alguien de confianza.</string>
+    <string name="puente_attention_red_accessibility">Prioridad preliminar de revisión: roja. Requiere apoyo humano prioritario.</string>
+
+    <string name="puente_attention_disclaimer">Esta es una prioridad preliminar de revisión, no un diagnóstico.</string>
+    <string name="puente_attention_human_note">Ninguna prioridad reemplaza a una persona.</string>
+
+    <!-- Accesibilidad: orbe y navegación -->
+    <string name="puente_orb_content_description">Puente, tu espacio de acompañamiento</string>
+    <string name="puente_nav_selected_suffix">, seleccionado</string>
+
+    <!-- Estados -->
+    <string name="puente_loading_message">Preparando tu espacio…</string>
+    <string name="puente_inline_loading">Actualizando</string>
+    <string name="puente_retry">Reintentar</string>
+    <string name="puente_error_title">No pudimos abrir esto ahora.</string>
+    <string name="puente_error_message">Puedes intentarlo otra vez. Nada de lo que escribiste se perdió.</string>
+    <string name="puente_empty_title">Todavía no hay nada registrado.</string>
+    <string name="puente_empty_message">Cuando quieras, puedes empezar a contarlo como quieras.</string>
+
+    <!-- Privacidad -->
+    <string name="puente_privacy_indicator">Tú decides qué compartir.</string>
+    <string name="puente_privacy_chat_note">Tu conversación es privada y se guarda cifrada en tu teléfono.</string>
+
+    <!-- Errores de dominio (claves de :core:common.UiError) -->
+    <string name="error_not_found">No encontramos eso.</string>
+    <string name="error_validation">Revisa lo que escribiste.</string>
+    <string name="error_unauthorized">Necesitas autorizar esto primero.</string>
+    <string name="error_not_available">Esto todavía no está disponible.</string>
+    <string name="error_unexpected">Algo no salió como esperábamos.</string>
+</resources>

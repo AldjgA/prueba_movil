@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Tema base usado SOLO durante el arranque de la Activity, antes de que
+        Compose aplique PuenteTheme. No define la estética de la app:
+        la identidad visual vive en :core:designsystem.
+    -->
+    <style name="Theme.PuenteJoven" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/puente_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

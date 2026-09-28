@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Primer plano del icono: el orbe de Puente dentro de la zona segura
+    (66dp de 108dp). Forma orgánica + brillo interior, sin texto.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M54,30 C67,30 78,40 78,54 C78,68 67,78 54,78 C41,78 30,68 30,54 C30,40 41,30 54,30 Z"
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.92" />
+    <path
+        android:pathData="M46,44 C50,42 54,44 55,48 C56,52 53,55 49,55 C45,55 43,50 46,44 Z"
+        android:fillColor="#A78BFA" />
+</vector>

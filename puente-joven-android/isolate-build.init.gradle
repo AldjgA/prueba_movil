@@ -1,0 +1,7 @@
+// Init script: redirige TODOS los build/ a un árbol propio para evitar locks
+// cruzados con otros builds concurrentes sobre el mismo workspace.
+gradle.beforeProject { project ->
+    project.layout.buildDirectory.set(
+        new File(project.rootDir, ".isolated-build/" + project.path.replace(':', '_'))
+    )
+}

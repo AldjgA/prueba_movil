@@ -1,0 +1,36 @@
+# Android / Gradle (proyecto Puente Joven)
+# Los directorios build/ ya están cubiertos por el .gitignore raíz (node),
+# pero los repetimos aquí para que este subproyecto sea autónomo.
+
+# Compilados
+build/
+.gradle/
+.kotlin/
+**/build/
+captures/
+
+# Directorios temporales del flujo de trabajo (no son código del producto)
+.verify-designer/
+.isolated-build/
+
+# Caché de Gradle generada en el sandbox (rutas largas rompen `git add`)
+.gh/
+
+# Configuración local (rutas del SDK del usuario)
+local.properties
+
+# IDE
+*.iml
+*.ipr
+*.iws
+.idea/
+.DS_Store
+Thumbs.db
+
+# APKs / artefactos binarios (se regeneran con el build)
+*.apk
+*.aab
+*.ap_
+
+# Logs
+*.log
