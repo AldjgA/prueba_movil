@@ -1,72 +1,105 @@
-<!-- Declaración de necesidades del Agente C al Agente A (PLAN-3-AGENTES.md §2.3) -->
+<!-- Formato de CONTRATO-DE-INTEGRACION.md §2 · Declaración de necesidades del Agente C al Agente A (PLAN-3-AGENTES.md §2.3) -->
 
-# NECESIDADES · Agente C → Agente A
+# NECESIDADES — Agente C (Puente Red)
 
-**De:** Agente C (Portal profesional / Puente Red)
-**Para:** Agente A (Núcleo, contratos e integración)
-**Fecha:** 2026-09-30 · **Actualizado:** 2026-09-30 (tras la publicación de A) · **Rama:** `agente/C-red`
+**Agente:** C · **Fecha:** 2026-09-30 · **Spec:** `specs/PR-005` … `specs/TASK-020` (18 specs)
+
+> Formato de `CONTRATO-DE-INTEGRACION.md` §2. Los campos que **no aplican a Puente Red** van con
+> `—` y su motivo, según `specs/_PLANTILLA-SPEC.md` §1.2.
 
 ---
 
-## 0. Estado: la mitad está resuelta ✅
+## 1. Módulo nuevo
 
-A publicó en `main` (`942d581`, `5e853ad`) el contrato Joven↔Red, la ingesta y una revisión de
-guardrails. Detalle completo en **`../REVISION-A.md`**.
+**—** Puente Red **no crea módulos Gradle**. Vive fuera del APK: `puente-red/portal` (TS/React) y
+`puente-red/backend` (Go). Ningún `include(":feature:X")` depende de C.
 
-### Resuelto ✅
+## 2. Dependencia de build (la aplica A)
 
-| Necesidad | Quién lo cerró |
+**—** No hay dependencia de build entre Puente Red y el APK. La separación es por **superficie de
+API** (`/joven` vs `/profesional`), no por módulo (`PR-003` §1).
+
+## 3. Ruta nueva en el NavHost
+
+**—** El NavHost es del APK juvenil (`PuenteJovenNavHost.kt`). C no añade rutas allí. Las rutas de
+Puente Red viven en su propio router web.
+
+## 4. Entrada desde Home
+
+**—** `feature/home/HomeScreen.kt` es del APK. El portal no se enlaza desde Inicio (guardrail #6).
+
+## 5. Métodos de repositorio
+
+**—** C **no** consume `Repositories.kt`. Consume los **Contratos A/B/C** de `PR-003` por HTTP.
+No se piden métodos nuevos en el APK.
+
+## 6. Componentes del design system
+
+**—** `core/designsystem/**` es Compose y está congelado. El portal usa **tokens propios**
+extraídos del prototipo (brief §34: misma marca, distinta estructura).
+
+## 7. Otros (permisos, flags, migraciones)
+
+### 7.1 🆕 Reparto del árbol `puente-red/backend/` — **requiere ratificación de A**
+
+`PR-003` §1 decide **una API con dos superficies**, lo que convierte `puente-red/backend/` en un
+**árbol compartido A+C**. `PLAN-3-AGENTES.md` §2.2 no lo preveía (sus 6 archivos —ahora 7— son
+todos del APK). Propuesta de C, en `PR-000` §1.1:
+
+| Ruta | Dueño |
 |---|---|
-| Contrato de datos Joven ↔ Red versionado | `PR-003` |
-| Ingesta del reporte y emisión de `caseToken` | `PR-004` |
-| Modelo de identidad y anonimato | `PR-003` §7 (sustituye a `PR-002`) |
-| ¿Guardia 24/7? | `PR-003` §15: **no existe** |
-| Proveedor del LLM | `PR-003` §13: **Google GenAI** |
-| Auth de profesionales | `PR-003` Q9: **Supabase Auth** |
-| Escala del MVP | `PR-003` Q6: **demo ≤5 usuarios** |
+| `backend/routes/joven/**` | **A** |
+| `backend/routes/profesional/**` | **C** |
+| `backend/core/**` | **C** |
+| `backend/shared/**` (modelos, cliente Supabase, middleware, `contratoVersion`) | **A** |
+| `backend/main`, despliegue | **A** |
+
+**Sin este reparto, A y C editan el mismo árbol sin regla** — que es exactamente el riesgo #2 de
+`PLAN-3-AGENTES.md` §8.
+
+### 7.2 Tablas y RLS que C necesita crear en Supabase
+
+`casos`, `caso_correlacion`, `audit_event` las define `PR-004` §4 (**A**). C necesita además:
+`responders`, `responder_load`, `referrals`, `support_services`, `call_appointments` — con RLS por
+rol (`PR-010`) y aislamiento por institución si hay multi-tenant (Q8 abierto).
+
+### 7.3 Ubicación de las fixtures del contrato
+
+C propone que vivan en `PR-003` (**A**), con C como consumidor (`specs/PR-020` §3).
+
+### 7.4 CI de las pruebas de contrato
+
+`TASK-014` (**A**) define el CI. Las pruebas de `PR-020` deben correr **sin** compilar el APK y
+Puente Red juntos (`specs/PR-020` criterio 10).
 
 ---
 
-## 1. Lo que C sigue necesitando de A ⏳
+## 8. Lo que A ya cerró ✅
 
-| # | Necesidad | Tarea de A | Bloquea a C |
-|---|---|---|---|
-| 1 | **Plantilla de spec definitiva** — mis 18 specs usan la de `PLAN-TRABAJO-SDD.md` §6 | `TASK-000` | forma final de las 18 specs |
-| 2 | **Contrato de integración** (mecanismo de declaración de necesidades) | `TASK-00A` | cómo C declara y cómo A integra |
-| 3 | 🆕 **Reparto del árbol `puente-red/backend/`** — `PR-003` §1 crea **una API con dos superficies**, así que el backend es un árbol **compartido A+C**, algo que `PLAN-3-AGENTES.md` §2.2 no preveía | ratificación de `PR-000` §1.1 | que C no pise a A en el mismo árbol |
-| 4 | **Ratificación de `PR-000` rev. 2** (stack Go/Supabase/GenAI, `P10` web desktop-first, reparto del backend) | revisión | arrancar la Fase 1 |
-| 5 | **Modelo de amenaza de privacidad** (contexto de divorcio) | `TASK-021` | qué se guarda y qué se comparte (`PR-018`) |
-| 6 | **Multi-perfil en dispositivo compartido** | `TASK-025` | el vínculo `caseToken ↔ ProfileId` asume 1 perfil por instalación |
-| 7 | **`ModuleGraphGuardTest` reescrito** para vigilar la API Joven (no la ausencia de red) | `TASK-013` | `PR-020` verifica contra él |
+`PR-003` (contrato), `PR-004` (ingesta, decisiones cerradas el 2026-09-30: `deviceKey` = Keystore,
+ingesta acepta `ROJO`+`AMARILLO`, `sessionToken` sin caducidad, `caseToken` = ULID), `PR-002`
+(plegado en `PR-003` §7), `TASK-000` (plantilla), `TASK-00A` (contrato de integración),
+`PR-INFRA-RECOMENDACION`, y `PR-001` autorizado.
 
-## 2. Preguntas que C necesita que A cierre
+## 9. Preguntas que C necesita que A cierre
 
-| # | Pregunta | Bloquea a C |
+| # | Pregunta | Bloquea |
 |---|---|---|
-| 1 | ¿Dónde viven las **fixtures del contrato**: en `PR-003` (A) o en `PR-020` (C)? C propone **en A**, con C como consumidor | `PR-020` |
-| 2 | ¿`RESUELTO` y `CERRADO` son **dos estados** o uno? El diagrama de `PR-003` §3.1 los escribe como `RESUELTO→CERRADO` | `PR-009`, `PR-015` |
-| 3 | ¿El `sessionToken` **caduca**? ¿Cómo se renueva sin que el servidor conozca alias+PIN? (Q3 de `PR-004`) | `PR-020`, Contrato A |
-| 4 | ¿La ingesta acepta **amarillo** además de rojo? (Q2 de `PR-004`) | `PR-005` |
-| 5 | ¿El `deviceKey` es clave del **Keystore** o un secreto simple? (Q1 de `PR-004`) | `PR-004`/registro |
-| 6 | ¿`caseToken` **ULID** confirmado? (`PR-004` §3 lo asume; su Q4 aún lo lista como abierto) | `PR-009` |
+| 1 | ¿`RESUELTO` y `CERRADO` son dos estados o uno? (`PR-003` §3.1 los escribe `RESUELTO→CERRADO`) | `PR-009`, `PR-015` |
+| 2 | ¿El `sessionToken` sin caducidad es aceptable también para el portal, o solo para el APK? | `PR-010`, `PR-020` |
+| 3 | ¿A ratifica el reparto de §7.1? | arrancar la Fase 1 |
+| 4 | ¿A acepta `PR-000` rev. 2 (stack, `P10` web desktop-first)? | arrancar la Fase 1 |
 
-## 3. Cambios que C pide a A en archivos de A
+## 10. Lo que C se compromete a NO tocar
 
-**Ninguno en esta fase.** Todo lo de C vive bajo `puente-red/`.
-Si `PR-003` exige un tipo nuevo en `:core:model`, C lo declarará aquí y **no** lo editará (§2.2).
-
-## 4. Lo que C se compromete a NO tocar
-
-`settings.gradle.kts` · `app/build.gradle.kts` · `PuenteJovenNavHost.kt` ·
-`feature/home/HomeScreen.kt` · `core/data/repository/Repositories.kt` ·
-`core/data/local/LocalPuenteRepository.kt` · `core/designsystem/**` · `puente-red/backend/routes/joven/**` ·
-`puente-red/backend/shared/**` · cualquier archivo de `puente-joven-android/`.
+Los **7 archivos** de `CONTRATO-DE-INTEGRACION.md` §1 · `core/designsystem/**` ·
+`puente-red/backend/routes/joven/**` · `puente-red/backend/shared/**` · todo `puente-joven-android/`.
 
 ---
 
-## 5. Nota de sincronización
+## 11. Estado de sincronización
 
-C sigue en **Fase 0** (§3 de `PLAN-3-AGENTES.md`). Entrega **18 specs + `PR-000` rev. 2 +
-`REVISION-A.md`**.
-**C no construye** hasta que (a) A ratifique `PR-000` y el reparto del backend, (b) las specs de
-C sean revisadas por A y B (§3.0.3–0.4), y (c) se cierre `PR-001` con firma clínica.
+C sigue en **Fase 0**. Entrega: **18 specs en `specs/`** (plantilla oficial), `PR-000` rev. 2,
+`REVISION-A.md` y esta declaración.
+**C no construye** hasta que (a) A ratifique `PR-000` y el reparto del backend, (b) las specs sean
+revisadas por A y B (`PLAN-3-AGENTES.md` §3.0.3–0.4), y (c) se cierre `PR-001` con firma clínica.

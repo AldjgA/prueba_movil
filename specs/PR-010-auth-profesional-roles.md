@@ -1,0 +1,169 @@
+# PR-010 · Autenticación profesional y roles
+
+**Estado:** En revisión
+**Autor:** Agente C · **Revisor:** Agente A
+**Fecha:** 2026-09-30
+**Ola:** R2 · **Depende de:** `PR-003` §1, `PR-INFRA` §2, `PR-007` · **Bloquea:** `PR-011`–`PR-017`, `PR-018`
+
+---
+
+## 1. Contexto
+
+El portal maneja datos de menores en riesgo. La autenticación no es una pantalla de login: es la
+**raíz de la trazabilidad**. Sin identidad de profesional fiable, `PR-018` (*"quién vio qué y
+cuándo"*) no puede cumplirse y el guardrail #11 se cae.
+
+El brief §20 exige un login **propio**, distinto del adolescente, con **selector de rol**:
+Psicología · Trabajo social · Orientación · Supervisión.
+
+**`PR-003` Q9 y `PR-INFRA` §2 deciden no reinventar la autenticación:** se usa **Supabase Auth** y
+la autorización se apoya en **RLS de Postgres**.
+
+---
+
+## 2. Alcance
+
+### Dentro
+- Login con **correo institucional + contraseña** vía **Supabase Auth** (brief §20).
+- **Rol** como *claim* del usuario + fila en el directorio (`PR-007`), entre los cuatro del brief.
+- **Autorización por rol** en dos capas:
+  1. **RLS de Postgres** — la separación se hace en la BD, no en el código (`PR-INFRA` §2);
+  2. **guardia en la API** — ninguna ruta de `/profesional` se ejecuta sin rol válido.
+- Sesión con expiración y cierre por inactividad.
+- **Modo demo** (`demo@puentered.org`, brief §20) solo con datos ficticios. Con `PR-003` Q7, es el
+  modo **por defecto** del MVP.
+- Registro de cada login y fallo en `audit_event` (`PR-018`).
+
+### Fuera
+- El modelo de perfil de respondedor: `PR-007`.
+- El alta/baja de profesionales: administración del directorio (`PR-007`).
+- El login del adolescente: es del APK, de B. **No se reutiliza.** Superficies distintas
+  (`/joven` vs `/profesional`, `PR-003` §1).
+- 2FA: fuera del MVP (la sesión se diseña para admitirlo).
+
+---
+
+## 3. Módulo y propiedad
+
+- Módulo: `puente-red/portal/auth` (dueño **C**) + guardia en `puente-red/backend/routes/profesional`
+- Proveedor: **Supabase Auth** — no se implementa el almacén de credenciales
+- Archivos compartidos que necesita declarar: **ninguno del APK**
+
+---
+
+## 4. Contratos de datos
+
+- Interfaces de `Repositories.kt` que consume: **ninguna**.
+- Métodos nuevos que necesita: **ninguno del APK**.
+
+```go
+type ProfessionalRole string
+const (
+    RolePsicologia    ProfessionalRole = "PSICOLOGIA"
+    RoleTrabajoSocial ProfessionalRole = "TRABAJO_SOCIAL"
+    RoleOrientacion   ProfessionalRole = "ORIENTACION"
+    RoleSupervision   ProfessionalRole = "SUPERVISION"
+)
+
+type ProfessionalSession struct {
+    ResponderID string // = auth.users.id de Supabase Auth
+    Role        ProfessionalRole
+    IssuedAt    time.Time
+    ExpiresAt   time.Time
+    IsDemo      bool
+}
+
+type PortalAction string
+const (
+    ActionViewAlerts            PortalAction = "VIEW_ALERTS"
+    ActionViewCaseSummary       PortalAction = "VIEW_CASE_SUMMARY"
+    ActionViewProfessionalNotes PortalAction = "VIEW_PROFESSIONAL_NOTES"
+    ActionTakeCase              PortalAction = "TAKE_CASE"
+    ActionWriteProfessionalNotes PortalAction = "WRITE_PROFESSIONAL_NOTES"
+    ActionCreateReferral        PortalAction = "CREATE_REFERRAL"
+    ActionViewAggregatedReports PortalAction = "VIEW_AGGREGATED_REPORTS"
+    ActionManageDirectory       PortalAction = "MANAGE_DIRECTORY"
+    ActionViewAuditLog          PortalAction = "VIEW_AUDIT_LOG"
+)
+```
+
+**Matriz de autorización propuesta** (a ratificar por la ONG):
+
+| Acción | Psicología | Trabajo social | Orientación | Supervisión |
+|---|---|---|---|---|
+| Ver alertas | ✅ | ✅ | ✅ | ✅ |
+| Ver resumen autorizado | ✅ | ✅ | ✅ | ✅ |
+| Ver notas internas | ✅ | ✅ | ❌ | ✅ |
+| Tomar caso | ✅ | ✅ | ❌ | ✅ |
+| Escribir notas internas | ✅ | ✅ | ❌ | ✅ |
+| Crear derivación | ✅ | ✅ | ✅ | ✅ |
+| Ver reportes agregados | ✅ | ✅ | ❌ | ✅ |
+| Gestionar directorio | ❌ | ❌ | ❌ | ✅ |
+| Ver log de auditoría | ❌ | ❌ | ❌ | ✅ |
+
+---
+
+## 5. Criterios de aceptación (verificables)
+
+| # | Criterio | Cómo se verifica |
+|---|---|---|
+| 1 | Las credenciales **no** se validan en código propio: todo pasa por Supabase Auth | revisión + contrato |
+| 2 | Contraseña incorrecta → mensaje genérico, sin revelar si el correo existe | unitaria |
+| 3 | Ningún rol distinto de `SUPERVISION` ve el log de auditoría | autorización por tabla |
+| 4 | `ORIENTACION` no puede tomar casos ni escribir notas internas | autorización |
+| 5 | Un profesional de una institución no lee casos de otra | **RLS** |
+| 6 | Toda sesión expira y el portal cierra por inactividad | unitaria con reloj inyectable |
+| 7 | Una sesión `IsDemo` no puede escribir sobre datos reales | autorización + integración |
+| 8 | Cada login exitoso y cada fallo quedan en `audit_event` | integración con `PR-018` |
+| 9 | Ninguna acción de `/profesional` se ejecuta sin `authorize()` previo | contrato (sin rutas sin guardia) |
+| 10 | El portal **no** comparte sesión ni token con el APK juvenil | revisión |
+
+---
+
+## 6. Guardrails aplicables
+
+- #11 — la autenticación es la raíz de *"quién vio qué y cuándo"*. Criterio 8.
+- Brief §20 — login propio; no reutilizar el adolescente. Criterio 10.
+- **`PR-003` §1** — superficies separadas: `/joven` (token de caso) vs `/profesional`
+  (credenciales + rol). Criterios 1, 10.
+- `PR-INFRA` §2 — la separación se hace en **RLS**, no en el código. Criterio 5.
+- `PR-003` Q7 — la demo no usa datos reales. Criterio 7.
+- `PR-003` §9.7 — el profesional nunca ve la identidad del joven (todos los roles).
+
+---
+
+## 7. Referencia visual
+
+`ProLoginScreen.tsx` — *"PUENTE RED · Centro profesional de acompañamiento"*, correo y contraseña,
+selector de rol, CTA *"Entrar a Puente Red"*, demo `demo@puentered.org`.
+`ProSidebar.tsx` — bloque de usuario y *"Cerrar sesión"*.
+
+---
+
+## 8. Dependencias
+
+- **Bloquea:** `PR-011`–`PR-017`, `PR-018`.
+- **Bloqueado por:** `PR-003` §1 ✅, `PR-INFRA` §2 ✅, `PR-007`.
+- **Specs relacionadas:** `PR-018` (auditoría).
+
+---
+
+## 9. Preguntas abiertas
+
+| # | Pregunta | Estado |
+|---|---|---|
+| Q8 | ¿La ONG es el único operador del panel? | ⏳ define multi-institución (afecta a RLS) |
+| — | ¿Se confirma la matriz, en especial para *Orientación*? | ⏳ ONG |
+| — | ¿Alta manual por supervisión o auto-registro con aprobación? | ⏳ ONG |
+| — | ¿2FA en el MVP? | propuesta: diferir, dejar la sesión preparada |
+
+---
+
+## 10. Definition of Done
+
+- [ ] Spec **Aprobada** por otro agente
+- [ ] Compila (`go build ./...` + `npm run build`) y pasa lint
+- [ ] Pruebas de los 10 criterios en verde
+- [ ] `NECESIDADES.md` entregado a A y aplicado (si aplica)
+- [ ] Sin secretos ni endpoints hardcodeados
+- [ ] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
