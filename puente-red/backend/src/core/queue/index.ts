@@ -41,6 +41,7 @@ export type {
   CaseTicket,
   Clock,
   EnqueueInput,
+  Expediente,
   RevocationReason,
   YouthVisibleCaseStatus,
 } from "./types.ts";

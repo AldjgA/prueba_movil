@@ -20,7 +20,8 @@ import {
   isAlertFilter,
 } from '../core/alerts/index.ts';
 import { buildTodayBoard, DEFAULT_SERVICE_WINDOW, isOutOfHours, seedDemoCases } from '../core/home/index.ts';
-import { CaseQueue, InMemoryCaseStore, humanActor } from '../core/queue/index.ts';
+import { CaseQueue, InMemoryCaseAuditSink, InMemoryCaseStore, humanActor } from '../core/queue/index.ts';
+import { buildCaseFicha } from '../core/casefile/index.ts';
 
 /**
  * API Profesional — dueño: **C** (`PR-010`…`PR-017`).
@@ -77,7 +78,17 @@ export function createProfesionalRoutes({
   // persistente**: reiniciar el servidor vacía la cola.
   // ---------------------------------------------------------------------------
   const directorio = directory ?? crearDirectorioFicticio(reloj);
-  const cola = queue ?? new CaseQueue({ directory: directorio, store: new InMemoryCaseStore(), clock: reloj });
+  // ⚠️ El sumidero de auditoría **es obligatorio**: sin él, `eventsFor` devuelve vacío y la
+  // sección 7 de la ficha (`PR-013`) saldría siempre en blanco. Pasó desapercibido hasta que una
+  // prueba de la ficha lo cazó.
+  const cola =
+    queue ??
+    new CaseQueue({
+      directory: directorio,
+      store: new InMemoryCaseStore(),
+      audit: new InMemoryCaseAuditSink(),
+      clock: reloj,
+    });
 
   // `PR-003` Q7: por defecto el tablero está VACÍO. Los casos ficticios son opt-in.
   const demoCasos = env['PUENTE_DEMO_CASOS'] === 'on';
@@ -328,13 +339,43 @@ export function createProfesionalRoutes({
   });
 
   // ---------------------------------------------------------------------------
-  // PR-013…PR-017 — pendientes
+  // PR-013 · Ficha de caso
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Ficha estructurada del caso: **las 7 secciones del brief §24**.
+   *
+   * La ficha **no muestra la conversación** (brief §24, guardrail #5). La sección 6 lleva solo el
+   * `scope` autorizado, y lo que **nunca** se comparte se declara explícitamente en vez de
+   * omitirse.
+   *
+   * Devuelve **siempre 7 secciones**, en orden. Las que no tienen fuente aparecen con
+   * `disponible: false` y el motivo: omitirlas haría creer al profesional que ya las ha visto.
+   */
+  profesional.get('/casos/:caseToken', exigirAccion('VIEW_CASE_SUMMARY'), (c) => {
+    const ahora = reloj.nowEpochMillis();
+    const ficha = buildCaseFicha({
+      queue: cola,
+      directory: directorio,
+      caseToken: c.req.param('caseToken'),
+      nowEpochMillis: ahora,
+      outOfHours: isOutOfHours(ahora, ventanaServicio),
+    });
+
+    if (ficha === null) {
+      return c.json({ error: 'caso_no_encontrado', message: 'Ese caso no existe.' }, 404);
+    }
+    return c.json(ficha, 200);
+  });
+
+  // ---------------------------------------------------------------------------
+  // PR-014…PR-017 — pendientes
   // ---------------------------------------------------------------------------
   profesional.all('*', (c) =>
     c.json(
       {
         error: 'not_implemented',
-        message: 'Superficie profesional pendiente (PR-013…PR-017).',
+        message: 'Superficie profesional pendiente (PR-014…PR-017).',
         implementado: [
           '/auth/login',
           '/auth/logout',
@@ -342,6 +383,7 @@ export function createProfesionalRoutes({
           '/auditoria',
           '/home',
           '/alertas',
+          'GET /casos/:caseToken',
           'POST /casos/:caseToken/tomar',
         ],
       },

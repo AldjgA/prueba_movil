@@ -273,16 +273,17 @@ test('el logout sin token se rechaza', async () => {
 // ---------------------------------------------------------------------------
 // Superficie pendiente y frontera
 // ---------------------------------------------------------------------------
-test('las rutas de PR-013…PR-017 responden 501 y enumeran lo implementado', async () => {
+test('las rutas de PR-014…PR-017 responden 501 y enumeran lo implementado', async () => {
   const app = makeApp();
-  // La ficha de caso es PR-013: todavía no existe.
-  const respuesta = await app.request('/profesional/casos/PJ-001');
+  // Los seguimientos son PR-015: todavía no existen.
+  const respuesta = await app.request('/profesional/seguimientos');
 
   assert.equal(respuesta.status, 501);
   const cuerpo = await respuesta.json();
   assert.equal(cuerpo.error, 'not_implemented');
   assert.ok(cuerpo.implementado.includes('/auth/login'));
   assert.ok(cuerpo.implementado.includes('/alertas'));
+  assert.ok(cuerpo.implementado.includes('GET /casos/:caseToken'));
 });
 
 // ---------------------------------------------------------------------------
@@ -359,8 +360,70 @@ test('criterio 2: el filtro RED usa youthLevel, no category', async () => {
 });
 
 // ---------------------------------------------------------------------------
-// PR-012 criterio 8 · Tomar caso
+// PR-013 · Ficha de caso
 // ---------------------------------------------------------------------------
+test('la ficha de caso está guardada', async () => {
+  const app = makeApp();
+  const respuesta = await app.request('/profesional/casos/PJ-001');
+
+  assert.equal(respuesta.status, 401);
+  assert.equal((await respuesta.json()).reason, 'authz.no_session');
+});
+
+test('criterio 1: la ficha devuelve las 7 secciones del brief §24, en orden', async () => {
+  const app = makeApp({
+    env: { PUENTE_DEMO_PASSWORD: PASSWORD, PUENTE_DEMO_EMAIL: EMAIL, PUENTE_DEMO_CASOS: 'on' },
+  });
+  const { cuerpo } = await login(app);
+
+  const respuesta = await app.request('/profesional/casos/DEMO-MEDIO-NUEVO', conToken(cuerpo.token));
+  const ficha = await respuesta.json();
+
+  assert.equal(respuesta.status, 200);
+  assert.deepEqual(
+    ficha.secciones.map((s) => s.seccion),
+    ['MOTIVO', 'EVOLUCION', 'SENALES', 'FACTORES_PROTECTORES', 'HERRAMIENTAS', 'RESUMEN_AUTORIZADO', 'HISTORIAL'],
+  );
+});
+
+test('criterio 7: la cabecera lleva el encuadre de prioridad preliminar', async () => {
+  const app = makeApp({
+    env: { PUENTE_DEMO_PASSWORD: PASSWORD, PUENTE_DEMO_EMAIL: EMAIL, PUENTE_DEMO_CASOS: 'on' },
+  });
+  const { cuerpo } = await login(app);
+
+  const ficha = await (
+    await app.request('/profesional/casos/DEMO-MEDIO-NUEVO', conToken(cuerpo.token))
+  ).json();
+
+  assert.equal(ficha.encuadreKey, 'ficha.encuadre.prioridad_preliminar');
+  assert.equal(ficha.youthLevel, 'AMARILLO', 'nivel de reglas del APK');
+  assert.equal(ficha.categoria, 'MEDIO', 'categoría del LLM');
+});
+
+test('criterio 3: lo que nunca se comparte se declara, no se omite', async () => {
+  const app = makeApp({
+    env: { PUENTE_DEMO_PASSWORD: PASSWORD, PUENTE_DEMO_EMAIL: EMAIL, PUENTE_DEMO_CASOS: 'on' },
+  });
+  const { cuerpo } = await login(app);
+
+  const ficha = await (
+    await app.request('/profesional/casos/DEMO-MEDIO-NUEVO', conToken(cuerpo.token))
+  ).json();
+
+  const resumen = ficha.secciones.find((s) => s.seccion === 'RESUMEN_AUTORIZADO');
+  assert.ok(resumen.noAutorizadoKeys.includes('scope.conversacion_completa'));
+  assert.ok(resumen.noAutorizadoKeys.includes('scope.notas_internas'));
+});
+
+test('una ficha de un caso inexistente devuelve 404', async () => {
+  const app = makeApp();
+  const { cuerpo } = await login(app);
+
+  const respuesta = await app.request('/profesional/casos/NO-EXISTE', conToken(cuerpo.token));
+  assert.equal(respuesta.status, 404);
+  assert.equal((await respuesta.json()).error, 'caso_no_encontrado');
+});
 test('tomar caso está guardado', async () => {
   const app = makeApp();
   const respuesta = await app.request('/profesional/casos/PJ-001/tomar', { method: 'POST' });

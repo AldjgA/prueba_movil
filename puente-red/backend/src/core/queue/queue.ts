@@ -160,6 +160,7 @@ export class CaseQueue {
       revocationReason: null,
       idempotencyKey,
       updatedAtEpochMillis: now,
+      expediente: input.expediente ?? null,
     };
 
     this.#store.put(ticket);
@@ -366,6 +367,11 @@ export class CaseQueue {
 
   auditEvents(): readonly CaseAuditEvent[] {
     return this.#audit instanceof InMemoryCaseAuditSink ? this.#audit.events() : [];
+  }
+
+  /** Eventos de **un** caso, para la sección 7 de la ficha (`PR-013`). */
+  eventsFor(caseToken: string): CaseAuditEvent[] {
+    return this.auditEvents().filter((evento) => evento.caseToken === caseToken);
   }
 
   // -------------------------------------------------------------------------

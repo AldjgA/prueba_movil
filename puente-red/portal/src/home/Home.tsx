@@ -50,7 +50,11 @@ function copyDe(mapa: Record<string, string>, clave: string, respaldo: string): 
   return mapa[clave] ?? respaldo;
 }
 
-export function Home() {
+export interface HomeProps {
+  readonly onAbrirCaso: (caseToken: string) => void;
+}
+
+export function Home({ onAbrirCaso }: HomeProps) {
   const { token } = useSession();
   const { board, cargando, error, recargar } = useTodayBoard(token);
   const ahora = useTicker();
@@ -121,7 +125,7 @@ export function Home() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         {board?.cards.map((card) => (
-          <Tarjeta key={card.caseToken} card={card} ahora={ahora} />
+          <Tarjeta key={card.caseToken} card={card} ahora={ahora} onAbrir={() => onAbrirCaso(card.caseToken)} />
         ))}
       </div>
     </div>
@@ -190,7 +194,15 @@ function EstadoVacio({ board }: { board: TodayBoard }) {
   );
 }
 
-function Tarjeta({ card, ahora }: { card: AttentionCard; ahora: number }) {
+function Tarjeta({
+  card,
+  ahora,
+  onAbrir,
+}: {
+  card: AttentionCard;
+  ahora: number;
+  onAbrir: () => void;
+}) {
   const color = colorCategoria(card.category);
   // Criterio 3: el tiempo se recalcula en el cliente desde el instante de recepción, así que
   // avanza sin volver a pedir el tablero.
@@ -285,13 +297,11 @@ function Tarjeta({ card, ahora }: { card: AttentionCard; ahora: number }) {
           </span>
         </span>
 
-        {/* CTA deshabilitada: PR-013 (ficha de caso) todavía no existe. Se declara, no se finge. */}
         <button
           type="button"
           className="button-primary"
           style={{ width: "auto", padding: "0.5rem 1.25rem", fontSize: "0.8125rem" }}
-          disabled
-          title="Pendiente: PR-013 (ficha de caso)"
+          onClick={onAbrir}
         >
           {card.reason === "HIGH_WAITING" || card.reason === "SLA_BREACHED"
             ? "Revisar ahora"

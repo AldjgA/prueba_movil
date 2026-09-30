@@ -16,38 +16,39 @@ import { Orb } from "../design/Orb.tsx";
 import { brand, surface, text } from "../design/tokens.ts";
 import { useSession } from "../auth/SessionProvider.tsx";
 
-/** Vistas que existen hoy. */
-export type Vista = "inicio" | "alertas";
+/** Destinos navegables hoy. */
+export type Destino = "inicio" | "alertas";
 
-interface Destino {
+interface Entrada {
   readonly etiqueta: string;
   readonly icono: string;
-  /** Vista a la que navega. `null` = todavía no existe. */
-  readonly vista: Vista | null;
+  /** Destino al que navega. `null` = todavía no existe. */
+  readonly destino: Destino | null;
   /** Tarea que lo implementa. `null` = sin dueño declarado. */
   readonly tarea: string | null;
 }
 
 /** Orden del brief §33. */
-const DESTINOS: readonly Destino[] = [
-  { etiqueta: "Inicio", icono: "M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z", vista: "inicio", tarea: "PR-011" },
-  { etiqueta: "Alertas", icono: "M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0", vista: "alertas", tarea: "PR-012" },
-  { etiqueta: "Casos", icono: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8", vista: null, tarea: "PR-013" },
-  { etiqueta: "Seguimientos", icono: "M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z", vista: null, tarea: "PR-015" },
-  { etiqueta: "Derivaciones", icono: "M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3", vista: null, tarea: "PR-016" },
-  { etiqueta: "Reportes", icono: "M18 20V10M12 20V4M6 20v-6", vista: null, tarea: "PR-017" },
-  { etiqueta: "Observatorio", icono: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z", vista: null, tarea: "PR-017" },
-  { etiqueta: "Directorio", icono: "M4 6h16M4 10h16M4 14h16M4 18h16", vista: null, tarea: "PR-016" },
-  { etiqueta: "Configuración", icono: "M12 15a3 3 0 100-6 3 3 0 000 6z", vista: null, tarea: "PR-018" },
+const DESTINOS: readonly Entrada[] = [
+  { etiqueta: "Inicio", icono: "M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z", destino: "inicio", tarea: "PR-011" },
+  { etiqueta: "Alertas", icono: "M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0", destino: "alertas", tarea: "PR-012" },
+  { etiqueta: "Casos", icono: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8", destino: null, tarea: "PR-013" },
+  { etiqueta: "Seguimientos", icono: "M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z", destino: null, tarea: "PR-015" },
+  { etiqueta: "Derivaciones", icono: "M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3", destino: null, tarea: "PR-016" },
+  { etiqueta: "Reportes", icono: "M18 20V10M12 20V4M6 20v-6", destino: null, tarea: "PR-017" },
+  { etiqueta: "Observatorio", icono: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z", destino: null, tarea: "PR-017" },
+  { etiqueta: "Directorio", icono: "M4 6h16M4 10h16M4 14h16M4 18h16", destino: null, tarea: "PR-016" },
+  { etiqueta: "Configuración", icono: "M12 15a3 3 0 100-6 3 3 0 000 6z", destino: null, tarea: "PR-018" },
 ];
 
 export interface AppShellProps {
   readonly children: ReactNode;
-  readonly vista: Vista;
-  readonly onNavegar: (vista: Vista) => void;
+  /** Destino activo. La ficha de caso (`PR-013`) se abre desde Alertas. */
+  readonly activo: Destino;
+  readonly onNavegar: (destino: Destino) => void;
 }
 
-export function AppShell({ children, vista, onNavegar }: AppShellProps) {
+export function AppShell({ children, activo, onNavegar }: AppShellProps) {
   const { sesion, logout } = useSession();
   const iniciales = sesion?.institucion.slice(0, 2).toUpperCase() ?? "PR";
 
@@ -76,16 +77,16 @@ export function AppShell({ children, vista, onNavegar }: AppShellProps) {
           aria-label="Navegación principal"
         >
           {DESTINOS.map((destino) => {
-            const activo = destino.vista === vista;
-            const disponible = destino.vista !== null;
+            const activo_ = destino.destino === activo;
+            const disponible = destino.destino !== null;
             return (
               <button
                 key={destino.etiqueta}
                 type="button"
                 disabled={!disponible}
-                aria-current={activo ? "page" : undefined}
+                aria-current={activo_ ? "page" : undefined}
                 onClick={() => {
-                  if (destino.vista !== null) onNavegar(destino.vista);
+                  if (destino.destino !== null) onNavegar(destino.destino);
                 }}
                 title={
                   disponible
@@ -102,12 +103,12 @@ export function AppShell({ children, vista, onNavegar }: AppShellProps) {
                   width: "100%",
                   textAlign: "left",
                   fontFamily: "inherit",
-                  background: activo
+                  background: activo_
                     ? `color-mix(in srgb, ${brand.primary} 12%, transparent)`
                     : "transparent",
-                  color: activo ? text.primary : text.muted,
+                  color: activo_ ? text.primary : text.muted,
                   fontSize: "0.875rem",
-                  fontWeight: activo ? 600 : 400,
+                  fontWeight: activo_ ? 600 : 400,
                   // Los pendientes se ven atenuados y **no** se pueden pulsar.
                   opacity: disponible ? 1 : 0.45,
                   cursor: disponible ? "pointer" : "not-allowed",

@@ -50,7 +50,11 @@ const ESTADO_COPY: Record<string, string> = {
   EN_CURSO: "En curso",
 };
 
-export function Alerts() {
+export interface AlertsProps {
+  readonly onAbrirCaso: (caseToken: string) => void;
+}
+
+export function Alerts({ onAbrirCaso }: AlertsProps) {
   const { token, sesion } = useSession();
   const api = createAlertsApi();
 
@@ -228,6 +232,7 @@ export function Alerts() {
             fila={fila}
             ahora={ahora}
             esDemo={esDemo}
+            onAbrir={() => onAbrirCaso(fila.caseToken)}
             onTomar={() => void tomar(fila.caseToken)}
           />
         ))}
@@ -261,11 +266,13 @@ function Fila({
   fila,
   ahora,
   esDemo,
+  onAbrir,
   onTomar,
 }: {
   fila: AlertRow;
   ahora: number;
   esDemo: boolean;
+  onAbrir: () => void;
   onTomar: () => void;
 }) {
   const colorNivel = fila.youthLevel === "ROJO" ? semantic.danger : fila.youthLevel === "AMARILLO" ? semantic.warning : semantic.success;
@@ -339,22 +346,33 @@ function Fila({
         </p>
       </div>
 
-      <button
-        type="button"
-        className="button-primary"
-        style={{ width: "auto", padding: "0.4375rem 1rem", fontSize: "0.75rem" }}
-        disabled={yaTomado || esDemo}
-        onClick={onTomar}
-        title={
-          esDemo
-            ? "Modo demostración: solo lectura"
-            : yaTomado
-              ? "Este caso ya tiene responsable"
-              : "Tomar el caso"
-        }
-      >
-        {yaTomado ? "Tomado" : "Tomar caso"}
-      </button>
+      <div style={{ display: "flex", gap: "0.5rem" }}>
+        <button
+          type="button"
+          className="button-link"
+          onClick={onAbrir}
+          title="Abrir la ficha del caso (PR-013)"
+          style={{ fontSize: "0.75rem", whiteSpace: "nowrap" }}
+        >
+          Ver ficha
+        </button>
+        <button
+          type="button"
+          className="button-primary"
+          style={{ width: "auto", padding: "0.4375rem 1rem", fontSize: "0.75rem" }}
+          disabled={yaTomado || esDemo}
+          onClick={onTomar}
+          title={
+            esDemo
+              ? "Modo demostración: solo lectura"
+              : yaTomado
+                ? "Este caso ya tiene responsable"
+                : "Tomar el caso"
+          }
+        >
+          {yaTomado ? "Tomado" : "Tomar caso"}
+        </button>
+      </div>
     </article>
   );
 }

@@ -33,6 +33,33 @@ export const REVOCATION_REASONS = [
 ] as const;
 export type RevocationReason = (typeof REVOCATION_REASONS)[number];
 
+/**
+ * Expediente del caso: lo que el **Contrato A** (`PR-003` §4) ya define y que la ficha de caso
+ * (`PR-013`) necesita mostrar.
+ *
+ * **Nada de esto se inventa aquí**: son campos del contrato. Lo que NO está son las
+ * características del caso (`PR-006`), que la ficha declarará como no disponibles.
+ */
+export interface Expediente {
+  /** Claves del catálogo canónico de `motivo` (`PR-003` §4.2). Nunca texto libre. */
+  readonly motivoKeys: readonly string[];
+  /** Resumen autorizado por el joven. `scope` es CERRADO. */
+  readonly resumenAutorizado: {
+    readonly scope: readonly string[];
+    readonly note?: string;
+  };
+  readonly consentimiento: {
+    readonly id: string;
+    readonly scope: readonly string[];
+    readonly otorgadoEnEpochMillis: number;
+  } | null;
+  /**
+   * Herramientas que el joven **autorizó** compartir: las entradas `Tool` de su `scope`
+   * (hallazgo **K3** de B). Fuera del `scope` no hay herramientas — y eso es correcto.
+   */
+  readonly herramientasAutorizadas: readonly string[];
+}
+
 /** El ticket interno del caso. **Nunca sale entero hacia el joven.** */
 export interface CaseTicket {
   readonly caseToken: string;
@@ -62,6 +89,8 @@ export interface CaseTicket {
   /** Clave de idempotencia de la ingesta. Evita duplicar el caso en reintentos offline. */
   readonly idempotencyKey: string;
   readonly updatedAtEpochMillis: number;
+  /** Expediente del Contrato A. `null` si la ingesta no lo trajo. */
+  readonly expediente: Expediente | null;
 }
 
 /**
@@ -101,4 +130,6 @@ export interface EnqueueInput {
   readonly rulesetVersion: string;
   readonly category: ProfessionalCategory | null;
   readonly receivedAtEpochMillis?: number;
+  /** Expediente del Contrato A, si la ingesta lo trae. */
+  readonly expediente?: Expediente;
 }

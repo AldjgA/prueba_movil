@@ -19,7 +19,7 @@ El segundo producto de Puente Joven. El brief §34 lo define así:
 | `PR-010` | Autenticación profesional y roles | ✅ **implementado** |
 | `PR-011` | Home profesional | ✅ **implementado** |
 | `PR-012` | Centro de alertas | ✅ **implementado** |
-| `PR-013` | Ficha de caso (7 secciones) | ⏳ |
+| `PR-013` | Ficha de caso (7 secciones) | ✅ **implementado** |
 | `PR-014` | «Organizado por Puente» / «valoración profesional» | ⏳ |
 | `PR-015` | Timeline y seguimiento | ⏳ |
 | `PR-016` | Derivaciones y directorio | ⏳ |
