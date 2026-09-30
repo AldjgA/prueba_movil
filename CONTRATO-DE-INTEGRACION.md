@@ -29,6 +29,23 @@ un agente puede pedir cambios en ellos.
 > **Hallazgo de A (2026-09-30):** el plan listaba **6** archivos, pero **faltaba
 > `AppDestination.kt`**. Añadir una ruta nueva lo toca, así que también es de A. **Son 7.**
 
+### 1.1 Árbol del backend compartido (añadido el 2026-09-30)
+
+`PR-003` §1 decide **una API con dos superficies**, lo que convierte `puente-red/backend/` en un
+árbol **compartido entre A y C** — algo que `PLAN-3-AGENTES.md` §2.2 no preveía (sus 7 archivos
+son todos del APK). Reparto **ratificado** en `REVISION-C.md` §5.3:
+
+| Ruta | Dueño | Regla |
+|---|---|---|
+| `backend/routes/joven/**` | **A** | C solo lee |
+| `backend/routes/profesional/**` | **C** | A solo lee |
+| `backend/core/**` | **C** | Pipeline de triaje (`PR-005`–`PR-009`) |
+| `backend/shared/**` (modelos, cliente Supabase, middleware, `contratoVersion`, fixtures del contrato) | **A** | C declara cambios, no los aplica |
+| `backend/main` y configuración de despliegue | **A** | — |
+| `puente-red/portal/**` | **C** | Portal profesional |
+
+**La regla de declaración de §2 aplica igual aquí:** un agente no edita lo que no es suyo.
+
 ---
 
 ## 2. Mecanismo: declaración de necesidades
