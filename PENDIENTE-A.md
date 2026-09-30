@@ -1,26 +1,24 @@
 # PENDIENTE DE A — inventario al 2026-09-30
 
-**Autor:** Agente A — Núcleo y contratos · **`main`:** `65f9024`
+**Autor:** Agente A — Núcleo y contratos · **`main`:** `7ddaa4e`
 **Criterio:** lo que falta **de mi parte**, ordenado por a quién desbloquea.
 
 ---
 
-## 0. 🔴 Bloquea a B ahora mismo (B ya entregó el código; no puede integrarlo)
+## 0. 🔴 Bloquea a B ahora mismo — **parcialmente hecho (2026-09-30)**
 
-B tiene `TASK-004` y `TASK-005` **implementados y verificados** (50 pruebas en verde) pero
-**sin integrar**, porque todo lo de esta sección es mío.
+| # | Qué | Estado |
+|---|---|---|
+| **1** | `include(":feature:conversation")` y `include(":feature:signals")` | ✅ **hecho** (B puso `conversation`; A completó `signals`) |
+| **2** | Dependencias en `app/build.gradle.kts` | ✅ **hecho** |
+| **3** | **5 placeholders → pantallas reales** en `PuenteJovenNavHost.kt` | ⏳ **en curso en B** (lo tiene sin commitear). ⚠️ Colisión de nombres con `:core:navigation`: hay que aliasar |
+| **4** | **Validar `promptId`** en `appendPuenteMessage` | ✅ **hecho** (criterio #2 de `TASK-004`) |
+| **5** | **D1** · Parametrizar la barra | ✅ **hecho**: el componente ya aceptaba `items`; lo que faltaba era el **catálogo de los 5 destinos del MVP** (P3), añadido como `PuenteNavDestinations.Mvp` |
+| **6** | **D2** · Home de 6 enlaces **+ corregir `OpenHelpSomeone`** | ⏳ **pendiente**: `HelpRoute`/`NextStepsRoute` son de `TASK-008`/`TASK-010`, aún sin implementar. Se aplicará cuando existan esas pantallas |
 
-| # | Qué | Dónde | Por qué lo bloquea |
-|---|---|---|---|
-| **1** | `include(":feature:conversation")` y `include(":feature:signals")` | `settings.gradle.kts` | Sin esto sus módulos no existen para Gradle |
-| **2** | `implementation(project(":feature:conversation"))` y `:feature:signals` | `app/build.gradle.kts` | Sin esto la app no los ve |
-| **3** | **5 placeholders → pantallas reales**: `ConversationRoute`, `ContextCheckRoute`, `SignalsRoute`, `SituationMapRoute`, `AttentionRoute` | `PuenteJovenNavHost.kt` | ⚠️ Hay **colisión de nombres** con `:core:navigation`: hay que aliasar, como ya se hace con `HomeRoute as HomeScreenRoute` |
-| **4** | **Validar `promptId`** en `appendPuenteMessage` | `LocalPuenteRepository.kt` | Criterio #2 de `TASK-004`: hoy acepta `promptId = ""`. Un turno sin `promptId` es indistinguible de contenido generado — justo lo que prohíbe el guardrail #3 |
-| **5** | **D1** · Parametrizar `PuenteBottomNavigation` (descongelado) | `core/designsystem/**` | B necesita la barra de 5 pestañas (P3) |
-| **6** | **D2** · Contrato de Home de 6 enlaces **+ corregir `OpenHelpSomeone`** | `feature/home/**` | Hoy `OpenHelpSomeone` navega a `ConversationRoute`; **el brief §18 prohíbe** reutilizar el flujo de la Ruta A. Debe ir a `HelpRoute` |
-
-> Los puntos 1–4 son mecánicos y se hacen en una pasada. El 5 y el 6 son las decisiones que ya
-> ratifiqué en `REVISION-B-POR-A.md` §2 y que aún no ejecuté.
+> **Estado:** el código de B (`TASK-004`/`TASK-005`) está **integrado en `main`** y verificado:
+> **81 pruebas en verde** (`:core:model` 6 · `:core:data` 25 · `:feature:conversation` 20 ·
+> `:feature:signals` 30) y `:app:compileDemoDebugKotlin` BUILD SUCCESSFUL.
 
 ---
 
@@ -28,7 +26,7 @@ B tiene `TASK-004` y `TASK-005` **implementados y verificados** (50 pruebas en v
 
 | # | Qué | Dónde | Nota |
 |---|---|---|---|
-| **7** | `DemoFixtures` emite `SignalKey("frequency")`, `"isolation"`… en **minúsculas**, y `PR-003` §4.1 fijó **MAYÚSCULAS** y **retiró `frequency`** (es una dimensión, no una señal) | `:core:data` | B hizo el motor tolerante, pero la fixture sigue mintiendo |
+| **7** | `DemoFixtures` emitía `SignalKey("frequency")`, `"isolation"`… en **minúsculas** | `:core:data` | ✅ **hecho.** Canonicalizadas a MAYÚSCULAS y `frequency` retirada. La señal pasa a **`BULLYING`**: su evidencia es acoso escolar, y el acoso —caso central del brief— **no tenía clave de señal**. Añadida a `PR-003` §4.1 |
 | **8** | **D3** · Los enums exponen **`labelResKey`**, sin literales en español (`AttentionLevel.labelOf`, `SupportRequestState.label`, `TrendDirection.label`) | `:core:model` | `:core:model` es Kotlin puro: no puede tener `strings.xml`. Por eso el literal no es solo inconsistente, es **estructuralmente inevitable** si el enum devuelve texto |
 | **9** | Los `label` de las señales (`"Frecuencia"`, `"Aislamiento"`) y **3 sitios de `:feature:home`** (`HomeViewModel`, `HomeScreen`, `ObserveHomeUseCase.greeting()`) incumplen la regla #2 | `:core:data` + `:feature:home` | Lo detectó B. Si la regla no se aplica a lo que ya existe, cada feature nueva decidirá por su cuenta si la cumple |
 
