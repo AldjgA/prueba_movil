@@ -53,14 +53,14 @@ object DemoFixtures {
 
     val signals: List<Signal> = listOf(
         Signal(
-            key = SignalKey("frequency"),
-            label = "Frecuencia",
+            key = SignalKey("BULLYING"),
+            label = "Acoso",
             trendPercent = 85,
             trendDirection = TrendDirection.RISING,
             evidence = listOf(
                 SignalEvidence(
                     id = SignalEvidenceId("ev-freq-1"),
-                    signalKey = SignalKey("frequency"),
+                    signalKey = SignalKey("BULLYING"),
                     label = "Comentario aislado",
                     description = "Se rieron de mí en el pasillo.",
                     dateLabel = "02 SEP",
@@ -69,16 +69,16 @@ object DemoFixtures {
                 ),
                 SignalEvidence(
                     id = SignalEvidenceId("ev-freq-2"),
-                    signalKey = SignalKey("frequency"),
+                    signalKey = SignalKey("BULLYING"),
                     label = "Se repite",
                     description = "Ya son dos veces esta semana.",
                     dateLabel = "06 SEP",
                     intensity = 2,
-                    tags = listOf("Bullying", "Frecuencia ↑"),
+                    tags = listOf("Bullying", "Se repite ↑"),
                 ),
                 SignalEvidence(
                     id = SignalEvidenceId("ev-freq-3"),
-                    signalKey = SignalKey("frequency"),
+                    signalKey = SignalKey("BULLYING"),
                     label = "Empieza a evitar el recreo",
                     description = "Prefiero quedarme en el aula.",
                     dateLabel = "09 SEP",
@@ -87,7 +87,7 @@ object DemoFixtures {
                 ),
                 SignalEvidence(
                     id = SignalEvidenceId("ev-freq-4"),
-                    signalKey = SignalKey("frequency"),
+                    signalKey = SignalKey("BULLYING"),
                     label = "Dificultad para asistir al colegio",
                     description = "No quiero ir mañana tampoco.",
                     dateLabel = "13 SEP",
@@ -97,14 +97,14 @@ object DemoFixtures {
             ),
         ),
         Signal(
-            key = SignalKey("isolation"),
+            key = SignalKey("ISOLATION"),
             label = "Aislamiento",
             trendPercent = 72,
             trendDirection = TrendDirection.RISING,
             evidence = listOf(
                 SignalEvidence(
                     id = SignalEvidenceId("ev-iso-1"),
-                    signalKey = SignalKey("isolation"),
+                    signalKey = SignalKey("ISOLATION"),
                     label = "Evita espacios compartidos",
                     description = "Mejor solo en el aula.",
                     dateLabel = "09 SEP",
@@ -113,7 +113,7 @@ object DemoFixtures {
                 ),
                 SignalEvidence(
                     id = SignalEvidenceId("ev-iso-2"),
-                    signalKey = SignalKey("isolation"),
+                    signalKey = SignalKey("ISOLATION"),
                     label = "Se aparta del grupo",
                     description = "No quiso entrar al recreo.",
                     dateLabel = "13 SEP",
@@ -123,14 +123,14 @@ object DemoFixtures {
             ),
         ),
         Signal(
-            key = SignalKey("school_impact"),
+            key = SignalKey("SCHOOL_IMPACT"),
             label = "Impacto escolar",
             trendPercent = 60,
             trendDirection = TrendDirection.STABLE,
             evidence = listOf(
                 SignalEvidence(
                     id = SignalEvidenceId("ev-school-1"),
-                    signalKey = SignalKey("school_impact"),
+                    signalKey = SignalKey("SCHOOL_IMPACT"),
                     label = "Cuenta que cuesta ir",
                     description = "No quiero ir mañana tampoco.",
                     dateLabel = "13 SEP",

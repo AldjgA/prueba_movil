@@ -749,6 +749,12 @@ class LocalPuenteRepository @Inject constructor(
         promptId: String,
     ): AppResult<ConversationMessage> {
         ensureLoaded()
+        // Guardrail #3: sin IA generativa en el APK, todo turno de la app nace de una
+        // plantilla. Un turno sin `promptId` es **indistinguible de contenido generado**,
+        // que es exactamente lo que el guardrail prohíbe (criterio #2 de TASK-004).
+        if (promptId.isBlank()) {
+            return AppResult.Failure(UiError.Validation(technical = "blank promptId"))
+        }
         val conversation = conversationState.value
         if (conversation == null || conversation.id != conversationId) {
             return AppResult.Failure(UiError.NotFound(technical = "conversation mismatch"))

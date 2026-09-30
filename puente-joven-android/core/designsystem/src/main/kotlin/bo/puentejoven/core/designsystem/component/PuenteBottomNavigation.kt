@@ -31,9 +31,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import bo.puentejoven.core.designsystem.theme.PuenteTheme
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Timeline
 
 /**
@@ -53,8 +55,24 @@ object PuenteNavDestinations {
     val Talk = PuenteNavItem("talk", "Hablar", Icons.Filled.Chat)
     val Journey = PuenteNavItem("journey", "Recorrido", Icons.Filled.Timeline)
     val Help = PuenteNavItem("help", "Ayudar", Icons.Filled.FavoriteBorder)
+    val Tools = PuenteNavItem("tools", "Herramientas", Icons.Filled.Build)
+    val Profile = PuenteNavItem("profile", "Perfil", Icons.Filled.Person)
 
     val Default: List<PuenteNavItem> = listOf(Home, Talk, Journey, Help)
+
+    /**
+     * Los **5 destinos del MVP** (decisión **P3**): Inicio · Hablar · Recorrido · Herramientas ·
+     * Perfil.
+     *
+     * **Añadido el 2026-09-30 (decisión D1 de `REVISION-B-POR-A.md`).** El componente ya aceptaba
+     * `items`, pero el catálogo de destinos vivía aquí con 4 entradas y sin `Herramientas` ni
+     * `Perfil`: cualquier feature que quisiera la barra del MVP habría tenido que inventarse
+     * etiquetas e iconos por su cuenta. La barra del MVP se declara **una vez, aquí**.
+     *
+     * `Default` se conserva porque reproduce el prototipo original y sigue siendo válido para
+     * pantallas que no son las 5 pestañas.
+     */
+    val Mvp: List<PuenteNavItem> = listOf(Home, Talk, Journey, Tools, Profile)
 }
 
 /**

@@ -210,6 +210,12 @@ catálogo. El APK **debe** emitirlas así.
 | `SUBSTANCE_USE` | Consumo de alcohol | Sarfo 2026 |
 | `SELF_HARM` | Autolesión | Resumen §4 |
 | `PHYSICAL_VIOLENCE` | Violencia física | Sarfo 2026 |
+| `BULLYING` | Acoso escolar | Brief (caso central) |
+
+> **`BULLYING` añadido el 2026-09-30.** El brief hace del **acoso** el caso central del producto
+> (es el ejemplo de todo el prototipo), y el catálogo **no tenía clave para él**: el caso
+> bandera del producto se quedaba sin señal. Es un cambio **aditivo**: `PR-006` (`SignalTag`) y
+> `SignalCatalog` del APK deben incorporarlo.
 
 **Correspondencia con lo que el APK emitía** (verificado en `DemoFixtures.kt`):
 
