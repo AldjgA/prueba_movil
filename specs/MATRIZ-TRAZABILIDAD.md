@@ -39,22 +39,53 @@ tiene spec**. Es el índice del proyecto; si algo no está aquí, no existe.
 
 ## 3. Agente B — APK juvenil (14)
 
+**Actualizado por B el 2026-09-30:** las 14 specs están redactadas con la plantilla de `TASK-000`.
+13 pasan a **🔍 en revisión**; `TASK-024` queda en **🔒 borrador con puerta** (ver `REVISION-B.md` H4).
+
 | ID | Tarea | Módulo | Spec |
 |---|---|---|---|
-| `TASK-004` | Conversación + chequeo contextual | `feature:conversation` | ⏳ |
-| `TASK-005` | Señales + mapa + nivel de atención | `feature:signals` | ⏳ |
-| `TASK-006a` | Herramientas: sueño · respiración · plan de apoyo | `feature:tools` | ⏳ |
-| `TASK-006b` | Reporte personal + recorrido | `feature:report` | ⏳ |
-| `TASK-007` | Consentimiento + resumen + solicitud de apoyo | `feature:sharing` | ⏳ |
-| `TASK-008` | Ruta B «Quiero ayudar a alguien» | `feature:help` | ⏳ |
-| `TASK-009` | Perfil y privacidad | `feature:profile` | ⏳ |
-| `TASK-010` | Próximos pasos | `feature:nextsteps` | ⏳ |
-| `TASK-011` | Derivación y directorio | `feature:referral` | ⏳ |
-| `TASK-015` | Paquete de alerta roja | `feature:signals` | ⏳ |
-| `TASK-016` | Estado del caso rojo | `feature:sharing` | ⏳ |
-| `TASK-017` | Registro de eventos adversos | transversal | ⏳ |
-| `TASK-018` | Suite de prueba de seguridad | calidad | ⏳ |
-| `TASK-024` | Canal de audio | transversal | ⏳ |
+| `TASK-004` | Conversación + chequeo contextual | `feature:conversation` | 🔍 `specs/TASK-004-conversacion-chequeo.md` |
+| `TASK-005` | Señales + mapa + nivel de atención | `feature:signals` | 🔍 `specs/TASK-005-senales-mapa-nivel.md` |
+| `TASK-006a` | Herramientas: sueño · respiración · plan de apoyo | `feature:tools` | 🔍 `specs/TASK-006a-herramientas-breves.md` |
+| `TASK-006b` | Reporte personal + recorrido | `feature:report` | 🔍 `specs/TASK-006b-reporte-recorrido.md` |
+| `TASK-007` | Consentimiento + resumen + solicitud de apoyo | `feature:sharing` | 🔍 `specs/TASK-007-consentimiento-solicitud.md` |
+| `TASK-008` | Ruta B «Quiero ayudar a alguien» | `feature:help` | 🔍 `specs/TASK-008-ruta-b-quiero-ayudar.md` |
+| `TASK-009` | Perfil y privacidad (cierra la UI de `TASK-025`) | `feature:profile` | 🔍 `specs/TASK-009-perfil-privacidad.md` |
+| `TASK-010` | Próximos pasos | `feature:nextsteps` | 🔍 `specs/TASK-010-proximos-pasos.md` |
+| `TASK-011` | Derivación y directorio | `feature:referral` | 🔍 `specs/TASK-011-derivacion-directorio.md` |
+| `TASK-015` | Paquete de alerta roja | `feature:signals` | 🔍 `specs/TASK-015-paquete-alerta-roja.md` |
+| `TASK-016` | Estado del caso rojo | `feature:sharing` | 🔍 `specs/TASK-016-estado-caso-rojo.md` |
+| `TASK-017` | Registro de eventos adversos | `:core:audit` | 🔍 `specs/TASK-017-eventos-adversos.md` |
+| `TASK-018` | Suite de prueba de seguridad | transversal | 🔍 `specs/TASK-018-suite-seguridad.md` |
+| `TASK-024` | Canal de audio | por decidir | 🔒 `specs/TASK-024-canal-audio.md` |
+
+> **Nota de B:** `TASK-017` propone módulo propio `:core:audit` porque es transversal y la regla
+> *"una tarea = un módulo = un dueño"* no la cubre (`REVISION-B.md` H10). `TASK-024` **no se
+> construye** sin decisión del dueño: `PR-003` §6.2 la sitúa fuera del camino crítico del MVP.
+>
+> **Necesidades declaradas:** `puente-joven-android/deliverables/FASE-0-B/NECESIDADES.md`.
+> **Revisión de B sobre el plan y la Fase 0 de A:** `REVISION-B.md` (10 hallazgos, 3 rojos).
+> **Revisión de B sobre la Fase 0 de C:** `REVISION-C-POR-B.md` (10 hallazgos, **7 de frontera
+> Joven↔Red**). Las specs `TASK-011`, `TASK-015` y `TASK-016` quedan **corregidas** por esa revisión
+> (addenda §11 en cada una).
+
+### 3.1 Pendiente de decisión de A (contrato `PR-003`)
+
+| # | Qué | Hallazgo | Bloquea |
+|---|---|---|---|
+| D6 | Catálogo de `motivo` (no existe en ningún documento) | K2 | `TASK-015` |
+| D7 | Forma canónica de las claves de señal (APK `"isolation"` vs backend `ISOLATION`) | K1 | `TASK-015`, `TASK-013` |
+| D8 | `fueraDeHorario` en el Contrato B | K5 | `TASK-016` |
+| D9 | Copy visible de `rol`/`especialidad` (hoy llegarían claves de enum al adolescente) | K6 | `TASK-016` |
+
+### 3.2 Pendiente de C (tras rebasar sobre `main`)
+
+| # | Qué | Hallazgo |
+|---|---|---|
+| — | `PR-013` §2: la sección 5 (herramientas) se construye del `scope` autorizado, no del paquete | K3 |
+| — | `PR-006`: consumir `respuestasChequeo` o quitarlo del Contrato A | K4 |
+| — | `PR-018` §2: `metadataWithoutSensitiveContent` **no existe** en el APK | K9 |
+| — | Rebasar y aplicar `REVISION-C.md` F1–F4 (las specs en `49fbe0a` son previas) | K8 |
 
 ## 4. Agente C — Portal Puente Red (18)
 
