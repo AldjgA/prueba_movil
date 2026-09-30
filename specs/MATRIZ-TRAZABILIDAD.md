@@ -25,7 +25,7 @@ tiene spec**. Es el índice del proyecto; si algo no está aquí, no existe.
 |---|---|---|---|---|
 | `TASK-000` | Plantilla SDD + matriz de trazabilidad | juvenil | `specs/` | ✅ `_PLANTILLA-SPEC.md` |
 | `TASK-00A` | Contrato de integración | juvenil | `CONTRATO-DE-INTEGRACION.md` | ✅ |
-| `TASK-021` | Modelo de amenaza de privacidad | juvenil | doc | ⏳ |
+| `TASK-021` | Modelo de amenaza de privacidad | juvenil | `specs/TASK-021-...md` | ⏳ |
 | `TASK-003b` | Persistencia local (DataStore) | juvenil | `:core:data` | ⏳ |
 | `TASK-025` | Multi-perfil en dispositivo compartido | juvenil | `:core:data` | ⏳ |
 | `PR-001` | Protocolo de crisis | Red | `PR-001-PROTOCOLO-DE-CRISIS.md` | ✅ (autorizado) |
