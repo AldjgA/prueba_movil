@@ -31,6 +31,8 @@ import bo.puentejoven.feature.auth.entry.EntryRoute as EntryScreenRoute
 import bo.puentejoven.feature.auth.login.LoginRoute as LoginScreenRoute
 import bo.puentejoven.feature.onboarding.OnboardingRoute as OnboardingScreenRoute
 import bo.puentejoven.feature.home.HomeRoute as HomeScreenRoute
+import bo.puentejoven.feature.conversation.ConversationRoute as ConversationScreenRoute
+import bo.puentejoven.feature.conversation.ContextCheckRoute as ContextCheckScreenRoute
 
 /**
  * Grafo de navegación del joven.
@@ -76,26 +78,18 @@ fun PuenteJovenNavHost(
             HomeScreenRoute(navigator = navigator)
         }
 
-        // --- Resto del grafo joven (placeholders hasta sus tareas) ---
+        // --- TASK-004: conversación estructurada + chequeo contextual (B) ---
         composable<ConversationRoute> {
-            DestinationPlaceholder(
-                destination = ConversationRoute,
-                title = "Contarlo",
-                note = "Conversación estructurada y privada. Se implementa en TASK-004.",
-                navigator = navigator,
-            )
+            ConversationScreenRoute(navigator = navigator)
         }
 
-        composable<ContextCheckRoute> { backStackEntry ->
-            val route = backStackEntry.toRoute<ContextCheckRoute>()
-            DestinationPlaceholder(
-                destination = route,
-                title = "Chequeo contextual",
-                note = "Preguntas guiadas por reglas. Se implementa en TASK-004.",
-                navigator = navigator,
-            )
+        composable<ContextCheckRoute> {
+            // El `conversationId` de la ruta tipada lo lee el ViewModel del
+            // `SavedStateHandle`; la pantalla no necesita el argumento.
+            ContextCheckScreenRoute(navigator = navigator)
         }
 
+        // --- Resto del grafo joven (placeholders hasta sus tareas) ---
         composable<SignalsRoute> {
             DestinationPlaceholder(
                 destination = SignalsRoute,

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TASK-005 · Señales, mapa de situación y prioridad preliminar de revisión.
+         Regla de la casa #2: TODO texto visible vive aquí.
+         Guardrail #1 / PR-001 §15: se habla de SEÑALES y PRIORIDAD PRELIMINAR DE
+         REVISIÓN. Nunca «diagnóstico», «riesgo suicida» ni «gravedad clínica». -->
+
+    <!-- Señales -->
+    <string name="signals_title">Puente Señales</string>
+    <string name="signals_headline">Hay algo que cambió.</string>
+    <string name="signals_loading">Reuniendo lo que has contado…</string>
+    <string name="signals_empty">Todavía no hay señales registradas.</string>
+    <string name="signals_empty_hint">Cuando cuentes algo o uses una herramienta, aquí verás lo que va cambiando.</string>
+    <string name="signals_error_title">No pudimos reunir tus señales</string>
+    <string name="signals_error_body">Nada de lo que contaste se perdió. Puedes intentarlo otra vez.</string>
+    <string name="signals_retry">Volver a intentar</string>
+    <string name="signals_trend_rising">En aumento</string>
+    <string name="signals_trend_stable">Estable</string>
+    <string name="signals_trend_falling">En descenso</string>
+    <string name="signals_evidence_count">%1$d registros</string>
+    <string name="signals_why_title">¿Por qué te mostramos esto?</string>
+    <string name="signals_why_body">Esto sale de lo que tú nos contaste y de lo que se ha ido repitiendo con el tiempo. No es una evaluación: es un resumen de lo que aparece en tus registros.</string>
+    <string name="signals_open_attention">Ver mi prioridad de revisión</string>
+    <string name="signals_open_map">Ver el mapa de la situación</string>
+
+    <!-- Mapa de situación -->
+    <string name="map_title">Entendamos lo que está pasando</string>
+    <string name="map_headline">Cómo se conecta todo.</string>
+    <string name="map_loading">Ordenando la situación…</string>
+    <string name="map_empty">Todavía no hay nada que ordenar.</string>
+    <string name="map_empty_hint">A medida que cuentes cosas, aquí se irá armando el mapa.</string>
+    <string name="map_error_title">No pudimos armar el mapa</string>
+    <string name="map_error_body">Puedes intentarlo otra vez.</string>
+    <string name="map_retry">Volver a intentar</string>
+    <string name="map_nodes_label">Lo que aparece</string>
+    <string name="map_links_label">Cómo se conecta</string>
+    <string name="map_weight_accessibility">Peso %1$d de 4</string>
+    <string name="map_disclaimer">Esto es una forma de ordenar lo que contaste, no una evaluación psicológica.</string>
+
+    <!-- Prioridad preliminar de revisión -->
+    <string name="attention_title">Mi prioridad de revisión</string>
+    <string name="attention_loading">Revisando lo que has contado…</string>
+    <string name="attention_error_title">No pudimos calcular tu prioridad</string>
+    <string name="attention_error_body">Puedes intentarlo otra vez.</string>
+    <string name="attention_retry">Volver a intentar</string>
+    <string name="attention_reason_criterion">Hay algo en lo que contaste que conviene mirar con alguien.</string>
+    <string name="attention_reason_accumulation">No hay nada grave por sí solo, pero se están juntando varias cosas.</string>
+    <string name="attention_reason_latched_red">Ya te marcamos esta prioridad antes y no la bajamos por nuestra cuenta: necesita que una persona la revise.</string>
+    <string name="attention_motivos_title">Qué encontramos</string>
+    <string name="attention_evidence_title">Qué registros lo muestran</string>
+    <string name="attention_evidence_empty">Todavía no hay registros suficientes para mostrarte de dónde sale.</string>
+
+    <!-- Nivel verde (brief §13) -->
+    <string name="attention_green_title">Podemos trabajar en esto paso a paso.</string>
+    <string name="attention_green_explanation">Lo que contaste no muestra señales que necesiten apoyo urgente. Puedes seguir con las herramientas y con tu recorrido.</string>
+    <string name="attention_green_what_changed">Por ahora no aparece nada que haya empeorado de forma clara.</string>
+    <string name="attention_green_next_step">Puedes usar una herramienta breve cuando lo necesites. Si algo cambia, vuelve a contarlo.</string>
+
+    <!-- Nivel amarillo (brief §13) -->
+    <string name="attention_yellow_title">Sería bueno involucrar a alguien.</string>
+    <string name="attention_yellow_explanation">Lo que contaste se ha ido repitiendo y está afectando tu día a día. No tienes que manejarlo solo o sola.</string>
+    <string name="attention_yellow_what_changed">Se repite y se está acumulando: aparece más de una vez y toca más de un área.</string>
+    <string name="attention_yellow_next_step">Podemos ayudarte a preparar cómo pedir apoyo a alguien de confianza.</string>
+
+    <!-- Nivel rojo (brief §13) -->
+    <string name="attention_red_title">Esto necesita apoyo humano prioritario.</string>
+    <string name="attention_red_explanation">Lo que contaste incluye algo que necesita que una persona lo vea pronto. Esto no es un diagnóstico: es una señal de que conviene hablar con alguien ahora.</string>
+    <string name="attention_red_what_changed">Apareció algo que no puede esperar a que se resuelva solo.</string>
+    <string name="attention_red_next_step">Ahora mismo lo importante es que estés acompañado. Mira las opciones de abajo.</string>
+
+    <!-- Bloque de emergencia del nivel rojo (PR-001 §9, fila «Rojo» y «Fuera de horario») -->
+    <string name="attention_emergency_title">Qué puedes hacer ahora</string>
+    <string name="attention_emergency_body">Si estás en peligro inmediato, busca a un adulto de confianza que esté cerca, o llama a los servicios de emergencia de tu país.</string>
+    <string name="attention_emergency_contacts_pending">Los teléfonos de ayuda de tu zona todavía no están configurados en esta versión.</string>
+    <string name="attention_coverage_note">Aquí no hay una guardia disponible las 24 horas. Si envías tu caso, una persona lo revisará en horario de atención; no te prometemos una respuesta inmediata.</string>
+    <string name="attention_open_support">Preparar una solicitud de apoyo</string>
+
+    <!-- Aviso de motor de reglas (transparencia, PR-001 P10) -->
+    <string name="attention_ruleset_note">Esta prioridad la calculan reglas fijas a partir de lo que contaste. Versión de reglas: %1$s</string>
+</resources>

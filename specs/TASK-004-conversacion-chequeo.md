@@ -78,8 +78,8 @@ del catálogo para que A pueda correlacionarla con `rulesetVersion` si lo pide (
 |---|---|---|
 | 1 | Un turno escrito por el joven y la respuesta de Puente **sobreviven al reinicio del proceso** (cerrar la app y reabrir muestra el mismo historial) | instrumentada (o unitaria sobre `LocalPuenteRepository` con DataStore real) |
 | 2 | Ningún turno de Puente se puede crear sin `promptId` | unitaria: `appendPuenteMessage(..., promptId = "")` devuelve `UiError.Validation` |
-| 3 | El chequeo muestra **una sola pregunta** a la vez y no avanza sin respuesta | revisión visual + instrumentada |
-| 4 | Existe al menos una clave de catálogo por cada dimensión del brief §9 (9 dimensiones) | unitaria: `availableQuestionKeys()` cubre el conjunto de dimensiones |
+| 3 | El chequeo muestra **una sola pregunta** a la vez y no avanza **sin una decisión**: responder y saltar son las dos formas de decidir, y el salto queda registrado | revisión visual + instrumentada + unitaria |
+| 4 | Existe **una pregunta por cada dimensión** del brief §9 (las 10: cómo se siente · sueño · soledad · acoso · violencia · conflicto familiar · escuela · apoyo disponible · consumo · seguridad personal), y todas ofrecen poder no responder | unitaria: `GuidedScriptCatalog` cubre `CheckDimension.entries` |
 | 5 | Ningún texto del catálogo contiene términos clínicos ni diagnósticos (revisión contra la lista prohibida de `PR-001` §15) | revisión de contenido |
 | 6 | **Cero literales de copy en Kotlin**: todo texto visible sale de `strings.xml` | `grep` de literales en `feature/conversation/**` + revisión |
 | 7 | El módulo no depende de `:core:network` | `ModuleGraphGuardTest` |
