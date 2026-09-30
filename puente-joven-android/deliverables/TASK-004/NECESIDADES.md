@@ -108,7 +108,7 @@ vocabulario debería declararse una vez —como `PR-003` hizo con las claves de 
 
 | Necesidad | Detalle |
 |---|---|
-| `ModuleGraphGuardTest` (TASK-013) | Debe cubrir `:feature:conversation` y verificar que **no** depende de `:core:network` |
+| `ModuleGraphGuardTest` (TASK-013) | **Corregido el 2026-09-30 tras verificar el guard con el módulo ya integrado.** Lo que hay hoy: (a) el test de endpoints/secrets **sí** recorre `feature/**`, así que `:feature:conversation` ya está vigilado y pasa; (b) pero **nada comprueba que un módulo de feature evite `:core:network`** — los dos tests de red solo hacen regex sobre `app/build.gradle.kts`. Si mañana `feature/conversation/build.gradle.kts` añadiera `:core:network`, **ninguna prueba fallaría**. Hoy no explota porque `:core:network` no existe; el agujero se abre con `TASK-013`. Ver `REVISION-B.md` H7 |
 | `:core:data` — `DemoFixtures.kt` | Sigue emitiendo `SignalKey("frequency")` y `SignalKey("isolation")`. `PR-003` §4.1 retiró `frequency` y fijó MAYÚSCULAS. **Es de A** (`:core:data`): lo necesita `TASK-005`, no `TASK-004`, pero lo declaro aquí para que no se pierda |
 | `gradle.properties` | Sigue fuera del control de versiones a propósito. Correcto |
 
