@@ -2,6 +2,7 @@
 
 **Agente:** C · **Ola:** R2 · **Depende de:** `PR-009`, `PR-010`
 **Bloquea a:** `PR-013` (desde aquí se abre la ficha), `PR-017`
+**Reconciliado:** 2026-09-30 — (1) los filtros `Rojo`/`Amarillo` siguen el **nivel de origen del APK** (`origenNivel`, `PR-003` §4); la categoría operativa es `MEDIO`/`ALTO` (`PR-003` §5). Los dos ejes se mantienen separados, ahora con la nomenclatura del contrato. (2) Estados según `PR-003` §3.1.
 
 ---
 

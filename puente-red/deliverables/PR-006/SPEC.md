@@ -2,6 +2,7 @@
 
 **Agente:** C · **Ola:** R1 · **Depende de:** `PR-001` §5–6, `PR-004`
 **Bloquea a:** `PR-008` (el motor de derivación empareja por características)
+**Reconciliado:** 2026-09-30 — sin cambios estructurales. La entrada es el **Contrato A** (`PR-003` §4): `motivo` ya viene como **claves de catálogo**, no texto libre, lo que encaja con el vocabulario cerrado de esta spec. `promptVersion` obligatorio (ya estaba). Sin nomenclatura de estados que corregir.
 
 ---
 

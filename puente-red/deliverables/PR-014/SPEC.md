@@ -2,6 +2,7 @@
 
 **Agente:** C · **Ola:** R2 · **Depende de:** `PR-013`
 **Bloquea a:** `PR-013` (la ficha contiene esta separación), `PR-018` (audita quién escribió qué)
+**Reconciliado:** 2026-09-30 — sin cambios estructurales. Precisión: el bloque «organizado por Puente» **no** incluye los datos que el joven ve del profesional (`PR-003` §6.1) — eso es Contrato C y va en dirección contraria. El campo `referral` sigue delegando en `PR-016`.
 
 ---
 

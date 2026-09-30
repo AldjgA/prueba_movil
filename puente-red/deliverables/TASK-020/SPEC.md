@@ -2,6 +2,7 @@
 
 **Agente:** C · **Ola:** R3 · **Depende de:** `PR-017`, `PR-018`, `PR-009`, `PR-016`
 **Bloquea a:** la evaluación del piloto (Fase 4–5 del resumen ejecutivo)
+**Reconciliado:** 2026-09-30 — ⚠️ `PR-003` Q6/Q7: alcance **demostrativo, ≤5 usuarios recurrentes, sin datos reales ni sintéticos**. El marco de 7 dimensiones **no puede medirse** a esa escala: se entrega como **marco definido y listo** (definiciones, fórmulas, fuentes, umbrales), con el tablero en **modo demo**. Las métricas se activan cuando exista el piloto real; hasta entonces, el scorecard declara `baseline = null` y **no afirma mejoría** (criterio 7 ya lo exigía).
 
 ---
 

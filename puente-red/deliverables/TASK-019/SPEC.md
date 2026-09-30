@@ -1,7 +1,9 @@
 # TASK-019 · Apoyo humano breve telefónico (modelo híbrido)
 
-**Agente:** C · **Ola:** R3 · **Depende de:** `PR-001` §7–8 (firmado), `PR-007`, `PR-009`
+**Agente:** C · **Ola:** R3 · **Depende de:** `PR-001` §7–8 (firmado), `PR-007`, `PR-009`, `PR-003` §6.2
 **Bloquea a:** `TASK-020` (dimensión *Aceptabilidad*)
+**Reconciliado:** 2026-09-30 — ⚠️ `PR-003` §15 (Q8) resuelve: **no hay guardia 24/7**. La llamada **solo puede ofrecerse en horario**; fuera de él no se promete ni se agenda.
+`PR-003` §6.2 la lista como **opción B** del canal de contacto con el psicólogo: *"complemento válido"*, pero **baja prioridad** (R2) y **fuera del camino crítico del MVP**. Con Q6 (demo ≤5 usuarios) y Q7 (sin datos), esta tarea queda **al final de la cola** de C.
 
 ---
 

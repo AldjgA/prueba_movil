@@ -2,6 +2,8 @@
 
 **Agente:** C · **Ola:** R2 · **Depende de:** `PR-011`, `PR-012`, `PR-015`, `PR-016`
 **Bloquea a:** `TASK-020` (el marco de evaluación consume estas métricas)
+**Reconciliado:** 2026-09-30 — ⚠️ **impacto fuerte.** `PR-003` Q7 fija que la demo **no usa datos reales ni sintéticos**, y Q6 la acota a **≤5 usuarios recurrentes**. El observatorio **no tendrá nada que agregar** en el MVP.
+**Consecuencia:** se añade un **modo demo sin datos** que muestra la estructura, las cinco preguntas y los tipos de gráfico con **datos ficticios etiquetados como tales**, y declara explícitamente que no hay datos reales. La regla de **k-anonimato (`k = 5`) se mantiene** para cuando existan datos; hoy no se relaja solo porque la demo esté vacía.
 
 ---
 

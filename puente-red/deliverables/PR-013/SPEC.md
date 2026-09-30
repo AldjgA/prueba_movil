@@ -2,6 +2,7 @@
 
 **Agente:** C · **Ola:** R2 · **Depende de:** `PR-006`, `PR-009`, `PR-014`, `PR-003`
 **Bloquea a:** `PR-015` (el timeline cuelga de la ficha), `PR-016` (derivar desde la ficha)
+**Reconciliado:** 2026-09-30 — (1) la sección 6 (resumen autorizado) se construye desde el **Contrato A** de `PR-003` §4, con `scope` cerrado; (2) la sección 7 (historial) usa los estados de `PR-003` §3.1; (3) el encabezado usa `caseToken` (**ULID**) y `categoria` `MEDIO`/`ALTO`. La ficha sigue **sin** exponer identidad del joven (`PR-003` §9.7).
 
 ---
 

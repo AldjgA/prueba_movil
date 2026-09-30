@@ -2,6 +2,7 @@
 
 **Agente:** C · **Ola:** R1 · **Depende de:** `PR-006` (características), `PR-007` (directorio), `PR-005` (categoría)
 **Bloquea a:** `PR-009` (la cola consume la asignación propuesta), `PR-016` (derivaciones externas)
+**Reconciliado:** 2026-09-30 — sin cambios de diseño. La propuesta lleva el caso de `EN_COLA` a `ASIGNADO` (`PR-003` §3.1); el paso a `ACEPTADO` sigue siendo un **acto humano**, que es lo que preserva el guardrail #2. El directorio (`PR-007`) ahora se alimenta de Supabase Auth.
 
 ---
 

@@ -2,6 +2,9 @@
 
 **Agente:** C · **Ola:** R2 · **Depende de:** `PR-008`, `PR-013`, `PR-014`
 **Bloquea a:** `PR-017` (el funnel de atención se alimenta de las derivaciones)
+**Reconciliado:** 2026-09-30 — dos precisiones importantes:
+1. **El canal in-app no es este módulo.** `PR-003` §6.2 lo define como opción A del contacto con el psicólogo, **baja prioridad** (R2), candidato a ola **posterior** a `PR-016`. Este módulo es la derivación **externa** a servicios.
+2. Sigue **abierta y crítica** la pregunta de `PR-019` caso límite 3: *¿se registra consentimiento para derivar a un tercero, y qué pasa si el joven revoca con una derivación en curso?* Hoy `PR-003` no lo responde.
 
 ---
 

@@ -2,6 +2,10 @@
 
 **Agente:** C · **Ola:** R2 · **Depende de:** `PR-009` (cola y SLA), `PR-012` (alertas), `PR-010` (sesión)
 **Bloquea a:** `PR-017` (observatorio toma sus agregados del mismo modelo)
+**Reconciliado:** 2026-09-30 — tres cambios:
+1. Los estados del tablero son los de `PR-003` §3.1 (`RECIBIDO`…`CERRADO`).
+2. **Sin guardia 24/7** (`PR-003` §15, Q8): fuera de horario el tablero marca `fuera_de_horario` y **no** pinta un SLA incumplido como si hubiera alguien disponible.
+3. La demo opera **sin datos** (`PR-003` Q7): el **estado vacío es el caso normal** y debe verse bien, con hora de generación.
 
 ---
 

@@ -2,6 +2,7 @@
 
 **Agente:** C · **Ola:** R3 · **Depende de:** `PR-010`, `PR-009`, `PR-013`, `PR-014`, `PR-015`, `PR-016`
 **Bloquea a:** `PR-020`, `TASK-020` (dimensión *Implementación*), cumplimiento legal
+**Reconciliado:** 2026-09-30 — (1) el log es la tabla **`audit_event`** definida por `PR-004` §4.3 (quién / cuándo / qué caso / qué acción, **sin** contenido sensible); (2) toda lectura de **`caso_correlacion`** se audita (`PR-004` §4.2); (3) la separación de acceso se apoya en **RLS de Supabase**, no en el código (`PR-INFRA` §2); (4) se añade el evento de **login de profesional** vía Supabase Auth (`PR-010`).
 
 ---
 

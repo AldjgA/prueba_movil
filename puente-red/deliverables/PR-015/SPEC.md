@@ -2,6 +2,7 @@
 
 **Agente:** C · **Ola:** R2 · **Depende de:** `PR-013`, `PR-009`, `PR-018`
 **Bloquea a:** `PR-017` (métricas de tiempo de respuesta), `PR-020`
+**Reconciliado:** 2026-09-30 — (1) `EventType` se alinea a los estados de `PR-003` §3.1 (abajo, corregido); (2) la tabla de eventos es **`audit_event`** de `PR-004` §4.3; (3) el timeline describe acciones, nunca contenido del chat (`PR-003` §9.2).
 
 ---
 
@@ -62,10 +63,13 @@ pendingFollowUps(session) -> List<FollowUpItem>
 ```kotlin
 enum class ActorKind { SYSTEM, HUMAN }
 enum class EventType {
-    REPORT_RECEIVED, PATTERN_DETECTED, CLASSIFIED, ALERT_RAISED,
-    SUMMARY_AUTHORIZED, REQUEST_SENT, CASE_ACKNOWLEDGED, CASE_ASSIGNED,
-    ACTION_TAKEN, ASSESSMENT_SAVED, REFERRAL_CREATED, FOLLOWUP_SCHEDULED,
-    SLA_BREACHED, CASE_CLOSED,
+    // Alineado a PR-003 §3.1
+    RECIBIDO, CLASIFICADO, EN_COLA, ASIGNADO, ACEPTADO,
+    CONTACTO_HABILITADO, EN_CURSO, RESUELTO, CERRADO,
+    // Eventos de soporte
+    PATRON_DETECTADO, ALERTA_EMITIDA, RESUMEN_AUTORIZADO, SOLICITUD_ENVIADA,
+    ACCION_REALIZADA, VALORACION_GUARDADA, DERIVACION_CREADA,
+    SEGUIMIENTO_PROGRAMADO, SLA_INCUMPLIDO,
 }
 
 data class ActionEvent(

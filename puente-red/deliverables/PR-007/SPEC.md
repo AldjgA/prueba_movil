@@ -2,6 +2,10 @@
 
 **Agente:** C · **Ola:** R1 · **Depende de:** `PR-001` §7, `PR-000` §3
 **Bloquea a:** `PR-008` (el motor empareja contra este directorio), `PR-010` (roles), `PR-011`
+**Reconciliado:** 2026-09-30 — tres cambios:
+1. La identidad del profesional se apoya en **Supabase Auth** (`PR-003` Q9, `PR-INFRA` §2): `ResponderId` mapea a `auth.users.id`. **No se implementa almacén de credenciales.**
+2. El perfil debe exponer los **campos públicos** que el joven ve desde `ACEPTADO`: `nombreVisible`, `rol`, `especialidad` (`PR-003` §6.1, Contrato C). Son un subconjunto público del perfil, nunca datos personales.
+3. `PR-003` Q7: la demo **no carga datos sintéticos**. El seed del directorio se limita a lo mínimo para demostrar el flujo, marcado `isFictional`.
 
 ---
 
