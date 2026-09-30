@@ -196,6 +196,55 @@ POST /joven/casos                       (API Joven, autenticado con token de cas
 **Nunca viaja en el reporte:** `ProfileId`, alias, MAC, el chat completo ni ningún
 identificador de dispositivo. Solo claves de catálogo y lo autorizado por el joven.
 
+### 4.1 Catálogo de claves de señal (K1 — resuelto el 2026-09-30)
+
+**Forma canónica: `SNAKE_CASE` en MAYÚSCULAS.** Es la del backend, que es quien versiona el
+catálogo. El APK **debe** emitirlas así.
+
+| Clave canónica | Etiqueta en el APK | Origen |
+|---|---|---|
+| `SLEEP` | Sueño alterado | Sarfo 2026 |
+| `ANXIETY` | Ansiedad | Sarfo 2026 |
+| `ISOLATION` | Aislamiento | Sarfo 2026 |
+| `SCHOOL_IMPACT` | Deterioro escolar | Resumen §4 |
+| `SUBSTANCE_USE` | Consumo de alcohol | Sarfo 2026 |
+| `SELF_HARM` | Autolesión | Resumen §4 |
+| `PHYSICAL_VIOLENCE` | Violencia física | Sarfo 2026 |
+
+**Correspondencia con lo que el APK emitía** (verificado en `DemoFixtures.kt`):
+
+| APK emitía | Canónico |
+|---|---|
+| `sleep` | `SLEEP` |
+| `anxiety` | `ANXIETY` |
+| `isolation` | `ISOLATION` |
+| `school_impact` | `SCHOOL_IMPACT` |
+| `substance_use` | `SUBSTANCE_USE` |
+| `self_harm` | `SELF_HARM` |
+| `frequency` | **retirada** — es una **dimensión de análisis** (brief §10), no un tipo de señal |
+
+> El catálogo lo versiona `PR-006` (`SignalTag`); `PR-003` fija la **forma** y la correspondencia.
+
+### 4.2 Catálogo de `motivo` (K2 — resuelto el 2026-09-30, **provisional**)
+
+Derivado de `PR-001` §4.3. **Provisional y versionado** con `rulesetVersion`: provisional no
+significa indefinido — significa que la lista es **cerrada** y cambia de **versión**, no de diseño.
+
+| Clave | Criterio de `PR-001` §4.3 |
+|---|---|
+| `ideacion_activa` | Ideación suicida activa |
+| `plan_estructurado` | Plan |
+| `intento_reciente` | Intento reciente |
+| `autolesion` | Autolesión |
+| `abuso` | Abuso |
+| `peligro_inmediato` | Peligro inmediato |
+| `violencia_no_inmediata` | Violencia no inmediata (amarillo) |
+| `deterioro_escolar` | Deterioro escolar (amarillo) |
+| `aislamiento_persistente` | Aislamiento (amarillo) |
+
+> **Pendiente de firma clínica:** el clínico puede ajustar esta lista; al hacerlo **cambia
+> `rulesetVersion`**. Hasta entonces es la lista vigente, y B puede emitir `motivo` sin inventar.
+
 ---
 
 ## 5. Contrato B — Estado del caso (Backend → Joven)
@@ -210,9 +259,14 @@ GET /joven/casos/{caseToken}            (API Joven)
   "actualizadoEn": "…",
   "psicologo": { … } | null,            // NO NULO DESDE estado >= ACEPTADO (R5)
   "canalContacto": "IN_APP" | null,     // NO NULO SOLO desde CONTACTO_HABILITADO (R1)
+  "fueraDeHorario": false,              // K5: el APK NO infiere el horario del equipo
   "mensajesNoLeidos": 0
 }
 ```
+
+**`fueraDeHorario` (añadido el 2026-09-30 — hallazgo K5 de B).** Sin él, el APK tendría que
+**inferir el horario del equipo** para ser honesto con los tiempos (`PR-001` P5 / §9). Eso sería
+copiar localmente una regla de negocio ajena, y se desincronizaría el primer día.
 
 **Reglas duras:**
 - `psicologo` es `null` hasta `ACEPTADO`; desde `ACEPTADO` **sí** se muestra (R5).
@@ -229,9 +283,18 @@ GET /joven/casos/{caseToken}            (API Joven)
 {
   "nombreVisible": "…",        // nombre profesional de contacto (no datos personales)
   "rol": "psicologo",          // psicologo | trabajador_social | orientador | supervisor
-  "especialidad": "…"
+  "especialidad": "trauma"     // clave cerrada, minúsculas
 }
 ```
+
+**Forma canónica (K6 — resuelto el 2026-09-30):**
+
+- **`rol` en minúsculas.** `PR-007` se alinea: `PSICOLOGIA` era una **disciplina**, no un rol.
+- **`especialidad` es clave cerrada**, en minúsculas (`trauma`, `duelo`, `bullying`, `familia`,
+  `adicciones`).
+- **El copy visible vive en el APK** (`strings.xml`), y **A publica el catálogo de etiquetas**.
+  Nunca llega una clave de enum a la pantalla de un adolescente; nunca llega texto generado
+  (`PR-001` §6.2).
 
 ### 6.2 Canal de contacto — **baja prioridad** (R2), gated por el psicólogo (R1)
 
