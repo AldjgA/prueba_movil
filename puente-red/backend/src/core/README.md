@@ -121,21 +121,64 @@ Estas se repiten en varios módulos y conviene no romperlas:
 - **`authorize` nunca lanza**: un rechazo es un **valor**.
 - La **interfaz** de login vivirá en `puente-red/portal/`, aún sin montar.
 
+### Ya enganchado a `src/routes/profesional.js`
+
+La superficie `/profesional` ya responde (`PR-010`):
+
+| Ruta | Guardia |
+|---|---|
+| `GET /profesional` | — (marcador de vida) |
+| `POST /profesional/auth/login` | — (emite el token opaco) |
+| `POST /profesional/auth/logout` | sesión viva |
+| `GET /profesional/session` | sesión viva · devuelve **qué puede hacer** tu rol |
+| `GET /profesional/auditoria` | **`VIEW_AUDIT_LOG`** (solo `supervisor`) |
+
+El resto de `/profesional/**` responde `501` hasta `PR-011`…`PR-017`.
+
+**Regla al añadir una ruta:** toda ruta que toque datos pasa por `exigirAccion(...)`. Añadir una
+sin guardia es un fallo de seguridad (`PR-010` criterio 9). `exigirSesionViva` **no** sustituye a
+`exigirAccion`: solo vale para rutas que no tocan datos de nadie más.
+
+### ⚠️ Un bug de diseño que encontraron las pruebas
+
+`resolve` del registro de sesiones **marcaba actividad**. Consecuencia: **la inactividad no se
+detectaba nunca**, porque el propio acceso que se quiere medir reiniciaba el reloj. Ahora
+`resolve` es **sin efectos** y marcar actividad es explícito (`touch`), y **solo** se hace
+después de comprobar que la sesión vive.
+
 ---
 
 ## Variables de entorno
+
+⚠️ **La superficie de configuración es la de `src/shared/config.js` (de A)** — un solo juego de
+nombres para un solo proceso. Antes el núcleo usaba un prefijo `PUENTE_*` propio, lo que habría
+sido **dos superficies de configuración**.
 
 La clave **nunca** está en el repositorio ni en la configuración: solo su **nombre**.
 
 | Variable | Efecto | Defecto |
 |---|---|---|
-| `PUENTE_CLASSIFIER_ENABLED` | Enciende el clasificador | `false` |
-| `PUENTE_GENAI_API_KEY` | **La clave** del proveedor (la lee el adaptador) | — |
-| `PUENTE_GENAI_KEY_ENV_VAR` | Nombre alternativo de la variable de la clave | `PUENTE_GENAI_API_KEY` |
-| `PUENTE_CLASSIFIER_MODEL` | `modelVersion` | provisional |
-| `PUENTE_CLASSIFIER_PROMPT` | `promptVersion` | provisional |
-| `PUENTE_CLASSIFIER_TIMEOUT_MS` | Timeout de la llamada | `8000` |
-| `PUENTE_CLASSIFIER_MAX_SPEND_USD` | Tope de gasto diario | `1` |
+| `CLASSIFIER_MODE` | `on` enciende el clasificador; **cualquier otra cosa lo apaga** | `off` |
+| `CLASSIFIER_ENABLED` | Respaldo booleano si `CLASSIFIER_MODE` no está definida | `false` |
+| `GOOGLE_GENAI_API_KEY` | **La clave** del proveedor (la lee el adaptador) | — |
+| `GENAI_KEY_ENV_VAR` | Nombre alternativo de la variable de la clave | `GOOGLE_GENAI_API_KEY` |
+| `CLASSIFIER_MODEL` / `CLASSIFIER_PROMPT` | `modelVersion` / `promptVersion` | provisionales |
+| `CLASSIFIER_TIMEOUT_MS` | Timeout de la llamada | `8000` |
+| `CLASSIFIER_MAX_SPEND_USD` | Tope de gasto diario | `1` |
+
+### Variables del portal (`PR-010`)
+
+| Variable | Efecto | Defecto |
+|---|---|---|
+| `PUENTE_DEMO_EMAIL` | Correo del usuario de demostración | `demo@puentered.org` |
+| `PUENTE_DEMO_PASSWORD` | **Contraseña del usuario de demostración.** Si está vacía, **nadie entra** | — |
+| `PUENTE_DEMO_ROLE` | Rol del usuario de demostración | `supervisor` |
+| `PUENTE_DEMO_INSTITUTION` | Institución del usuario de demostración | `ong-demo` |
+
+⚠️ **No hay contraseña por defecto.** Un adaptador de demostración con credenciales adivinables
+es peor que no tener demo: **si `PUENTE_DEMO_PASSWORD` está vacía, el login siempre falla.**
+
+> **Pendiente de A:** añadir estas cuatro variables a `.env.example`, que es suyo.
 
 ---
 

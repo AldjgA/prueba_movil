@@ -98,8 +98,74 @@ El portal no puede: necesita **React + Vite**. He comprobado que el registro npm
 
 ## 8. Estado
 
-**Núcleo de seguridad de `PR-010` implementado y probado**: 21 pruebas propias (**135** en total
-en el paquete), cubriendo los 10 criterios.
+**Núcleo de seguridad implementado y probado**, y **ya enganchado** a
+`src/routes/profesional.js`:
 
-**Pendiente de este PR:** la interfaz de login (`puente-red/portal/auth`), que se hará al montar
-el portal.
+| Ruta | Guardia |
+|---|---|
+| `GET /profesional` | — (marcador de vida) |
+| `POST /profesional/auth/login` | — (emite el token opaco) |
+| `POST /profesional/auth/logout` | sesión viva |
+| `GET /profesional/session` | sesión viva · devuelve las acciones permitidas del rol |
+| `GET /profesional/auditoria` | `VIEW_AUDIT_LOG` (solo `supervisor`) |
+
+El resto de `/profesional/**` responde `501` hasta `PR-011`…`PR-017`.
+**Verificado de extremo a extremo**: el servidor arranca (`node src/main.js`) y las rutas
+responden. `npm test`: **177/177 en verde**.
+
+**Pendiente de este PR:** la **interfaz** de login (`puente-red/portal/auth`), que se hará al
+montar el portal.
+
+---
+
+## 9. 🆕 Necesidades surgidas al enganchar las rutas
+
+### 9.1 Añadir las variables de demostración a `.env.example` (**archivo de A**)
+
+`backend/.env.example` es de A, así que **no lo he editado**. Faltan cuatro variables que mi
+adaptador de demostración necesita:
+
+```
+# --- Portal profesional (PR-010) — SOLO DEMOSTRACIÓN ---
+PUENTE_DEMO_EMAIL=demo@puentered.org
+PUENTE_DEMO_PASSWORD=          # si está vacía, NADIE entra (fail closed)
+PUENTE_DEMO_ROLE=supervisor
+PUENTE_DEMO_INSTITUTION=ong-demo
+```
+
+**No hay contraseña por defecto a propósito**: un adaptador de demo con credenciales
+adivinables es peor que no tener demo.
+
+### 9.2 Alineación de nombres de variables (hecha por C)
+
+Mi `classification/config.ts` usaba un prefijo `PUENTE_*` propio. **Lo he alineado a la
+convención de `src/shared/config.js`**: `CLASSIFIER_MODE`, `GOOGLE_GENAI_API_KEY`,
+`CLASSIFIER_MODEL`, `CLASSIFIER_TIMEOUT_MS`… Habría sido **dos superficies de configuración
+para el mismo proceso**.
+
+**Aviso para A:** si añade configuración nueva, que sea en `shared/config.js`, y el núcleo se
+alinea.
+
+### 9.3 El adaptador real de Supabase Auth sigue pendiente
+
+`AuthPort` está definido y probado; el adaptador de demostración funciona. Falta el de
+**Supabase Auth**, que necesita el cliente de `src/shared/**` (de A). Requisitos: rol **como
+claim del token** (no consultado a la base en cada petición), **claim de institución**,
+**expiración con refresco** (`REVISION-C` §5.2) y usuario demo.
+
+### 9.4 🆕 Creé `test/profesional.test.js` — confirmar propiedad
+
+El reparto de `CONTRATO-DE-INTEGRACION.md` §1.1 no menciona `test/`. He creado
+`test/profesional.test.js` (nuevo, no toca el `smoke.test.js` de A) porque es el sitio natural
+para las pruebas de ruta y `node --test` las descubre desde la raíz. **Si A prefiere otra
+ubicación, lo muevo.**
+
+### 9.5 ⚠️ Dos bugs de diseño que encontraron mis propias pruebas
+
+1. **`resolve` del registro de sesiones marcaba actividad**, así que **la inactividad no se
+   detectaba nunca** — el propio acceso que se quiere medir reiniciaba el reloj. Ahora `resolve`
+   es sin efectos y `touch` es explícito, y solo se llama tras comprobar que la sesión vive.
+2. **Las rutas no pasaban sumidero de auditoría**, así que `GET /auditoria` devolvía siempre
+   vacío. El `AuthService` se construía con el sumidero nulo por defecto.
+
+Ambos están corregidos y fijados con pruebas.

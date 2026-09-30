@@ -42,7 +42,7 @@ export const DEFAULT_CONFIG: ClassifierConfig = {
   promptVersion: "classification-prompt/1.0.0-provisional",
   timeoutMs: 8_000,
   maxSpendUsdPerDay: 1,
-  apiKeyEnvVar: "PUENTE_GENAI_API_KEY",
+  apiKeyEnvVar: "GOOGLE_GENAI_API_KEY",
   catalogVersion: "rationale-catalog/1.0.0-provisional",
 };
 
@@ -60,21 +60,30 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
 /**
  * Construye la configuración desde el entorno.
  *
- * **Nunca** lee el valor de la clave: solo su nombre. Si el nombre está vacío, se usa el
- * de por defecto.
+ * ⚠️ **Los nombres de las variables siguen la convención de `src/shared/config.js`** (de A),
+ * que es quien define la superficie de configuración del backend: `CLASSIFIER_MODE=on|off`,
+ * `GOOGLE_GENAI_API_KEY`, `CLASSIFIER_*`. Antes usaba un prefijo `PUENTE_*` propio, y eso
+ * habría sido **dos superficies de configuración para el mismo proceso**.
+ *
+ * **Nunca** lee el valor de la clave: solo su nombre. Si el nombre está vacío, se usa el de por
+ * defecto.
  */
 export function loadConfigFromEnv(env: EnvLike): ClassifierConfig {
+  const modo = env["CLASSIFIER_MODE"];
+  const enabled =
+    modo === undefined ? parseBoolean(env["CLASSIFIER_ENABLED"], DEFAULT_CONFIG.enabled) : modo === "on";
+
   return {
-    enabled: parseBoolean(env["PUENTE_CLASSIFIER_ENABLED"], DEFAULT_CONFIG.enabled),
+    enabled,
     provider: "google-genai",
-    modelVersion: env["PUENTE_CLASSIFIER_MODEL"] ?? DEFAULT_CONFIG.modelVersion,
-    promptVersion: env["PUENTE_CLASSIFIER_PROMPT"] ?? DEFAULT_CONFIG.promptVersion,
-    timeoutMs: parsePositiveInt(env["PUENTE_CLASSIFIER_TIMEOUT_MS"], DEFAULT_CONFIG.timeoutMs),
+    modelVersion: env["CLASSIFIER_MODEL"] ?? DEFAULT_CONFIG.modelVersion,
+    promptVersion: env["CLASSIFIER_PROMPT"] ?? DEFAULT_CONFIG.promptVersion,
+    timeoutMs: parsePositiveInt(env["CLASSIFIER_TIMEOUT_MS"], DEFAULT_CONFIG.timeoutMs),
     maxSpendUsdPerDay: parsePositiveInt(
-      env["PUENTE_CLASSIFIER_MAX_SPEND_USD"],
+      env["CLASSIFIER_MAX_SPEND_USD"],
       DEFAULT_CONFIG.maxSpendUsdPerDay,
     ),
-    apiKeyEnvVar: env["PUENTE_GENAI_KEY_ENV_VAR"] ?? DEFAULT_CONFIG.apiKeyEnvVar,
-    catalogVersion: env["PUENTE_CATALOG_VERSION"] ?? DEFAULT_CONFIG.catalogVersion,
+    apiKeyEnvVar: env["GENAI_KEY_ENV_VAR"] ?? DEFAULT_CONFIG.apiKeyEnvVar,
+    catalogVersion: env["CATALOG_VERSION"] ?? DEFAULT_CONFIG.catalogVersion,
   };
 }

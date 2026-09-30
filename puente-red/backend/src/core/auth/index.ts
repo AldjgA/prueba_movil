@@ -37,6 +37,9 @@ export type {
 export { authorize, rejectionKey } from "./authorize.ts";
 export type { AuthzDecision, AuthzRejection, AuthorizeOptions, ResourceRef } from "./authorize.ts";
 
+export { InMemorySessionRegistry } from "./sessionRegistry.ts";
+export type { InMemorySessionRegistryDeps, SessionRegistry } from "./sessionRegistry.ts";
+
 export { InMemoryAuthAuditSink, NOOP_AUTH_AUDIT_SINK, maskEmail } from "./audit.ts";
 export type { AuthAuditAction, AuthAuditEvent, AuthAuditSink } from "./audit.ts";
 
@@ -51,3 +54,6 @@ export type {
 
 export { AUTH_SERVICE_VERSION, AuthService, GENERIC_SIGN_IN_MESSAGE, SYSTEM_CLOCK } from "./authService.ts";
 export type { AuthServiceDeps, SignInFailureReason, SignInResult } from "./authService.ts";
+
+export { DEMO_DEFAULTS, createDemoAuthPort } from "./demoAuthPort.ts";
+export type { EnvLike } from "./demoAuthPort.ts";
