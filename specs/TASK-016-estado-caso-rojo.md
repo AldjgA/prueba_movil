@@ -169,63 +169,68 @@ profesional, **no** notas internas.
 
 ---
 
-## 11. Addendum — correcciones tras revisar la cola de C (2026-09-30)
+## 11. Addendum — huecos cerrados por A el 2026-09-30
 
-`PR-009` §4 ya define el Contrato B como `YouthVisibleCaseStatus` (C lo tiene bien tipado, y su §6
-explica el `fuera_de_horario` correctamente). Al compararlo con lo que mi pantalla necesita aparecen
-**tres huecos**. Ver `REVISION-C-POR-B.md` hallazgos **K5** y **K6**.
+Los tres huecos que detecté al revisar la cola de C **están cerrados** en `PR-003` revisado
+(`58e557f`, ver `REVISION-B-POR-A.md` §3). Esta sección sustituye al addendum anterior.
 
-### C1 · 🔴 Falta `fueraDeHorario` en el Contrato B (K5)
+### C1 · ✅ `fueraDeHorario` añadido al Contrato B (K5)
 
-`PR-009` §6 dice, con buen criterio: *"La cola marca `fuera_de_horario` para que `PR-011`/`PR-012` no
-pinten un SLA incumplido como si hubiera alguien."*
+A **aceptó el campo** y lo publicó en `PR-003` §5:
 
-Pero el `YouthVisibleCaseStatus` de `PR-009` §4 **no tiene ese campo**: solo `CaseToken`,
-`ContratoVersion`, `Estado`, `Categoria`, `ActualizadoEn`, `Psicologo`, `CanalContacto`,
-`MensajesNoLeidos`.
+```
+GET /joven/casos/{caseToken}
+{
+  "estado": "ACEPTADO",
+  "categoria": "ALTO",
+  "psicologo": { … } | null,
+  "canalContacto": "IN_APP" | null,
+  "fueraDeHorario": false,              // K5: el APK NO infiere el horario del equipo
+  "mensajesNoLeidos": 0
+}
+```
 
-**Sin ese campo no puedo cumplir `PR-001` §9** (fila *"Fuera de horario: Igual + aviso de
-cobertura"*). Y la alternativa —que el APK **infiera** el horario del equipo— sería peor: una copia
-local de una regla de negocio ajena, desincronizada el primer día.
+A razonó igual que B: *"el APK no debe inferir el horario del equipo — sería copiar localmente una
+regla de negocio ajena y se desincronizaría el primer día."*
 
-**Propuesta:** añadir `fueraDeHorario: boolean` al Contrato B. Un booleano evita que el APK tenga que
-adivinar, y es la única forma de que la pantalla sea honesta (`PR-001` P5, `PR-003` §15 / Q8).
+**Efecto en esta spec:** el criterio **#7** (*"el copy no promete contacto inmediato"*) pasa a ser
+verificable: con `fueraDeHorario == true` la pantalla muestra instrucciones de emergencia y números
+reales **sin** prometer tiempo; con `false`, el aviso de cobertura del horario. `CaseStatus` incorpora
+el campo y **`isStale`** sigue siendo propuesta de B (Q2) para el caso sin red — son dos cosas
+distintas: `fueraDeHorario` lo dice el backend, `isStale` lo determina el APK al no poder refrescar.
 
-### C2 · 🟠 `rol` y `especialidad` llegarían como claves de enum (K6)
+### C2 · ✅ `rol` y `especialidad`: forma canónica y copy (K6)
 
-| Documento | `rol` |
+A resolvió los dos problemas que planteé:
+
+| Punto | Decisión de A |
 |---|---|
-| `PR-003` §6.1 y `PR-020` criterio 3 | `psicologo` · `trabajador_social` · `orientador` · `supervisor` |
-| **`PR-007` §4** | `PSICOLOGIA` · `TRABAJO_SOCIAL` · `ORIENTACION` · `SUPERVISION` |
+| Forma de `rol` | **minúsculas**: `psicologo`, `trabajador_social`, `orientador`, `supervisor`. `PR-007` se alinea; `PSICOLOGIA` era una **disciplina**, no un rol |
+| `especialidad` | **clave cerrada**, en minúsculas (p. ej. `trauma`) |
+| **Copy visible** | **Vive en el APK** (`strings.xml`), y **A publica el catálogo de etiquetas** |
 
-Dos vocabularios distintos para el mismo campo, y `PR-009` §4 lo tipa como `string` sin restricción.
-Además, `PR-007` §4 define `Specialty` = `TRAUMA | GRIEF | BULLYING | FAMILY | SUBSTANCE`.
+La última línea es la que me importaba: *"nunca llega una clave de enum a la pantalla de un
+adolescente, y nunca llega texto generado (`PR-001` §6.2)"*.
 
-**Lo que me toca a mí:** esta pantalla **muestra `rol` y `especialidad` al adolescente desde
-`ACEPTADO`** (R5). Si el contrato entrega `BULLYING` y `TRABAJO_SOCIAL`, la app le mostraría claves
-de enum en mayúsculas a un chico de 15 años.
+**Efecto en esta spec:** la pantalla **no** muestra `rol` ni `especialidad` en crudo: los resuelve
+por `labelResKey` contra el catálogo que publique A. Se añade al criterio #2 y al #3.
 
-**Propuesta:** A fija en `PR-003` §6.1 (a) la forma canónica de `rol`, (b) si `especialidad` es clave
-cerrada o texto libre, y (c) **dónde vive el copy visible**. Si son claves, B necesita el catálogo de
-etiquetas en el `strings.xml` del APK; si es texto libre, hay que decidir quién lo escribe y con qué
-revisión —`PR-001` §6.2 prohíbe que llegue texto generado a una superficie del joven.
+**Nuevo ítem en `NECESIDADES.md`:** A publica el catálogo de etiquetas de `rol` y `especialidad`.
+Hasta entonces, esta spec queda bloqueada en su parte de copy (no en la estructura).
 
-### C3 · 🟠 Multi-perfil en la correlación (confirmación pedida por C)
+### C3 · ✅ Multi-perfil en la correlación — confirmado
 
 `PR-019` §8 pide que la correlación `caseToken ↔ ProfileId` soporte **varios `ProfileId` por
-instalación**. Confirmado desde el APK: `TASK-025` ya lo permite (`observeProfiles()`,
-`switchProfile()`, `unlockSessionFor(alias, pin)`), y `TASK-009` le da UI. Si la correlación asumiera
-un `ProfileId` por instalación, un dispositivo compartido rompería el vínculo del caso.
-
-**Efecto en esta spec:** ninguno en el contrato; se añade a la KDoc del consumidor. Lo anoto porque
-es el tipo de suposición que se cuela sin que nadie la escriba.
+instalación**. Confirmado desde el APK: `TASK-025` ya lo permite y `TASK-009` le da UI. Si la
+correlación asumiera un `ProfileId` por instalación, un dispositivo compartido rompería el vínculo
+del caso.
 
 ### Efecto sobre los criterios de aceptación
 
-- El criterio **#3** (el par R1/R5) sigue igual y es el más importante.
-- El criterio **#7** (*"el copy no promete contacto inmediato"*) ahora **depende de C1**: sin
-  `fueraDeHorario` la app no puede saber cuándo prometer y cuándo no.
-- Se añade un criterio implícito: **ninguna clave de enum llega a la pantalla sin etiqueta**
-  (regla de la casa #2), lo que depende de C2.
+- **#3** (el par R1/R5) sigue igual y sigue siendo el más importante.
+- **#7** ahora es verificable gracias a C1.
+- Se añade: **ninguna clave de enum llega a la pantalla sin etiqueta** (regla de la casa #2),
+  dependiente de C2.
 
-**Estado de la spec:** sigue bloqueada por `TASK-013`, y ahora también por C1 y C2.
+**Estado de la spec:** sigue bloqueada por `TASK-013` (`:core:network`) y por el catálogo de
+etiquetas de A. Los dos bloqueos de contrato que levanté **están resueltos**.

@@ -44,7 +44,7 @@ tiene spec**. Es el índice del proyecto; si algo no está aquí, no existe.
 
 | ID | Tarea | Módulo | Spec |
 |---|---|---|---|
-| `TASK-004` | Conversación + chequeo contextual | `feature:conversation` | 🔍 `specs/TASK-004-conversacion-chequeo.md` |
+| `TASK-004` | Conversación + chequeo contextual | `feature:conversation` | ✅ aprobada · 🔨 código entregado (`deliverables/TASK-004/NECESIDADES.md`) |
 | `TASK-005` | Señales + mapa + nivel de atención | `feature:signals` | 🔍 `specs/TASK-005-senales-mapa-nivel.md` |
 | `TASK-006a` | Herramientas: sueño · respiración · plan de apoyo | `feature:tools` | 🔍 `specs/TASK-006a-herramientas-breves.md` |
 | `TASK-006b` | Reporte personal + recorrido | `feature:report` | 🔍 `specs/TASK-006b-reporte-recorrido.md` |

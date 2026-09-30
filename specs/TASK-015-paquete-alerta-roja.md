@@ -182,52 +182,62 @@ Referencias de contexto: brief §13 (*ROJO: "Esto necesita apoyo humano priorita
 
 ---
 
-## 11. Addendum — dos bloqueos nuevos tras revisar la cola de C (2026-09-30)
+## 11. Addendum — bloqueos resueltos por A el 2026-09-30
 
-Al revisar `PR-005` y `PR-006` aparecieron **dos cosas que impiden emitir el Contrato A tal como está
-escrito**. Ver `REVISION-C-POR-B.md` hallazgos **K1**, **K2** y **K4**.
+Los dos bloqueos que detecté al revisar la cola de C **están resueltos** en `PR-003` revisado
+(`58e557f`, ver `REVISION-B-POR-A.md` §3). Esta sección sustituye al addendum anterior.
 
-### B1 · 🔴 El catálogo de `motivo` no existe (K2)
+### B1 · ✅ Catálogo de `motivo` publicado (`PR-003` §4.2)
 
-`PR-003` §4 exige `"motivo": ["ideacion_activa", "…"]` con **claves de catálogo**, y `PR-005` §9
-delega ese catálogo al clínico *"en `PR-001`"* — pero `PR-001` §4.3 da **criterios en prosa**, no
-claves. **Sin el catálogo, `motivo` no se puede emitir.** Y `motivo` es el campo que le dice al
-equipo *por qué* se disparó la alerta: no es opcional.
+**Provisional y versionado** con `rulesetVersion` — que es exactamente lo que propuse: una lista
+**cerrada** que cambia de **versión**, no de diseño. El APK ya puede emitir `motivo` sin inventar.
 
-**Propuesta:** A publica el catálogo en `PR-003`, derivado de `PR-001` §4.3, **versionado** junto a
-`rulesetVersion`. Si el clínico no lo ha cerrado, se declara provisional y versionado — así un
-cambio de catálogo es un cambio de versión, no un rediseño.
-
-### B2 · 🔴 La forma canónica de las claves de señal no coincide (K1)
-
-| Lado | Valor real |
+| Clave | Criterio de `PR-001` §4.3 |
 |---|---|
-| APK (verificado en `DemoFixtures.kt:56,100`) | `SignalKey("frequency")`, `SignalKey("isolation")` — minúsculas |
-| Backend (`PR-006` §4) | `SignalTag` = `SLEEP \| ISOLATION \| SCHOOL_IMPACT \| SUBSTANCE_USE \| SELF_HARM \| ANXIETY` — mayúsculas |
+| `ideacion_activa` | Ideación suicida activa |
+| `plan_estructurado` | Plan |
+| `intento_reciente` | Intento reciente |
+| `autolesion` | Autolesión |
+| `abuso` | Abuso |
+| `peligro_inmediato` | Peligro inmediato |
+| `violencia_no_inmediata` | Violencia no inmediata (amarillo) |
+| `deterioro_escolar` | Deterioro escolar (amarillo) |
+| `aislamiento_persistente` | Aislamiento (amarillo) |
 
-No hay tabla de correspondencia en ningún documento, y `frequency` **no tiene equivalente** en
-`SignalTag` (es una dimensión del brief §10, no un tipo de señal). El extractor de C recibiría claves
-que no entiende.
+**Efecto en esta spec:** `motivoKeys` se tipa como **clave del catálogo vigente**, y el paquete
+lleva el `rulesetVersion` que corresponde. Si el clínico ajusta la lista, **cambia la versión** y el
+paquete lo refleja sin rediseño. El criterio #4 pasa a ser verificable de verdad.
 
-**Propuesta:** A fija en `PR-003` (a) la lista cerrada de claves de señal, (b) su forma canónica y
-(c) la tabla APK↔backend si los dos vocabularios se mantienen a propósito.
+### B2 · ✅ Forma canónica de las claves de señal (`PR-003` §4.1)
 
-### B3 · 🟠 `respuestasChequeo` viaja y nadie lo consume (K4)
+**Forma canónica: `SNAKE_CASE` en MAYÚSCULAS.** Catálogo cerrado:
 
-`PR-005` §4 (`IngestedReport`) no lo tiene; `PR-006` §2 extrae *"del `ResumenAutorizado`"*. El
-chequeo contextual es la entrada más limpia que tiene el sistema (claves de catálogo, declaradas por
-el joven, sin texto libre).
+`SLEEP` · `ANXIETY` · `ISOLATION` · `SCHOOL_IMPACT` · `SUBSTANCE_USE` · `SELF_HARM` ·
+`PHYSICAL_VIOLENCE`
 
-**Propuesta:** que `PR-006` lo consuma explícitamente, o que **se quite del contrato**. Lo que no
-debe pasar es que B lo envíe y nadie lo lea: es superficie de exposición sin contrapartida.
+`frequency` queda **retirada**: es una **dimensión de análisis** (brief §10), no un tipo de señal.
+El APK emitía `"frequency"` en las fixtures; deja de ser válido.
 
-### Efecto sobre los criterios de aceptación
+**Efecto en esta spec:** las claves que emite `motivo` y el `scope` del resumen autorizado deben
+pertenecer a este catálogo. La verificación pasa de «clave de catálogo» a «clave de **este**
+catálogo, en **esta** forma».
 
-- El criterio **#4** (*"`motivo` y `respuestasChequeo` son claves de catálogo"*) sigue siendo
-  verificable, pero ahora depende de que el catálogo exista (B1).
-- El criterio **#6** (consentimiento válido) **no cambia**.
-- Se añade un criterio implícito: las claves emitidas deben pertenecer al catálogo **vigente y
-  versionado** que publique A.
+**Efecto colateral declarado a A (nuevo ítem en `NECESIDADES.md`):** `DemoFixtures.kt` sigue
+emitiendo `SignalKey("frequency")` y `SignalKey("isolation")` en minúsculas. Es `:core:data`, y no
+está claro si `DemoFixtures.kt` es de A (como `LocalPuenteRepository.kt`) o no. **B no lo toca**: se
+declara.
 
-**Estado de la spec:** pasa a **bloqueada** hasta que A publique el catálogo (`PR-003`) y la forma
-canónica de las claves. No se construye a ciegas.
+### B3 · ✅ `respuestasChequeo` se queda y se consume (K4)
+
+A resolvió que **se queda**: son claves de catálogo sin texto libre y *"la señal más fiable del
+sistema, porque el joven las declaró"*. `PR-006` §2 debe consumirlas explícitamente (lo corrige C).
+Esta spec sigue emitiéndolas.
+
+### B4 · ✅ `PR-001` no se ajustó al firmar (K10)
+
+El product owner confirmó que **el fichero tal como está es el texto firmado**. Se cierra la Q1 en su
+parte de «¿cambió algo?»: **no**. Lo que sigue abierto es solo si el clínico quiere añadir criterios
+nuevos, y eso es un cambio de `rulesetVersion`, no un bloqueo.
+
+**Estado de la spec:** **desbloqueada** en sus dos bloqueos. Queda pendiente únicamente la decisión
+de A sobre `AlertPackageRepository` + `AlertPackage` (Q2) y el envío de `TASK-013`.

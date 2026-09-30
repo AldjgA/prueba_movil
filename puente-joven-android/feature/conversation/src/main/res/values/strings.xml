@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TASK-004 · Conversación estructurada + chequeo contextual.
+         Regla de la casa #2: TODO texto visible vive aquí, nunca como literal en Kotlin.
+         Ningún texto de este fichero contiene datos personales ni términos clínicos
+         (PR-001 §15: el sistema detecta señales, no diagnostica). -->
+
+    <!-- Encuadre de transparencia (brief §7, etapa 1) -->
+    <string name="conversation_title">Contarlo</string>
+    <string name="conversation_headline">Estoy aquí contigo.</string>
+    <string name="conversation_transparency_label">Antes de empezar</string>
+    <string name="conversation_transparency_line1">Esto es tuyo</string>
+    <string name="conversation_transparency_line2">y es privado.</string>
+    <string name="conversation_transparency_body">Lo que escribas se queda en tu teléfono. No se comparte con nadie a menos que tú lo autorices, y nunca se envía la conversación completa.</string>
+    <string name="conversation_transparency_limits">Puente no diagnostica y no reemplaza a una persona. Si en algún momento hay peligro, te vamos a mostrar cómo pedir ayuda real.</string>
+    <string name="conversation_transparency_accept">Entendido, empezar</string>
+
+    <!-- Conversación -->
+    <string name="conversation_input_hint">Hoy…</string>
+    <string name="conversation_send">Enviar</string>
+    <string name="conversation_empty">Todavía no has escrito nada.</string>
+    <string name="conversation_empty_hint">Cuando quieras, empieza por lo que pasó hoy.</string>
+    <string name="conversation_loading">Preparando tu espacio…</string>
+    <string name="conversation_error_title">No pudimos abrir la conversación</string>
+    <string name="conversation_error_body">Puedes intentarlo otra vez. Nada de lo que escribiste se perdió.</string>
+    <string name="conversation_retry">Volver a intentar</string>
+    <string name="conversation_send_error">Tu mensaje no se guardó. Vuelve a intentarlo.</string>
+    <string name="conversation_continue_check">Seguir con unas preguntas</string>
+    <string name="conversation_author_label">Tú</string>
+    <string name="conversation_puente_label">Puente</string>
+
+    <!-- Turnos guiados de Puente (guion por reglas, brief §8) -->
+    <string name="conversation_puente_opening">Puedes empezar por lo que pasó hoy.</string>
+    <string name="conversation_puente_acknowledge">Quiero ayudarte a ordenar esto.</string>
+    <string name="conversation_puente_check_intro">Vamos a ver algunas cosas, una por una. Puedes saltar cualquiera.</string>
+
+    <!-- Chequeo contextual (brief §9) -->
+    <string name="check_title">Entendamos lo que está pasando</string>
+    <string name="check_progress">Pregunta %1$d de %2$d</string>
+    <string name="check_skip">Prefiero no responder</string>
+    <string name="check_loading">Preparando las preguntas…</string>
+    <string name="check_done_title">Gracias por contarlo.</string>
+    <string name="check_done_body">Con esto ya podemos ordenar lo que está pasando. Nada de esto es un diagnóstico.</string>
+    <string name="check_done_action">Volver a la conversación</string>
+    <string name="check_back_to_conversation">Volver a la conversación</string>
+    <string name="check_empty">No hay preguntas disponibles.</string>
+    <string name="check_empty_hint">Puedes volver a la conversación cuando quieras.</string>
+    <string name="check_error_title">No pudimos cargar las preguntas</string>
+    <string name="check_error_body">Tu conversación sigue guardada.</string>
+    <string name="check_retry">Volver a intentar</string>
+    <string name="check_save_error">Tu respuesta no se guardó. Vuelve a intentarlo.</string>
+
+    <!-- Dimensión: cómo se siente -->
+    <string name="check_feelings_prompt">¿Cómo te has sentido estos días?</string>
+    <string name="check_feelings_better">Mejor que antes</string>
+    <string name="check_feelings_same">Más o menos igual</string>
+    <string name="check_feelings_worse">Peor que antes</string>
+    <string name="check_feelings_mixed">Depende del día</string>
+
+    <!-- Dimensión: sueño -->
+    <string name="check_sleep_prompt">¿Cómo estás durmiendo?</string>
+    <string name="check_sleep_ok">Bien</string>
+    <string name="check_sleep_falling_asleep">Me cuesta dormirme</string>
+    <string name="check_sleep_waking_up">Me despierto en la noche</string>
+    <string name="check_sleep_very_little">Duermo muy poco</string>
+
+    <!-- Dimensión: soledad -->
+    <string name="check_loneliness_prompt">¿Te sientes acompañado o solo?</string>
+    <string name="check_loneliness_accompanied">Acompañado</string>
+    <string name="check_loneliness_sometimes">A veces solo</string>
+    <string name="check_loneliness_often">Me siento solo seguido</string>
+    <string name="check_loneliness_always">Me siento solo casi siempre</string>
+
+    <!-- Dimensión: acoso -->
+    <string name="check_bullying_prompt">¿Alguien te molesta o se ríe de ti?</string>
+    <string name="check_bullying_no">No</string>
+    <string name="check_bullying_sometimes">A veces</string>
+    <string name="check_bullying_often">Seguido</string>
+    <string name="check_bullying_every_day">Casi todos los días</string>
+
+    <!-- Dimensión: violencia -->
+    <string name="check_violence_prompt">¿Has vivido algo violento, en casa o fuera?</string>
+    <string name="check_violence_no">No</string>
+    <string name="check_violence_arguments">Discusiones fuertes</string>
+    <string name="check_violence_physical">Algo físico</string>
+
+    <!-- Dimensión: conflicto familiar -->
+    <string name="check_family_prompt">¿Cómo están las cosas en casa?</string>
+    <string name="check_family_calm">Tranquilas</string>
+    <string name="check_family_tense">Un poco tensas</string>
+    <string name="check_family_fights">Hay peleas seguidas</string>
+
+    <!-- Dimensión: escuela -->
+    <string name="check_school_prompt">¿Cómo va el colegio?</string>
+    <string name="check_school_well">Bien</string>
+    <string name="check_school_focus">Me cuesta concentrarme</string>
+    <string name="check_school_missing">Estoy faltando algunos días</string>
+    <string name="check_school_not_going">Casi no estoy yendo</string>
+
+    <!-- Dimensión: apoyo disponible -->
+    <string name="check_support_prompt">¿Hay alguien con quien puedas contar?</string>
+    <string name="check_support_adult">Sí, un adulto</string>
+    <string name="check_support_friend">Sí, un amigo o amiga</string>
+    <string name="check_support_not_sure">No estoy seguro</string>
+    <string name="check_support_nobody">Ahora mismo no</string>
+
+    <!-- Dimensión: consumo (brief §9: «cuando corresponda») -->
+    <string name="check_substance_prompt">¿Has consumido algo para sentirte mejor?</string>
+    <string name="check_substance_no">No</string>
+    <string name="check_substance_once">Alguna vez</string>
+    <string name="check_substance_sometimes">Varias veces</string>
+
+    <!-- Dimensión: seguridad personal -->
+    <string name="check_safety_prompt">¿Te sientes seguro ahora mismo?</string>
+    <string name="check_safety_yes">Sí</string>
+    <string name="check_safety_mostly">Casi siempre</string>
+    <string name="check_safety_not_always">No siempre</string>
+    <string name="check_safety_no">No</string>
+</resources>
