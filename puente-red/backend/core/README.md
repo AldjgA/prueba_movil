@@ -16,6 +16,7 @@ El núcleo del pipeline de triaje de Puente Red. Aquí viven las tareas `PR-005`
 | `PR-007` Directorio de profesionales | `directory/` | ✅ implementado |
 | `PR-008` Motor de derivación | `routing/` | ✅ implementado |
 | `PR-009` Cola, SLA y trazabilidad | `queue/` | ✅ implementado |
+| `PR-010` Autenticación y roles *(núcleo)* | `auth/` | ✅ implementado |
 
 **Fuera de este paquete** (dueño: Agente A, `CONTRATO-DE-INTEGRACION.md` §1.1):
 `backend/routes/joven/**`, `backend/shared/**` (modelos, cliente Supabase, `contratoVersion`,
@@ -30,10 +31,11 @@ directamente (type stripping nativo, estable desde Node 22.18).
 
 ```bash
 cd puente-red/backend/core
-npm test          # 114 pruebas: PR-005 (22) + PR-006 (18) + PR-007 (21) + PR-008 (23) + PR-009 (30)
+npm test          # 135 pruebas: PR-005 (22) + PR-006 (18) + PR-007 (21) + PR-008 (23) + PR-009 (30) + PR-010 (21)
 ```
 
 **La ola R1 está completa**: clasificación → características → directorio → derivación → cola.
+De la ola R2, el **núcleo de seguridad** de `PR-010` también lo está.
 
 > **Limitación del type stripping:** no se pueden usar `enum`, `namespace` ni *parameter
 > properties*. Por eso los "enums" son uniones de literales + objetos `as const`. Los imports
@@ -220,6 +222,46 @@ inventado; está declarado en `deliverables/PR-009/NECESIDADES.md` §7.2 con una
 Se accede por el puerto `CaseStore`. La implementación real será **Supabase** (RLS +
 `audit_event`, `PR-004` §4); aquí va una en memoria para que la lógica sea demostrable sin base
 de datos.
+
+---
+
+## `auth/` — PR-010, autenticación y roles (núcleo)
+
+**La autenticación no es una pantalla de login: es la raíz de la trazabilidad.** Sin identidad
+de profesional fiable, `PR-018` (*"quién vio qué y cuándo"*) no puede cumplirse.
+
+> **Alcance:** este paquete implementa el **núcleo de seguridad**. La **interfaz** de login vive
+> en `puente-red/portal/`, que aún no está montado (ver §«Pendiente»).
+
+### La matriz de autorización es DATOS, no código
+
+`AUTHORIZATION_MATRIX` es una tabla `acción → roles`. Eso permite probarla **por tabla
+completa** (9 acciones × 4 roles) y evita que una comprobación suelta en un endpoint se olvide.
+`ORIENTACION` queda restringida a lo no clínico por prudencia — es una decisión de producto,
+no técnica.
+
+### Decisiones que conviene entender
+
+- **Las credenciales no se validan en código propio.** Todo pasa por el puerto `AuthPort`
+  (Supabase Auth). Hay una prueba que comprueba que el servicio **delega** y otra que verifica
+  que **no existe** ningún método de validación de contraseñas.
+- **Un único mensaje para cualquier fallo de credenciales.** El puerto no distingue "el correo
+  no existe" de "la contraseña es incorrecta": si lo hiciera, el login sería un **oráculo**
+  para averiguar qué correos están dados de alta. En la auditoría, el correo va **enmascarado**
+  (`a***z@ong.org`).
+- **Dos relojes de sesión, y hacen falta los dos.** Caducidad **absoluta** (8 h) e
+  **inactividad** (30 min). Un portátil abierto y desatendido en un centro comunitario no debe
+  seguir con sesión viva. Marcar actividad reinicia la inactividad pero **no** la caducidad.
+- **El portal SÍ caduca** (`REVISION-C` §5.2). El `sessionToken` sin caducidad es solo de la API
+  Joven; `ProfessionalSession` **no tiene** ese campo, tiene fechas.
+- **El aislamiento entre instituciones se comprueba ANTES que el rol.** `SUPERVISION` puede
+  todo… dentro de su institución.
+- **El modo demo no escribe.** Puede leer lo que su rol permita; las acciones de escritura se
+  rechazan con `DEMO_READ_ONLY` (`PR-003` Q7).
+- **`authorize` nunca lanza.** Un rechazo es un **valor**: el llamante está obligado a mirarlo,
+  y una guardia olvidada no se convierte en un `try/catch` silencioso.
+- **Se auditan los rechazos, no las acciones correctas.** Un `VIEW_ALERTS` correcto no merece un
+  evento; un intento de `ORIENTACION` de escribir notas internas, sí.
 
 ---
 

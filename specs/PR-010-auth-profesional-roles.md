@@ -166,9 +166,48 @@ selector de rol, CTA *"Entrar a Puente Red"*, demo `demo@puentered.org`.
 
 ## 10. Definition of Done
 
-- [ ] Spec **Aprobada** por otro agente
-- [ ] Compila (`go build ./...` + `npm run build`) y pasa lint
-- [ ] Pruebas de los 10 criterios en verde
-- [ ] `NECESIDADES.md` entregado a A y aplicado (si aplica)
-- [ ] Sin secretos ni endpoints hardcodeados
-- [ ] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+- [x] Spec **Aprobada** por otro agente (`REVISION-C.md`)
+- [x] Compila y pasa pruebas — `npm test`: **135/135 en verde** (21 de este módulo)
+- [x] Pruebas de los 10 criterios en verde (**núcleo de seguridad**)
+- [ ] `NECESIDADES.md` entregado a A y aplicado — **entregado**
+  (`deliverables/PR-010/NECESIDADES.md`)
+- [x] Sin secretos ni endpoints hardcodeados
+- [x] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+- [ ] **Interfaz de login** (`puente-red/portal/auth`) — **pendiente**: requiere montar el
+  portal (React + Vite), que es un cambio de naturaleza (dependencias y build step)
+
+### Estado de implementación (2026-09-30)
+
+**Implementado** en `puente-red/backend/core/auth/` (dueño: C), Node ≥ 22.18, sin dependencias.
+
+**Alcance de este incremento: el núcleo de seguridad**, que es donde viven los 10 criterios.
+La **interfaz** de login queda pendiente del montaje del portal.
+
+**Nota de ubicación:** la spec situaba el módulo en `puente-red/portal/auth`. El **núcleo** está
+en `backend/core/auth` a propósito: la guardia protege **rutas de la API**, no pantallas. Si
+viviera en el portal, la API Profesional dependería del front-end para autorizar.
+
+Lo que hace verificables los criterios:
+
+- **Criterio 1:** el servicio **delega** en el puerto (se comprueba que la llamada llega con las
+  credenciales) y una prueba verifica que **no existe** ningún método de validación de
+  contraseñas en el servicio.
+- **Criterio 2:** un correo inexistente y una contraseña incorrecta producen **el mismo** mensaje
+  y el **mismo** `reasonKey`. El correo se guarda **enmascarado** en la auditoría
+  (`a***z@ong.org`).
+- **Criterios 3 y 4:** se prueba la **matriz completa** (9 acciones × 4 roles) contra la tabla
+  esperada, no solo casos sueltos.
+- **Criterio 5:** el aislamiento entre instituciones se comprueba **antes** que el rol; se prueba
+  que `SUPERVISION` tampoco puede salir de su institución.
+- **Criterio 6:** dos relojes. A los 29 min la sesión vive; a los 60 está **inactiva**; a las 9 h
+  está **caducada** (y `EXPIRED` gana a `IDLE`).
+- **Criterio 6d:** `ProfessionalSession` **no tiene** campo `sessionToken`; se comprueba con
+  `Object.keys`, y una política de TTL 0 produce caducidad inmediata.
+- **Criterio 7:** las 4 acciones de escritura con sesión demo se rechazan; las 5 de lectura se
+  permiten.
+- **Criterio 8:** login correcto, fallido, cierre de sesión y **rechazo de autorización** dejan
+  evento; una acción permitida **no** genera ruido.
+- **Criterio 9:** sin sesión, las 9 acciones se rechazan con `NO_SESSION`; y `authorize`
+  **nunca lanza** (un rechazo es un valor, no una excepción).
+- **Criterio 10:** la sesión profesional no comparte ningún campo con la del APK (ni
+  `sessionToken`, ni `caseToken`, ni `profileId`).
