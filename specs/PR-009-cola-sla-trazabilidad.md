@@ -29,8 +29,8 @@ quién lo tomó. Alimenta `PR-011`, `PR-012`, `PR-015`, `PR-018` y las métricas
 RECIBIDO → CLASIFICADO → EN_COLA → ASIGNADO → ACEPTADO → [CONTACTO_HABILITADO] → EN_CURSO → RESUELTO → CERRADO
 ```
 
-- **SLA** por categoría (`PR-001` §7 **[VALIDAR]**): `ALTO` acuse ≤ 5 min · psicólogo ≤ 30 min;
-  `MEDIO` acuse ≤ 4 h · resolución ≤ 24 h.
+- **SLA** por categoría, según `PR-001` §7 **(firmado 2026-09-30)**: `ALTO` acuse ≤ 5 min ·
+  psicólogo ≤ 30 min; `MEDIO` acuse ≤ 4 h · resolución ≤ 24 h.
 - **Tiempo esperando** en vivo (`ProCaseScreen`: *"Esperando: 1h 24 min"*).
 - Marca de **"caso sin responsable"** cuando `EN_COLA` supera la ventana de acuse.
 - **Trazabilidad**: cada transición con actor, instante y motivo → `audit_event` (`PR-004` §4.3).
@@ -153,8 +153,8 @@ psicólogo lo inicie. La proyección **nunca** incluye estado interno, carga ni 
 ## 8. Dependencias
 
 - **Bloquea:** `PR-011`, `PR-012`, `PR-015`, `PR-019`.
-- **Bloqueado por:** `PR-003` §3 ✅, `PR-004` ✅ (decisiones cerradas), `PR-008`;
-  `PR-001` §7 (**tiempos sin firmar**).
+- **Bloqueado por:** `PR-003` §3 ✅, `PR-004` ✅ (decisiones cerradas), `PR-008`.
+  `PR-001` §7 ✅ **firmado** (2026-09-30).
 - **Specs relacionadas:** `PR-004`, `PR-018`.
 
 ---
@@ -164,7 +164,7 @@ psicólogo lo inicie. La proyección **nunca** incluye estado interno, carga ni 
 | # | Pregunta | Estado |
 |---|---|---|
 | — | ¿`RESUELTO` y `CERRADO` son dos estados o uno? `PR-003` §3.1 los escribe `RESUELTO→CERRADO` | ⏳ aclarar con A |
-| — | ¿Los tiempos de `PR-001` §7 se confirman? | ⏳ propuesta, no dato clínico |
+| — | ¿Los tiempos de `PR-001` §7 se confirman? | ✅ **cerrado**: `PR-001` firmado. Si el clínico ajustó los tiempos, se actualizan aquí |
 
 ---
 

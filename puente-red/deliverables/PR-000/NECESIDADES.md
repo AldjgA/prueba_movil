@@ -63,6 +63,10 @@ todos del APK). Propuesta de C, en `PR-000` §1.1:
 `responders`, `responder_load`, `referrals`, `support_services`, `call_appointments` — con RLS por
 rol (`PR-010`) y aislamiento por institución si hay multi-tenant (Q8 abierto).
 
+**🆕 `TASK-025` afecta a `caso_correlacion`:** con multi-perfil, una **instalación** puede tener
+**varios `ProfileId`**. La correlación `caseToken ↔ ProfileId` debe soportar N perfiles por
+dispositivo (y `deleteAllLocalContent()` borra todos). A debe confirmarlo al implementar `TASK-025`.
+
 ### 7.3 Ubicación de las fixtures del contrato
 
 C propone que vivan en `PR-003` (**A**), con C como consumidor (`specs/PR-020` §3).
@@ -79,7 +83,11 @@ Puente Red juntos (`specs/PR-020` criterio 10).
 `PR-003` (contrato), `PR-004` (ingesta, decisiones cerradas el 2026-09-30: `deviceKey` = Keystore,
 ingesta acepta `ROJO`+`AMARILLO`, `sessionToken` sin caducidad, `caseToken` = ULID), `PR-002`
 (plegado en `PR-003` §7), `TASK-000` (plantilla), `TASK-00A` (contrato de integración),
-`PR-INFRA-RECOMENDACION`, y `PR-001` autorizado.
+`PR-INFRA-RECOMENDACION`, `TASK-021` (modelo de amenaza), y las specs de `TASK-003b` y `TASK-025`.
+
+**Fuera del repo, confirmado por el product owner el 2026-09-30:**
+- ✅ **`PR-001` tiene firma clínica** → desbloquea `PR-005`, `PR-006`, `PR-007`, `PR-009`, `TASK-019`.
+- ✅ **Se usará Gemini de pago** → el bloqueo legal de `PR-INFRA` §4 queda resuelto.
 
 ## 9. Preguntas que C necesita que A cierre
 
@@ -89,6 +97,7 @@ ingesta acepta `ROJO`+`AMARILLO`, `sessionToken` sin caducidad, `caseToken` = UL
 | 2 | ¿El `sessionToken` sin caducidad es aceptable también para el portal, o solo para el APK? | `PR-010`, `PR-020` |
 | 3 | ¿A ratifica el reparto de §7.1? | arrancar la Fase 1 |
 | 4 | ¿A acepta `PR-000` rev. 2 (stack, `P10` web desktop-first)? | arrancar la Fase 1 |
+| **5** | ⚠️ **`PR-001` en el repo sigue marcado `BORRADOR` / "no está validado clínicamente" y conserva los marcadores `[VALIDAR]`.** El product owner confirma que **la firma existe fuera del repo**: ¿A publica la **versión firmada** en `main`? Mis specs referencian `PR-001` §5–§7 como fuente de verdad (medio/alto, tiempos de SLA, criterios de rojo) y **no reestatean los valores** — si el clínico los ajustó, hay que publicarlos | `PR-005`, `PR-006`, `PR-007`, `PR-009`, `TASK-019` |
 
 ## 10. Lo que C se compromete a NO tocar
 
@@ -101,5 +110,8 @@ Los **7 archivos** de `CONTRATO-DE-INTEGRACION.md` §1 · `core/designsystem/**`
 
 C sigue en **Fase 0**. Entrega: **18 specs en `specs/`** (plantilla oficial), `PR-000` rev. 2,
 `REVISION-A.md` y esta declaración.
-**C no construye** hasta que (a) A ratifique `PR-000` y el reparto del backend, (b) las specs sean
-revisadas por A y B (`PLAN-3-AGENTES.md` §3.0.3–0.4), y (c) se cierre `PR-001` con firma clínica.
+**C no construye** hasta que (a) A ratifique `PR-000` y el reparto del backend, y (b) las specs sean
+revisadas por A y B (`PLAN-3-AGENTES.md` §3.0.3–0.4).
+
+✅ **Los bloqueos clínicos y de proveedor LLM quedaron cerrados el 2026-09-30** (firma de `PR-001` y
+Gemini de pago), así que ya **no** son motivo de espera.

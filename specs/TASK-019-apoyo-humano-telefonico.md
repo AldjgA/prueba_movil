@@ -134,8 +134,8 @@ No existe en el prototipo. Es una pantalla nueva; debe **extender** el lenguaje 
 ## 8. Dependencias
 
 - **Bloquea:** `TASK-020` (dimensión *Aceptabilidad*).
-- **Bloqueado por:** `PR-001` §7–8 (**firma clínica pendiente**); `PR-003` §15 ✅ (sin guardia);
-  `PR-007`, `PR-009`.
+- **Bloqueado por:** — ✅ **desbloqueada.** `PR-001` §7–8 **firmado clínicamente** (2026-09-30);
+  `PR-003` §15 ✅ (sin guardia); `PR-007`, `PR-009`.
 - **Specs relacionadas:** `PR-015` (seguimientos), `PR-019` (consentimiento).
 
 ---

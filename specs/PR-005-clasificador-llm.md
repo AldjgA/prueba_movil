@@ -43,6 +43,24 @@ devuelve una categoría.
 - Extraer características: es `PR-006`.
 - Recibir `ProfileId`, alias o MAC. Solo `caseToken`.
 
+### Requisito legal del proveedor LLM — ✅ **resuelto el 2026-09-30**
+
+**Decisión del product owner: se usará Gemini de pago**, que no entrena con los datos enviados.
+
+`PR-INFRA-RECOMENDACION` §4 (verificado el 2026-09-30) documenta el motivo de la restricción:
+
+| Capa de Gemini | ¿Google usa los prompts para mejorar sus productos? |
+|---|---|
+| **Gratuita** | **Sí** — es una **condición de uso**, no un opt-out configurable |
+| **De pago / Vertex AI** | **No** |
+
+**La capa gratuita sigue prohibida con datos reales de menores** (no cumple la decisión D3 de
+no-reentrenamiento). La de pago está **aprobada**.
+
+**Implicación de diseño (se mantiene):** el clasificador debe poder **desactivarse por
+configuración** y devolver `ALTO` por defecto cuando no haya proveedor habilitado. Así el sistema
+sigue siendo seguro aunque el LLM falle, se apague o se agote el tope de gasto.
+
 ---
 
 ## 3. Módulo y propiedad
@@ -117,8 +135,8 @@ versionado. Evita que el modelo inyecte texto arbitrario hacia una superficie hu
 - #2 — la IA propone; el psicólogo acepta. `IsDegradable` protege la alarma.
 - **D2 / `PR-003` §9.4** — el LLM **solo sube**; nunca baja un rojo.
 - **`PR-003` §9.10** — el modelo nunca ve identidad.
-- **`PR-INFRA` §4** — ⚠️ la capa **gratuita** de Gemini usa los prompts para mejorar productos de
-  Google: **prohibida con datos reales de menores**. Capa de pago obligatoria.
+- **`PR-INFRA` §4** — ✅ **resuelto (2026-09-30): se usará Gemini de pago**, que no usa los prompts
+  para mejorar productos de Google. La capa gratuita queda **prohibida** con datos reales de menores.
 - **`PR-003` Q7** — la demo no carga datos reales ni sintéticos.
 
 ---
@@ -134,7 +152,8 @@ en `PR-018`. No se reutiliza `core/designsystem` (es Compose y está congelado).
 ## 8. Dependencias
 
 - **Bloquea:** `PR-008`, `PR-012`.
-- **Bloqueado por:** `PR-001` §5–6 (**firma clínica pendiente**); `PR-004` ✅; `PR-003` ✅.
+- **Bloqueado por:** — ✅ **desbloqueada.** `PR-001` §5–6 **firmado clínicamente** (2026-09-30);
+  `PR-004` ✅; `PR-003` ✅; Gemini de pago ✅.
 - **Specs relacionadas:** `PR-006` (extracción), `PR-009` (cola).
 
 ---
@@ -143,10 +162,10 @@ en `PR-018`. No se reutiliza `core/designsystem` (es Compose y está congelado).
 
 | # | Pregunta | Estado |
 |---|---|---|
-| P4 | ¿"Medio" y "alto" significan urgencia, complejidad o riesgo? | ⏳ sin firmar |
-| P5 | ¿Quién responde si el LLM clasifica mal? | ⏳ sin firmar |
-| Q12 | Proveedor y no-reentrenamiento | ⚠️ parcial: GenAI; **capa de pago obligatoria** |
-| — | ¿Qué catálogo de `RationaleKeys` y quién lo versiona? | propuesta: el clínico, en `PR-001` |
+| P4 | ¿"Medio" y "alto" significan urgencia, complejidad o riesgo? | ✅ **cerrado por la firma de `PR-001`** — el valor vive en `PR-001` §5; esta spec no lo reestatea |
+| P5 | ¿Quién responde si el LLM clasifica mal? | ✅ **cerrado por `PR-001` §10** (fallback a `ALTO`, sin caso sin categoría) |
+| Q12 | Proveedor y no-reentrenamiento | ✅ **cerrado: Google GenAI de pago** (2026-09-30) |
+| — | ¿Qué catálogo de `RationaleKeys` y quién lo versiona? | ⏳ el clínico, en `PR-001` |
 
 ---
 

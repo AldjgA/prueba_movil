@@ -144,7 +144,10 @@ servidor. Se rechaza y se alerta: es un fallo del emisor o un intento de ampliac
 ## 8. Dependencias
 
 - **Bloquea:** `PR-020`.
-- **Bloqueado por:** `PR-003` ✅, `PR-004` ✅, `PR-009`, `PR-016`.
+- **Bloqueado por:** `PR-003` ✅, `PR-004` ✅, `PR-009`, `PR-016`, **`TASK-021`** (la declara
+  bloqueada: su amenaza T4 exige correlación restringida y auditada).
+- **Relacionada:** **`TASK-025`** — la correlación `caseToken ↔ ProfileId` debe soportar **varios
+  `ProfileId` por instalación** (multi-perfil), no uno solo.
 - **Specs relacionadas:** `PR-016` (derivación y revocación), `PR-018` (auditoría).
 
 ---

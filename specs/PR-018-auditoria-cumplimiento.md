@@ -137,6 +137,9 @@ pantalla nueva y debe **extender** el lenguaje visual (brief §37), no inventar 
 
 - **Bloquea:** `PR-020`, `TASK-020`, cumplimiento legal.
 - **Bloqueado por:** `PR-004` §4.3 ✅, `PR-009`, `PR-010`, y el resto del portal.
+- **Relacionada:** **`TASK-021`** — sus amenazas **T4** (requerimiento judicial) y **T8** (el
+  profesional ve más de lo autorizado) son el encargo de seguridad que esta spec implementa; su
+  **Q3** es la misma P11 de §9.
 - **Specs relacionadas:** `PR-015` (timeline de negocio), `PR-019`.
 
 ---

@@ -54,13 +54,22 @@ Todas en estado **🔍 En revisión** — esperan la revisión cruzada de A y B 
 - **A es el único que hace merge.**
 - **Nada de red fuera de la API Joven** (`PR-003` §10).
 
-## 5. Bloqueos abiertos
+## 5. Bloqueos
+
+### ✅ Cerrados el 2026-09-30
+
+| Bloqueo | Cómo se cerró |
+|---|---|
+| Firma clínica de `PR-001` §5–7 | **firmado** (confirmado por el product owner) → desbloquea `PR-005`, `PR-006`, `PR-007`, `PR-009`, `TASK-019` |
+| Gemini de pago antes de casos reales | **asegurado** → resuelto el requisito de `PR-INFRA` §4 |
+
+### ⏳ Abiertos
 
 | Bloqueo | Quién lo cierra |
 |---|---|
-| Firma clínica de `PR-001` §5–7 | psicólogo |
-| Capa de pago de Gemini antes de casos reales | ONG / presupuesto |
-| P11 (responsable legal de datos de menores) | legal |
-| P12 y la revocación vs derivación en curso | legal |
+| **Publicar `PR-001` firmado en `main`** — el repo lo tiene como `BORRADOR` con marcadores `[VALIDAR]` | A |
 | Ratificación de `PR-000` rev. 2 y del reparto del backend | A |
 | Revisión cruzada de las 18 specs | A y B |
+| P11 (responsable legal de datos de menores) — también `TASK-021` Q3 | legal |
+| P12 y la revocación vs derivación en curso | legal |
+| ¿`RESUELTO` y `CERRADO` son dos estados o uno? | A |

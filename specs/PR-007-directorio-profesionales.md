@@ -126,7 +126,7 @@ semilla del modelo.
 ## 8. Dependencias
 
 - **Bloquea:** `PR-008`, `PR-010`, `PR-011`.
-- **Bloqueado por:** `PR-001` §7 (**firma clínica pendiente**: quién responde y con qué formación);
+- **Bloqueado por:** — ✅ **desbloqueada.** `PR-001` §7 **firmado clínicamente** (2026-09-30);
   `PR-003` Q9 ✅ (Supabase Auth).
 - **Specs relacionadas:** `PR-006`, `PR-016`.
 

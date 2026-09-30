@@ -117,7 +117,8 @@ como probabilidad clínica, que es lo que el brief §15 prohíbe mostrar.
 ## 8. Dependencias
 
 - **Bloquea:** `PR-008`, `PR-013`.
-- **Bloqueado por:** `PR-001` §5–6 (**firma clínica pendiente**); `PR-004` ✅.
+- **Bloqueado por:** — ✅ **desbloqueada.** `PR-001` §5–6 **firmado clínicamente** (2026-09-30);
+  `PR-004` ✅.
 - **Specs relacionadas:** `PR-005` (clasificación), `PR-007` (directorio).
 
 ---
@@ -127,7 +128,7 @@ como probabilidad clínica, que es lo que el brief §15 prohíbe mostrar.
 | # | Pregunta | Estado |
 |---|---|---|
 | P6 | ¿Qué atributos pesan en "el más apropiado"? | define qué debe extraerse realmente |
-| — | ¿El vocabulario cerrado lo valida el clínico? | propuesta: sí, junto con `PR-001` §5 |
+| — | ¿El vocabulario cerrado lo valida el clínico? | ✅ **cerrado**: validado con la firma de `PR-001` §5 |
 | — | ¿Se admite `SUBSTANCE_USE` en el piloto? | resumen §4.1 lo marca prioritario; confirmar |
 
 ---
