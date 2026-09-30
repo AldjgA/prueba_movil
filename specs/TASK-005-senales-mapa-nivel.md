@@ -146,3 +146,59 @@ backend puede recibir el mismo `rulesetVersion` en el reporte (`PR-003` §4).
 - [ ] `NECESIDADES.md` entregado a A y aplicado
 - [ ] Sin secretos ni endpoints hardcodeados (`ModuleGraphGuardTest`)
 - [ ] Cero literales de copy en Kotlin (regla de la casa #2)
+
+---
+
+## 11. Addendum — implementación (2026-09-30)
+
+Spec **aprobada** por A (`REVISION-B-POR-A.md` §1). Implementada en `feature:signals`.
+
+### Cómo quedaron las preguntas abiertas
+
+| # | Pregunta | Estado tras implementar |
+|---|---|---|
+| **Q1** | Umbrales concretos | **Implementados como decisión de ingeniería, versionada.** `ACCUMULATION_THRESHOLD = 3` y la tabla de criterios viven en `AttentionRuleset` con `VERSION = "2026-09-30.1"`. Sigue pendiente la validación clínica, pero ahora es un **cambio de versión**, no un rediseño |
+| **Q2** | ¿Rojo = alarma o valoración de riesgo? | **Implementado como alarma**: `requiresHumanConfirmation` sigue siendo `true` y el rojo **no se degrada solo** (ver abajo) |
+| Q3 | Peso de la persistencia | **Resuelto**: cada señal en ascenso cuenta como un factor de acumulación |
+| Q4 | ¿Mapa propio o vista del mismo dato? | Implementado como **pantalla propia** con los componentes del DS |
+| Q5 | ¿Las 6 dimensiones del brief §10? | Cubiertas por reglas; `frequency` se retira como *señal* (es dimensión, `PR-003` §4.1) |
+
+### 🔴 Hallazgo que la implementación destapó: tres criterios de rojo sin fuente
+
+`PR-001` §4.3 define el rojo con seis criterios. **El APK solo puede detectar tres.**
+
+`ideacion_activa`, `plan_estructurado` e `intento_reciente` **no tienen ninguna fuente**:
+el chequeo (brief §9) no pregunta por ellos y la conversación es texto libre que nada lee
+(guardrail #3). Un joven puede escribir «quiero morir» y el sistema **no eleva su
+prioridad**.
+
+No se ha inventado una pregunta: cómo preguntar por autolesión e ideación a un
+adolescente es una decisión clínica (`PR-001` §13). La carencia queda **declarada en el
+código** (`MotivoCatalog.unreachableFromApk`) y **protegida por una prueba** que falla si
+alguno de esos motivos aparece sin una fuente deliberada.
+
+Ver `deliverables/TASK-005/NECESIDADES.md` §0.1.
+
+### D2 aplicado dentro del APK
+
+`PR-003` §9.4 dice que el LLM no puede bajar un rojo. La implementación extiende el
+invariante al propio APK: **una alarma roja ya emitida no se apaga sola** porque el joven
+responda distinto después. Se implementa en `AttentionRuleset.enforceNoDegrade`, una
+función **pura y separada** de `evaluate`, para que la evaluación siga siendo sin estado
+(criterio #3) y el invariante se pruebe solo (criterio #6).
+
+Requiere que una persona lo revise — que es literalmente `PR-001` P4.
+
+### Criterios de aceptación: estado
+
+| # | Criterio | Estado |
+|---|---|---|
+| 1 | El nivel nunca solo por color | ✅ `AttentionCard` + `attentionIcon` + `attentionAccessibilityLabel` |
+| 2 | Pantalla de explicabilidad con los registros | ✅ bloque «¿por qué te mostramos esto?» + evidencia por señal |
+| 3 | Cálculo determinista y reproducible | ✅ probado |
+| 4 | `isPreliminary` / `requiresHumanConfirmation` | ⚠️ **parcial**: la pantalla usa `isPreliminary = true`; el modelo `AttentionAssessment` ya no se construye (el nivel se deriva), ver `NECESIDADES.md` §6.1 |
+| 5 | Copy sin palabras prohibidas | ✅ `strings.xml` revisado |
+| 6 | Un rojo no se degrada | ✅ `enforceNoDegrade` + 4 pruebas |
+| 7 | Qué cambió / por qué / qué después | ✅ los tres campos del `AttentionCard` |
+| 8 | Cero literales de copy en Kotlin | ✅ |
+| 9 | Sin `:core:network` | ✅ (pendiente de que A reescriba `ModuleGraphGuardTest`) |
