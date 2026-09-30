@@ -20,6 +20,7 @@ import bo.puentejoven.core.model.ChatAccessRequest
 import bo.puentejoven.core.model.ChatAccessRequestId
 import bo.puentejoven.core.model.ChatAccessRequestStatus
 import bo.puentejoven.core.model.ChatAccessScope
+import bo.puentejoven.core.model.CheckCatalog
 import bo.puentejoven.core.model.ConsentId
 import bo.puentejoven.core.model.ConsentRecord
 import bo.puentejoven.core.model.ContextResponse
@@ -786,15 +787,15 @@ class LocalPuenteRepository @Inject constructor(
     // ContextCheckRepository
     // -----------------------------------------------------------------------
 
+    /**
+     * Claves del chequeo, del **catálogo único** (`CheckCatalog`, `PR-003` §4.3).
+     *
+     * Antes esta lista estaba escrita aquí a mano, con 4 claves **distintas** de las
+     * del prototipo: dos vocabularios para lo mismo. Si derivaban, una regla dejaba
+     * de dispararse **en silencio** — y la que más importa es `safety`.
+     */
     override suspend fun availableQuestionKeys(): AppResult<List<String>> =
-        AppResult.Success(
-            listOf(
-                "hoy_como_estas",
-                "donde_ocurre",
-                "cada_cuanto",
-                "con_quien_puedes_contar",
-            ),
-        )
+        AppResult.Success(CheckCatalog.questionKeys)
 
     override suspend fun recordResponse(
         questionKey: String,

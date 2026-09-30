@@ -241,9 +241,43 @@ significa indefinido — significa que la lista es **cerrada** y cambia de **ver
 | `violencia_no_inmediata` | Violencia no inmediata (amarillo) |
 | `deterioro_escolar` | Deterioro escolar (amarillo) |
 | `aislamiento_persistente` | Aislamiento (amarillo) |
+| `acumulacion` | **Escalada por acumulación**: varias señales amarillas a la vez, sin que ninguna sea grave por sí sola |
+| `acoso` | **Acoso o violencia entre iguales** — el caso central del brief |
 
 > **Pendiente de firma clínica:** el clínico puede ajustar esta lista; al hacerlo **cambia
 > `rulesetVersion`**. Hasta entonces es la lista vigente, y B puede emitir `motivo` sin inventar.
+
+> **Por qué `acumulacion` y `acoso` (añadidos el 2026-09-30):** sin `acumulacion`, un amarillo
+> disparado por **acumulación** viajaba con `motivo` **vacío** — el equipo no sabría por qué se
+> encendió. Y `acoso` es el caso central del brief: no podía faltar en el catálogo.
+
+### 4.3 Catálogo de claves del chequeo (duplicación resuelta el 2026-09-30)
+
+**Un solo vocabulario, una sola fuente.** Verificado: el prototipo (`ContextCheckScreen.tsx`) define
+**5 preguntas** y `LocalPuenteRepository.availableQuestionKeys()` devolvía **otras 4**
+(`hoy_como_estas`, `donde_ocurre`, `cada_cuanto`, `con_quien_puedes_contar`). Dos vocabularios para
+lo mismo: si derivan, **una regla deja de dispararse en silencio**.
+
+**Canónico = el del prototipo.** Se publica en código en `:core:model` (`CheckCatalog`), de modo que
+`feature:conversation` y `feature:signals` **consuman la misma constante** en vez de duplicarla.
+
+| Clave de pregunta | Pregunta (copy, vive en el APK) | Opciones (claves cerradas) |
+|---|---|---|
+| `emotions` | ¿Cómo describirías cómo te has sentido esta semana? | `sad` · `anxious` · `angry` · `confused` · `exhausted` · `lonely` · `fine` · `dont_know` |
+| `sleep` | ¿Cómo ha estado tu sueño últimamente? | `sleeps_well` · `hard_to_sleep` · `sleeps_too_much` · `nightmares` · `varies` |
+| `school` | ¿Cómo está yendo en el colegio? | `fine` · `so_so` · `struggling` · `missing_school` · `doesnt_want_to_go` |
+| `loneliness` | ¿Tienes personas con quienes hablar cuando algo te preocupa? | `several` · `one_or_two` · `rarely` · `usually_not` · `no_one` |
+| `safety` | ¿Te sientes seguro/a en tu entorno habitual? | `yes` · `no` |
+
+**Reglas:**
+
+1. **La clave es un identificador, no copy.** El texto de la pregunta y de las opciones **nunca**
+   viaja en el contrato: vive en `strings.xml` del APK (regla de la casa #2).
+2. **`safety` es la pregunta crítica**: es la única cuya respuesta puede elevar a rojo por sí sola.
+   Que su clave sea estable es lo que garantiza que **no se pierda un peligro inmediato**.
+3. `emotions` admite **selección múltiple**; las otras cuatro, una sola.
+4. El catálogo se versiona con `rulesetVersion`: añadir o quitar una clave **es** un cambio de
+   versión, no un ajuste de copy.
 
 ---
 
