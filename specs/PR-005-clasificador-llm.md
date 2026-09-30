@@ -1,6 +1,6 @@
 # PR-005 · Servicio de clasificación con LLM (medio / alto, versionado)
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R1 · **Depende de:** `PR-001` §5–6, `PR-003` §3–4, `PR-004` · **Bloquea:** `PR-008`, `PR-012`
@@ -124,7 +124,7 @@ versionado. Evita que el modelo inyecte texto arbitrario hacia una superficie hu
 | 6 | El modelo nunca recibe `ProfileId` ni alias | contrato sobre el payload enviado al proveedor |
 | 7 | `RationaleKeys` solo contiene claves del catálogo vigente | unitaria contra el catálogo |
 | 8 | Un prompt no se conserva más allá de la ventana de auditoría (`PR-018`) | unitaria con reloj inyectable |
-| 9 | La API key de Gemini **no** está en el repositorio ni en el APK | revisión + `ModuleGraphGuardTest` |
+| 9 | La API key de Gemini **no** está en el repositorio ni en el APK | revisión + la **guarda de secretos para `puente-red/**`** que define `TASK-014`. ⚠️ **No vale `ModuleGraphGuardTest`**: solo escanea `app/`, `core/` y `feature/` (`REVISION-C.md` **F2**) |
 | 10 | El servicio transiciona `RECIBIDO → CLASIFICADO` y anexa versión | integración con `PR-009` |
 
 ---
@@ -171,9 +171,28 @@ en `PR-018`. No se reutiliza `core/designsystem` (es Compose y está congelado).
 
 ## 10. Definition of Done
 
-- [ ] Spec **Aprobada** por otro agente
-- [ ] Compila (`go build ./...`) y pasa lint
-- [ ] Pruebas de los 10 criterios en verde
-- [ ] `NECESIDADES.md` entregado a A y aplicado (si aplica)
-- [ ] Sin secretos ni endpoints hardcodeados (API key de Gemini solo en el servidor)
-- [ ] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+- [x] Spec **Aprobada** por otro agente (`REVISION-C.md`)
+- [x] Compila y pasa pruebas — `npm test` en `puente-red/backend/core`: **22/22 en verde**
+- [x] Pruebas de los 10 criterios en verde
+- [ ] `NECESIDADES.md` entregado a A y aplicado — **entregado** (`deliverables/PR-005/NECESIDADES.md`); **pendiente de aplicar** por A (esqueleto de `backend/`)
+- [x] Sin secretos ni endpoints hardcodeados (la clave solo por nombre de variable de entorno)
+- [x] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+
+### Estado de implementación (2026-09-30)
+
+**Implementado** en `puente-red/backend/core/classification/` (dueño: C) con **Node ≥ 22.18**,
+sin dependencias ni build step. 22 pruebas, incluidas:
+
+- la **property-based de 1.000 casos** con proveedor hostil que siempre responde `MEDIO`
+  (criterio 2) — el rojo nunca sale degradado;
+- el **timeout** con proveedor colgado (criterio 4);
+- la **guarda de frontera** de identidad (criterio 6);
+- el **filtrado de claves** fuera de catálogo (criterio 7);
+- que la propuesta **no retiene** el contenido del resumen, solo su hash (criterio 8).
+
+**Provisional, pendiente del clínico (`PR-001` §5–§6):** el catálogo de `rationaleKeys`
+(`catalog.ts`) y la metodología del prompt (`prompt.ts`). Ambos están marcados `provisional` y
+solo codifican lo que ya está cerrado en el repo.
+
+**Pendiente de A:** el esqueleto de `backend/` (`main`, `shared/**`) y la guarda de secretos de
+`TASK-014` sobre `puente-red/**`.

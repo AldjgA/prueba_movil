@@ -1,6 +1,6 @@
 # PR-008 · Motor de derivación escalonado por gravedad y equidad
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R1 · **Depende de:** `PR-005`, `PR-006`, `PR-007` · **Bloquea:** `PR-009`, `PR-016`
@@ -140,9 +140,43 @@ asignar"*). `ProCaseScreen.tsx` (*"Próxima acción: Asignar profesional"*).
 
 ## 10. Definition of Done
 
-- [ ] Spec **Aprobada** por otro agente
-- [ ] Compila (`go build ./...`) y pasa lint
-- [ ] Pruebas de los 8 criterios en verde
-- [ ] `NECESIDADES.md` entregado a A y aplicado (si aplica)
-- [ ] Sin secretos ni endpoints hardcodeados
-- [ ] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+- [x] Spec **Aprobada** por otro agente (`REVISION-C.md`)
+- [x] Compila y pasa pruebas — `npm test`: **84/84 en verde** (23 de este módulo)
+- [x] Pruebas de los 8 criterios en verde
+- [ ] `NECESIDADES.md` entregado a A y aplicado — **entregado**
+  (`deliverables/PR-008/NECESIDADES.md`); contiene **una petición de cambio de contrato**
+- [x] Sin secretos ni endpoints hardcodeados
+- [x] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+
+### Estado de implementación (2026-09-30)
+
+**Implementado** en `puente-red/backend/core/routing/` (dueño: C), Node ≥ 22.18, sin
+dependencias ni build step.
+
+Lo que hace verificables los criterios:
+
+- **D5 dos veces (criterios 1 y 2):** el directorio ya filtra, y el motor añade una segunda
+  barrera por si el directorio cambia. Se prueba con un `CAPACITATED_STAFF` en el directorio.
+- **Equidad como regla de ORDEN (criterio 5):** la ordenación primaria es la **banda de carga**
+  (0: ≤ mediana · 1: ≤ 2× · 2: > 2×) y la secundaria la puntuación. Se prueba con un
+  respondedor con **3× la mediana** que tiene el **mejor emparejamiento posible** (especialidad
+  + banda de edad) y aun así **no es el primero**. Si la equidad fuera solo un peso, ese
+  respondedor habría ganado.
+- **Cobertura (criterio 3):** `ALTO` + fuera de horario + nadie de guardia →
+  `REQUIRES_ON_CALL_ESCALATION`; en horario, `PROPOSED`.
+- **Determinismo (criterio 4):** orden banda → puntuación → `id`. Se prueba también que el
+  orden de salida **no depende del orden de siembra**.
+- **Catálogo (criterio 7):** se recorre cada clave emitida y se comprueba que está en el
+  catálogo.
+- **Nunca asigna (criterio 8):** se comprueba que `RoutingProposal` no tiene campos de
+  asignación **y** que el motor expone **un único método público** (`propose`).
+
+### ⚠️ Dos cosas declaradas, no inventadas
+
+1. **`protectiveCoverage` vale 0.** La spec lista el peso *"factores protectores ya cubiertos
+   por el respondedor"* (10 puntos) pero **no define su semántica**, y el contrato no tiene
+   ningún vínculo respondedor↔factores protectores. El peso queda declarado y **configurable**
+   para que el clínico lo active al responder **P6**.
+2. **Idioma y zona solo puntúan si el caso los declara.** El **Contrato A no los incluye**
+   (`PR-003` §4): son datos que el joven tendría que declarar. Ver la petición de cambio en
+   `deliverables/PR-008/NECESIDADES.md` §7.2.

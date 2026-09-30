@@ -156,8 +156,12 @@ test('la superficie profesional está montada y separada', async () => {
   assert.equal(res.status, 200);
   assert.equal((await res.json()).superficie, 'profesional');
 
-  const ajena = await api.request('/profesional/casos/xxx');
-  assert.equal(ajena.status, 501, 'Las rutas de C todavía no existen');
+  // Actualizado por C el 2026-09-30: `/profesional/casos/:caseToken` YA existe (`PR-013`), así
+  // que la comprobación usaba una ruta que ya no es cierta. El propósito de esta aserción es que
+  // la superficie está **separada**, no que esté vacía; se usa una ruta que sigue pendiente.
+  // Ver `puente-red/deliverables/PR-013/NECESIDADES.md` §7.5.
+  const ajena = await api.request('/profesional/seguimientos');
+  assert.equal(ajena.status, 501, 'Las rutas de C que aún no existen responden 501');
 });
 
 test('los 9 estados del caso proyectan a los 7 del APK, sin huérfanos (hallazgo F1)', () => {

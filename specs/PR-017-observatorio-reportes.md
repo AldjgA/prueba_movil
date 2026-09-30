@@ -1,6 +1,6 @@
 # PR-017 · Observatorio y reportes agregados
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R2 · **Depende de:** `PR-011`, `PR-012`, `PR-015`, `PR-016` · **Bloquea:** `TASK-020`

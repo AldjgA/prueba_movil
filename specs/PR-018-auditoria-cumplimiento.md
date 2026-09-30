@@ -1,6 +1,6 @@
 # PR-018 · Auditoría, trazabilidad y cumplimiento (quién vio qué y cuándo)
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R3 · **Depende de:** `PR-004` §4.3, `PR-009`, `PR-010`, `PR-013`, `PR-014`, `PR-015`, `PR-016` · **Bloquea:** `PR-020`, `TASK-020`
@@ -33,7 +33,8 @@ una ONG ni una autoridad.
 - **Retención** explícita y política de purga, con reloj inyectable (mismo patrón que
   `RetentionRepository` del APK).
 - **Sin contenido sensible**: un evento nunca guarda texto del chat, notas internas ni el resumen
-  autorizado. Guarda **referencias y metadatos** (`metadataWithoutSensitiveContent` en el APK).
+  autorizado. Guarda **referencias y metadatos** — el mismo criterio que aplica `TASK-017` en el
+  APK (`AdverseEvent` no admite texto libre).
 - **Visor de auditoría** para `SUPERVISION`.
 - **Exportación** para autoridad competente, con marca de quién exportó.
 

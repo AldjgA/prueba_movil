@@ -1,6 +1,6 @@
 # PR-007 · Directorio de profesionales y modelo de perfil (dos tipos de respondedor)
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R1 · **Depende de:** `PR-001` §7, `PR-003` Q9, `PR-000` §3 · **Bloquea:** `PR-008`, `PR-010`, `PR-011`
@@ -144,9 +144,37 @@ semilla del modelo.
 
 ## 10. Definition of Done
 
-- [ ] Spec **Aprobada** por otro agente
-- [ ] Compila (`go build ./...`) y pasa lint
-- [ ] Pruebas de los 8 criterios en verde
-- [ ] `NECESIDADES.md` entregado a A y aplicado (si aplica)
-- [ ] Sin secretos ni endpoints hardcodeados
-- [ ] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+- [x] Spec **Aprobada** por otro agente (`REVISION-C.md`)
+- [x] Compila y pasa pruebas — `npm test`: **61/61 en verde** (21 de este módulo)
+- [x] Pruebas de los 8 criterios en verde
+- [ ] `NECESIDADES.md` entregado a A y aplicado — **entregado**
+  (`deliverables/PR-007/NECESIDADES.md`); no añade necesidades nuevas
+- [x] Sin secretos ni endpoints hardcodeados
+- [x] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+
+### Estado de implementación (2026-09-30)
+
+**Implementado** en `puente-red/backend/core/directory/` (dueño: C), Node ≥ 22.18, sin
+dependencias ni build step.
+
+Lo que hacen verificables los criterios:
+
+- **D5 como restricción de datos (criterios 1 y 2):** un `CAPACITATED_STAFF` con
+  `maxCategory = ALTO` se **rechaza** con motivo explícito (`KIND_CATEGORY_MISMATCH`) y **no
+  se guarda**; `listEligible` con `ALTO` nunca devuelve personal capacitado.
+- **Lista blanca de campos (criterio 6):** `projectProfile` descarta claves desconocidas. Se
+  prueba pasando `documento`, `direccion`, `telefono` y `cedula`, y comprobando que el perfil
+  almacenado tiene **exactamente las 12 claves** del tipo y que ningún valor aparece
+  serializado.
+- **Contrato C (criterio 8):** `publicView` devuelve **exactamente tres** campos. Se prueba
+  con `Object.keys` y se verifica que no se filtra el `id`, la zona, el tipo ni la
+  `maxCategory`.
+- **Carga derivada (criterio 7):** `ResponderLoad` se lee de una `LoadSource` externa; un
+  intento de fijarla en el `upsert` se ignora.
+- **Auditoría (criterio 4):** se prueba que crear, actualizar y activar/desactivar dejan
+  evento, que **un rechazo no lo deja**, y que el evento **no** contiene el nombre ni las
+  especialidades.
+- **Demo (criterio 3):** tres perfiles ficticios con **ambos** tipos de respondedor, para que
+  D5 sea demostrable.
+
+**Provisional, pendiente del clínico (`PR-001` §7):** especialidades, zonas e idiomas.

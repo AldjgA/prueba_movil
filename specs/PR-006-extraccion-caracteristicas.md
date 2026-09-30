@@ -1,6 +1,6 @@
 # PR-006 · Extracción de características del caso
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R1 · **Depende de:** `PR-001` §5–6, `PR-003` §4, `PR-004` · **Bloquea:** `PR-008`, `PR-013`
@@ -24,7 +24,8 @@ autorizado, con vocabulario cerrado.
 ## 2. Alcance
 
 ### Dentro
-- Extraer del `ResumenAutorizado` un `CaseFeatureSet` con vocabulario **cerrado**:
+- Extraer del `ResumenAutorizado` **y de las `respuestasChequeo`** un `CaseFeatureSet` con
+  vocabulario **cerrado**:
   - **tipo de situación** (bullying, violencia, duelo, conflicto familiar, adicciones, otro);
   - **ámbito** (colegio, casa, comunidad, digital);
   - **señales** (sueño, aislamiento, impacto escolar, consumo, autolesión, ansiedad);
@@ -40,6 +41,18 @@ autorizado, con vocabulario cerrado.
 - No decidir la derivación.
 - No extraer nada del chat no autorizado. Solo del `ResumenAutorizado`.
 - No inferir características no declaradas (p. ej. "probable depresión").
+
+> **Corrección por el hallazgo K4 de B.** `respuestasChequeo` viajaba en el Contrato A
+> (`PR-003` §4) y **ningún consumidor lo leía**: era superficie de exposición sin contrapartida.
+> Se consume aquí, y con razón — son **claves de catálogo declaradas por el joven**, la fuente
+> estructurada más limpia del sistema (brief §9). Procedencia `DECLARED`.
+>
+> **Corrección por el hallazgo K1 de B.** Las claves de señal son las **canónicas de
+> `PR-003` §4.1** (`SNAKE_CASE` en mayúsculas). `frequency` se **retira**: era una *dimensión de
+> análisis* (brief §10), no un tipo de señal.
+>
+> **Corrección por el hallazgo K2 de B.** El catálogo de `motivo` es el de **`PR-003` §4.2**
+> (provisional y versionado con `rulesetVersion`), no una lista por definir.
 
 ---
 
@@ -135,9 +148,37 @@ como probabilidad clínica, que es lo que el brief §15 prohíbe mostrar.
 
 ## 10. Definition of Done
 
-- [ ] Spec **Aprobada** por otro agente
-- [ ] Compila (`go build ./...`) y pasa lint
-- [ ] Pruebas de los 7 criterios en verde
-- [ ] `NECESIDADES.md` entregado a A y aplicado (si aplica)
-- [ ] Sin secretos ni endpoints hardcodeados
-- [ ] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+- [x] Spec **Aprobada** por otro agente (`REVISION-C.md`)
+- [x] Compila y pasa pruebas — `npm test`: **40/40 en verde** (18 de este módulo)
+- [x] Pruebas de los 7 criterios en verde
+- [ ] `NECESIDADES.md` entregado a A y aplicado — **entregado**
+  (`deliverables/PR-006/NECESIDADES.md`); no añade necesidades nuevas
+- [x] Sin secretos ni endpoints hardcodeados
+- [x] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+
+### Estado de implementación (2026-09-30)
+
+**Implementado** en `puente-red/backend/core/features/` (dueño: C), Node ≥ 22.18, sin
+dependencias ni build step.
+
+Arquitectura en dos capas:
+
+1. **Extracción base determinista** (`mapping.ts`): tabla de claves de catálogo → vocabulario
+   cerrado. Es lo que da el **criterio 7** (determinismo) y hace la extracción **auditable por
+   el clínico** sin tocar código de IA.
+2. **Enriquecimiento opcional por LLM** (`extractionPort.ts`): deduce de la nota **ya
+   redactada**. Un fallo o timeout **no** invalida la extracción base.
+
+Decisiones que hacen verificables los criterios:
+
+- **Criterio 2:** la salida no tiene ningún campo de texto libre — es una propiedad del tipo.
+  Un modelo que devuelve prosa ve su texto descartado (probado).
+- **Criterio 3:** `redactForModel` convierte la edad exacta en **banda** y elimina institución,
+  teléfono, correo y usuario **antes** de que el texto llegue al proveedor (probado
+  interceptando la petición).
+- **Criterio 4:** `DECLARED` vs `EXTRACTED` con bandas de confianza distintas; una
+  característica declarada **no** se degrada al fusionar (probado).
+- **Criterio 7c:** la salida se **reordena por vocabulario**, así que no depende del orden en
+  que el modelo devolvió las claves. *(Esto corrigió un bug real detectado por las pruebas.)*
+
+**Provisional, pendiente del clínico (`PR-001` §5):** el vocabulario y la tabla de mapeo.

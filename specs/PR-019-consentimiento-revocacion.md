@@ -1,6 +1,6 @@
 # PR-019 · Consentimiento, identidad y revocación cross-producto
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R3 · **Depende de:** `PR-003` §5–§7, `PR-004`, `PR-009`, `PR-016` · **Bloquea:** `PR-020`
@@ -104,7 +104,7 @@ servidor. Se rechaza y se alerta: es un fallo del emisor o un intento de ampliac
 | # | Caso | Regla |
 |---|---|---|
 | 1 | Revocación **antes** de `ACEPTADO` | El caso se cierra; el profesional nunca lo vio |
-| 2 | Revocación **después** de `ACEPTADO` | El psicólogo **ya vio** los datos del joven (seudónimo). Bloquea accesos futuros; **no** des-revela. La UI lo dice con honestidad |
+| 2 | Revocación **después** de `ACEPTADO` | El psicólogo **ya vio** los datos del joven (seudónimo). Bloquea accesos futuros; **no** des-revela. La UI lo dice con honestidad. El caso pasa a **`CERRADO` sin pasar por `RESUELTO`** (`REVISION-C.md` §5.1): cerrar no es resolver |
 | 3 | Revocación con **derivación externa en curso** | ⏳ **abierto** (crítico, sin resolver) |
 | 4 | El joven **pierde el dispositivo** | Pierde la cuenta (`PR-003` §11, R4). El caso sigue vivo en el backend; se pierde el vínculo local. Deuda conocida |
 | 5 | El psicólogo **no decide** comunicarse | El joven ve los datos pero **no** tiene canal. Es un estado válido y frecuente |

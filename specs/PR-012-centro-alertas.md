@@ -1,6 +1,6 @@
 # PR-012 · Centro de alertas con priorización y filtros
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R2 · **Depende de:** `PR-009`, `PR-010` · **Bloquea:** `PR-013`, `PR-017`
@@ -140,9 +140,53 @@ Derivados*; badge numérico en `ProSidebar.tsx` (*"Alertas · 2"*).
 
 ## 10. Definition of Done
 
-- [ ] Spec **Aprobada** por otro agente
-- [ ] Compila (`npm run build`) y pasa lint
-- [ ] Pruebas de los 8 criterios en verde
-- [ ] `NECESIDADES.md` entregado a A y aplicado (si aplica)
-- [ ] Sin secretos ni endpoints hardcodeados
-- [ ] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+- [x] Spec **Aprobada** por otro agente (`REVISION-C.md`)
+- [x] Compila y pasa pruebas — backend **231/231** + `tsc` limpio; portal **49/49** + build
+- [x] Pruebas de los 8 criterios en verde
+- [ ] `NECESIDADES.md` entregado a A y aplicado — **entregado**
+  (`deliverables/PR-012/NECESIDADES.md`); contiene **un hallazgo que afecta a todo el backend**
+- [x] Sin secretos ni endpoints hardcodeados
+- [x] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+
+### Estado de implementación (2026-09-30)
+
+**Implementado** en `backend/src/core/alerts/` y `portal/src/alerts/`. Rutas
+`GET /profesional/alertas` y `POST /profesional/casos/:caseToken/tomar`, ambas guardadas.
+
+Lo que hace verificables los criterios:
+
+- **Criterio 2, el decisivo:** hay **dos ejes independientes** — `youthLevel` (`VERDE | AMARILLO |
+  ROJO`, reglas del APK) y `category` (`MEDIO | ALTO`, LLM). El filtro `RED` filtra por
+  **`youthLevel`**. Se prueba con un caso `ROJO`/`MEDIO` (debe salir en `RED`) y otro
+  `AMARILLO`/`ALTO` (no debe salir), y que la fila lleva **los dos ejes separados**.
+- **Criterio 5:** el orden es **el mismo código** que `PR-011` (`core/triage/urgency.ts`), y hay
+  una prueba que **compara el orden de las dos pantallas** y exige que coincidan.
+- **Criterio 6:** los contadores se calculan **antes** de paginar y **después** de aplicar la
+  búsqueda, y se prueba que el total de cada filtro coincide con su contador.
+- **Criterio 7:** la fila lleva `slaBreached` **y** `pattern.sla_incumplido`; el portal pinta color
+  **y** texto, nunca solo color.
+- **Criterio 8:** `takeCase` en la cola compone **dos transiciones que ya existen**
+  (`EN_COLA → ASIGNADO → ACEPTADO`) y es el **único** camino para tomar un caso: lo usan la lista
+  y la ficha (`PR-013`). El identificador del profesional sale de la **sesión**, nunca del cuerpo.
+
+### 🔴 Un hallazgo que afecta a todo el backend
+
+**El backend no comprueba tipos.** Node ejecuta los `.ts` borrando los tipos sin revisarlos, así
+que un error de tipos **no falla al construir ni al probar**: se convierte en un bug de ejecución.
+
+Pasó de verdad en esta tarea: en `PR-011` se pasó una tarjeta **sin `severity`** a la comparación
+→ `NaN` → `sort` **no ordenó nada**, y los criterios 1 y 2 quedaron sin cumplir sin que nada
+fallara. Y al montar el chequeo aparecieron **tres claves duplicadas** en `KEY_TO_FEATURES` (en un
+literal de objeto gana la última, así que el catálogo canónico quedaba sobrescrito en silencio).
+
+Se ha añadido `backend/tsconfig.json` y el chequeo **está limpio**. A debe añadir `typescript` +
+`@types/node` + un script `typecheck` a su `package.json` y meterlo en el CI (`TASK-014`).
+
+### ⚠️ Dos cosas declaradas, no inventadas
+
+1. **El filtro «Derivados» existe pero devuelve siempre vacío.** No hay estado `DERIVADO` en
+   `PR-003` §3.1, y las derivaciones son `PR-016`. El portal lo explica en su estado vacío. **No**
+   se ha inventado un estado ni se ha reutilizado `RESUELTO`.
+2. **La sesión de demostración no puede tomar casos** (es de solo lectura, `PR-010` criterio 7).
+   Es correcto y está probado, pero significa que **la demo no demuestra el criterio 8**: las
+   pruebas usan una sesión real.
