@@ -283,6 +283,84 @@ test('las rutas de PR-011…PR-017 responden 501 y enumeran lo implementado', as
   assert.ok(cuerpo.implementado.includes('/auth/login'));
 });
 
+// ---------------------------------------------------------------------------
+// PR-011 · Home profesional
+// ---------------------------------------------------------------------------
+test('criterio 6: el home está guardado (sin sesión responde 401)', async () => {
+  const app = makeApp();
+  const respuesta = await app.request('/profesional/home');
+
+  assert.equal(respuesta.status, 401);
+  const cuerpo = await respuesta.json();
+  assert.equal(cuerpo.reason, 'authz.no_session');
+});
+
+test('criterio 6b: un rol desconocido no pasa la guardia del home', async () => {
+  const port = {
+    signIn: async () => ({
+      ok: true,
+      responderId: 'raro-1',
+      role: 'ADMIN',
+      institutionId: 'ong-1',
+      isDemo: false,
+      refreshToken: 'r',
+    }),
+    refresh: async () => ({ ok: false, reason: 'PROVIDER_ERROR' }),
+    signOut: async () => {},
+  };
+  const reloj = makeReloj();
+  const app = makeApp({ authService: new AuthService({ port, clock: reloj.clock }), clock: reloj.clock });
+
+  const { cuerpo } = await login(app);
+  const respuesta = await app.request('/profesional/home', conToken(cuerpo.token));
+
+  assert.equal(respuesta.status, 403);
+});
+
+test('criterio 4: por defecto el tablero está VACÍO (PR-003 Q7: sin datos)', async () => {
+  const app = makeApp();
+  const { cuerpo } = await login(app);
+
+  const respuesta = await app.request('/profesional/home', conToken(cuerpo.token));
+  const board = await respuesta.json();
+
+  assert.equal(respuesta.status, 200);
+  assert.deepEqual(board.cards, []);
+  assert.equal(board.waitingCount, 0);
+  assert.equal(board.demoData, false);
+  assert.equal(typeof board.generatedAtEpochMillis, 'number');
+});
+
+test('con PUENTE_DEMO_CASOS=on el tablero demuestra el orden y lo declara', async () => {
+  const app = makeApp({
+    env: { PUENTE_DEMO_PASSWORD: PASSWORD, PUENTE_DEMO_EMAIL: EMAIL, PUENTE_DEMO_CASOS: 'on' },
+  });
+  const { cuerpo } = await login(app);
+
+  const respuesta = await app.request('/profesional/home', conToken(cuerpo.token));
+  const board = await respuesta.json();
+
+  assert.equal(respuesta.status, 200);
+  assert.equal(board.demoData, true, 'el tablero debe declarar que son datos ficticios');
+  assert.ok(board.cards.length > 0);
+  // El primero es el ALTO sin responsable.
+  assert.equal(board.cards[0].reason, 'HIGH_WAITING');
+  assert.equal(board.cards[0].assigneeId, null);
+});
+
+test('el tablero no expone identidad del joven', async () => {
+  const app = makeApp({
+    env: { PUENTE_DEMO_PASSWORD: PASSWORD, PUENTE_DEMO_EMAIL: EMAIL, PUENTE_DEMO_CASOS: 'on' },
+  });
+  const { cuerpo } = await login(app);
+  const respuesta = await app.request('/profesional/home', conToken(cuerpo.token));
+  const serializado = JSON.stringify(await respuesta.json());
+
+  for (const prohibido of ['profileId', 'alias', 'youthId', 'deviceKey']) {
+    assert.ok(!serializado.includes(prohibido), `no debe contener "${prohibido}"`);
+  }
+});
+
 test('criterio 12: la superficie profesional no responde en /joven', async () => {
   const app = makeApp();
   const respuesta = await app.request('/joven/casos');

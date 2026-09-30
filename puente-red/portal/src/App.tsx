@@ -7,7 +7,7 @@
 
 import { LoginScreen } from "./auth/LoginScreen.tsx";
 import { useSession } from "./auth/SessionProvider.tsx";
-import { Pendiente } from "./pages/Pendiente.tsx";
+import { Home } from "./home/Home.tsx";
 import { AppShell } from "./shell/AppShell.tsx";
 
 export function App() {
@@ -19,7 +19,7 @@ export function App() {
 
   return (
     <AppShell activo="Inicio">
-      <Pendiente />
+      <Home />
     </AppShell>
   );
 }

@@ -12,6 +12,9 @@ import {
 } from '../core/auth/index.ts';
 import { CONTRATO_VERSION } from '../shared/contract.js';
 import { leerJson } from '../shared/middleware.js';
+import { DEMO_SEED, Directory } from '../core/directory/index.ts';
+import { buildTodayBoard, DEFAULT_SERVICE_WINDOW, isOutOfHours, seedDemoCases } from '../core/home/index.ts';
+import { CaseQueue, InMemoryCaseStore } from '../core/queue/index.ts';
 
 /**
  * API Profesional — dueño: **C** (`PR-010`…`PR-017`).
@@ -43,7 +46,15 @@ const CODIGO_POR_MOTIVO = {
   CROSS_INSTITUTION: 403,
 };
 
-export function createProfesionalRoutes({ env = process.env, authService, registry, audit, clock } = {}) {
+export function createProfesionalRoutes({
+  env = process.env,
+  authService,
+  registry,
+  audit,
+  clock,
+  directory,
+  queue,
+} = {}) {
   const profesional = new Hono();
 
   const reloj = clock ?? { nowEpochMillis: () => Date.now() };
@@ -55,6 +66,23 @@ export function createProfesionalRoutes({ env = process.env, authService, regist
   // hay contraseña en el entorno (`core/auth/demoAuthPort.ts`).
   const auth =
     authService ?? new AuthService({ port: createDemoAuthPort(env), audit: auditoria, clock: reloj });
+
+  // ---------------------------------------------------------------------------
+  // Estado del portal: directorio y cola.
+  //
+  // ⚠️ **En memoria.** La persistencia real es Supabase (`PR-004` §4), que necesita el cliente
+  // de `src/shared/**` (de A). Mientras no exista, el portal es demostrable pero **no
+  // persistente**: reiniciar el servidor vacía la cola.
+  // ---------------------------------------------------------------------------
+  const directorio = directory ?? crearDirectorioFicticio(reloj);
+  const cola = queue ?? new CaseQueue({ directory: directorio, store: new InMemoryCaseStore(), clock: reloj });
+
+  // `PR-003` Q7: por defecto el tablero está VACÍO. Los casos ficticios son opt-in.
+  const demoCasos = env['PUENTE_DEMO_CASOS'] === 'on';
+  if (demoCasos) {
+    seedDemoCases({ queue: cola, directory: directorio, nowEpochMillis: reloj.nowEpochMillis() });
+  }
+  const ventanaServicio = env['PUENTE_HORARIO_SERVICIO'] ?? DEFAULT_SERVICE_WINDOW;
 
   /** Token del portal, de `Authorization: Bearer <token>`. */
   const tokenDe = (c) => {
@@ -194,18 +222,56 @@ export function createProfesionalRoutes({ env = process.env, authService, regist
   );
 
   // ---------------------------------------------------------------------------
-  // PR-011…PR-017 — pendientes
+  // PR-011 · Home profesional
+  // ---------------------------------------------------------------------------
+
+  /**
+   * **«¿Qué necesita nuestra atención ahora?»** (`PR-011`).
+   *
+   * El orden lo decide el servidor (`core/home/todayBoard.ts`), no el cliente: si el portal
+   * ordenara, la prioridad dependería de la pantalla que la muestra.
+   *
+   * `fueraDeHorario` lo calcula **el servidor** a partir del horario configurado. El APK y el
+   * portal **no** deben inferirlo (hallazgo K5 de B).
+   */
+  profesional.get('/home', exigirAccion('VIEW_ALERTS'), (c) => {
+    const ahora = reloj.nowEpochMillis();
+    const board = buildTodayBoard({
+      queue: cola,
+      directory: directorio,
+      nowEpochMillis: ahora,
+      outOfHours: isOutOfHours(ahora, ventanaServicio),
+      demoData: demoCasos,
+    });
+    return c.json(board, 200);
+  });
+
+  // ---------------------------------------------------------------------------
+  // PR-012…PR-017 — pendientes
   // ---------------------------------------------------------------------------
   profesional.all('*', (c) =>
     c.json(
       {
         error: 'not_implemented',
-        message: 'Superficie profesional pendiente (PR-011…PR-017).',
-        implementado: ['/auth/login', '/auth/logout', '/session', '/auditoria'],
+        message: 'Superficie profesional pendiente (PR-012…PR-017).',
+        implementado: ['/auth/login', '/auth/logout', '/session', '/auditoria', '/home'],
       },
       501,
     ),
   );
 
   return profesional;
+}
+
+/**
+ * Directorio con los perfiles **ficticios** de la demostración (brief §28, `PR-003` Q7).
+ *
+ * En producción lo sustituye el directorio real de la ONG, que es una tabla de Supabase.
+ */
+function crearDirectorioFicticio(reloj) {
+  const directorio = new Directory({ clock: reloj });
+  for (const perfil of DEMO_SEED) {
+    directorio.upsert(perfil, null);
+  }
+  return directorio;
 }

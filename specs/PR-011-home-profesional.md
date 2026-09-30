@@ -143,9 +143,48 @@ Seguridad prioritaria / Esperando: 18 min / Responsable: Sin asignar / Revisar a
 
 ## 10. Definition of Done
 
-- [ ] Spec **Aprobada** por otro agente
-- [ ] Compila (`npm run build`) y pasa lint
-- [ ] Pruebas de los 8 criterios en verde
-- [ ] `NECESIDADES.md` entregado a A y aplicado (si aplica)
-- [ ] Sin secretos ni endpoints hardcodeados
-- [ ] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+- [x] Spec **Aprobada** por otro agente (`REVISION-C.md`)
+- [x] Compila y pasa pruebas — backend **196/196**; portal **34/34** + `npm run build` correcto
+- [x] Pruebas de los 8 criterios en verde
+- [ ] `NECESIDADES.md` entregado a A y aplicado — **entregado**
+  (`deliverables/PR-011/NECESIDADES.md`); contiene **un hueco de integración** (§7.1)
+- [x] Sin secretos ni endpoints hardcodeados
+- [x] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+
+### Estado de implementación (2026-09-30)
+
+**Implementado** en `backend/src/core/home/` (tablero y horario) y `portal/src/home/` (pantalla).
+Ruta `GET /profesional/home` guardada con `VIEW_ALERTS`.
+
+Lo que hace verificables los criterios:
+
+- **El orden es una severidad calculada** (`SEVERITY`), con el tiempo esperando como criterio
+  secundario. Concilia dos criterios que tiran en direcciones distintas: el 1 (*un `ALTO` sin
+  responsable, siempre primero*) y el 2 (*un incumplido aparece aunque sea antiguo*). Sin la
+  severidad, un `MEDIO` incumplido adelantaría a un rojo sin nadie — justo el fallo que
+  `PR-001` P5 quiere evitar. Se prueba explícitamente.
+- **`reason` y la severidad se calculan en la misma decisión** (`clasificar`). Si se calcularan
+  por separado podrían no coincidir, y el profesional vería una tarjeta arriba con un motivo que
+  no explica por qué está arriba.
+- **Criterio 3:** el portal guarda **cuándo leyó** el tablero y recalcula el tiempo esperando con
+  un reloj local, sin volver a pedir. `waitingAt` es puro y está probado.
+- **Criterio 4:** sin casos, el tablero está vacío y **dice a qué hora se comprobó**.
+- **Criterio 5:** ninguna tarjeta lleva identidad del joven; el responsable es el **profesional**.
+- **Criterio 7:** el contador de «sin responsable» usa el mismo criterio que `SlaStatus.unassigned`
+  de `PR-009`, y se prueba comparándolo con la cola.
+- **Criterio 8:** fuera de horario el reloj del SLA **no corre**, así que no se pinta un
+  incumplimiento que no existe.
+
+### ⚠️ Tres cosas declaradas, no inventadas
+
+1. **La cola no se alimenta de `/joven/casos`.** La ingesta (A) escribe en `shared/store.js` y el
+   tablero lee del `CaseQueue`: **son almacenes distintos**. Cada mitad funciona y la unión no
+   existe. Declarado con opciones en `deliverables/PR-011/NECESIDADES.md` §7.1.
+2. **`IMPORTANT_CHANGE` no es derivable**: el `CaseTicket` no lleva patrones de señal. El motivo
+   existe en el tipo y tiene su hueco en el orden, pero **no se emite**. §7.2.
+3. **El horario de servicio es provisional** (`08:00-18:00`) y usa la **hora local del servidor**.
+   Si el servidor está en UTC, el portal mentiría sobre la cobertura. §7.3.
+
+**Casos ficticios opt-in:** por defecto el tablero está **vacío** (`PR-003` Q7). Solo se siembra
+con `PUENTE_DEMO_CASOS=on`, y entonces el tablero se marca `demoData: true` y el portal lo declara
+en pantalla.

@@ -17,7 +17,7 @@ El segundo producto de Puente Joven. El brief §34 lo define así:
 | Tarea | Qué | Estado |
 |---|---|---|
 | `PR-010` | Autenticación profesional y roles | ✅ **implementado** |
-| `PR-011` | Home profesional | ⏳ |
+| `PR-011` | Home profesional | ✅ **implementado** |
 | `PR-012` | Centro de alertas | ⏳ |
 | `PR-013` | Ficha de caso (7 secciones) | ⏳ |
 | `PR-014` | «Organizado por Puente» / «valoración profesional» | ⏳ |
@@ -25,8 +25,8 @@ El segundo producto de Puente Joven. El brief §34 lo define así:
 | `PR-016` | Derivaciones y directorio | ⏳ |
 | `PR-017` | Observatorio y reportes | ⏳ |
 
-Lo que existe hoy es **acceso + estructura**. Los destinos de la barra lateral muestran la tarea
-que los implementa, para que nadie confunda una maqueta con un producto.
+La barra lateral declara la tarea que implementa cada destino, para que nadie confunda una
+maqueta con un producto.
 
 ---
 
@@ -94,6 +94,29 @@ credenciales: son cosas distintas y el profesional tiene que poder distinguirlas
 `VITE_ES_DEMO=false` solo en un despliegue con personas reales atendiendo. Por defecto se declara
 demo: `PR-001` §8 prohíbe que una demo simule una respuesta clínica que no existe.
 
+### El portal **no ordena** el tablero
+
+`PR-011` recibe las tarjetas **ya ordenadas** por el servidor. Si ordenara el cliente, la
+prioridad dependería de la pantalla que la muestra. Hay una prueba que fija que el portal respeta
+el orden recibido.
+
+### El tiempo esperando avanza sin recargar
+
+`useTodayBoard` guarda **cuándo se leyó** el tablero y `useTicker` mueve un reloj local cada 20 s.
+El texto se recalcula con `waitingAt(receivedAt, ahora)` — puro y probado. Es lo que hace que
+«Esperando: 18 min» pase a «19 min» sin volver a pedir nada.
+
+### El copy vive en el portal
+
+El servidor manda **claves de catálogo** (`motive.seguridad_prioritaria`) y el portal las
+traduce (`Home.tsx`). Un cambio de redacción no toca el backend.
+
+### Se declara lo que es demostración
+
+Si el tablero llega con `demoData: true`, la pantalla lo dice. Si llega `outOfHours: true`, avisa
+de que los tiempos de respuesta **no corren**. Y la CTA *"Revisar"* está **deshabilitada** con su
+`title` explicando que depende de `PR-013`: no se finge una pantalla que no existe.
+
 ---
 
 ## Estructura
@@ -109,13 +132,18 @@ src/
     idle.ts          cierre por inactividad (lógica pura + temporizador inyectado)
     SessionProvider.tsx
     LoginScreen.tsx
+  home/              PR-011
+    api.ts           cliente de /profesional/home
+    format.ts        formateo del tiempo esperando (puro)
+    useTodayBoard.ts carga del tablero + reloj de la interfaz
+    Home.tsx         «¿Qué necesita nuestra atención ahora?»
   shell/
     AppShell.tsx     barra lateral (brief §33)
-  pages/
-    Pendiente.tsx    declara qué falta y de quién es
   App.tsx
   main.tsx
 ```
+
+`src/auth/api.ts` y `src/home/api.ts` son los **únicos** archivos que construyen rutas de API.
 
 ---
 
