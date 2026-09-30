@@ -59,6 +59,7 @@ git worktree add ../pj-agenteC -b agente/C-red
 | `feature/home/HomeScreen.kt` | **A** |
 | `core/data/repository/Repositories.kt` | **A** |
 | `core/data/local/LocalPuenteRepository.kt` | **A** |
+| `core/navigation/AppDestination.kt` | **A** (añadido el 2026-09-30: faltaba en la lista original) |
 | `core/designsystem/**` | **congelado** |
 | `feature/<tu-módulo>/**` | el agente que lo creó |
 

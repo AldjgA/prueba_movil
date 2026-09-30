@@ -187,6 +187,7 @@ git worktree add ../pj-005 -b task/005-signals
 | `feature/home/HomeScreen.kt` | Integrador | Solo él añade enlaces de entrada |
 | `Repositories.kt` | Integrador | Congelado; cambios requieren solicitud |
 | `LocalPuenteRepository.kt` | Integrador | Dueño único (persistencia + métodos nuevos) |
+| `core/navigation/AppDestination.kt` | Integrador | Dueño único de las rutas tipadas (añadido el 2026-09-30) |
 | `core/designsystem/**` | Congelado | Si falta un componente, se pide, no se improvisa |
 | `feature/<tu-modulo>/**` | Agente | Propiedad exclusiva |
 
