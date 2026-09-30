@@ -13,7 +13,7 @@ El núcleo del pipeline de triaje de Puente Red. Aquí viven las tareas `PR-005`
 |---|---|---|
 | `PR-005` Clasificador LLM | `classification/` | ✅ implementado |
 | `PR-006` Extracción de características | `features/` | ✅ implementado |
-| `PR-007` Directorio de profesionales | `directory/` | ⏳ |
+| `PR-007` Directorio de profesionales | `directory/` | ✅ implementado |
 | `PR-008` Motor de derivación | `routing/` | ⏳ |
 | `PR-009` Cola, SLA y trazabilidad | `queue/` | ⏳ |
 
@@ -30,7 +30,7 @@ directamente (type stripping nativo, estable desde Node 22.18).
 
 ```bash
 cd puente-red/backend/core
-npm test          # 40 pruebas: PR-005 (22) + PR-006 (18)
+npm test          # 61 pruebas: PR-005 (22) + PR-006 (18) + PR-007 (21)
 ```
 
 > **Limitación del type stripping:** no se pueden usar `enum`, `namespace` ni *parameter
@@ -104,6 +104,32 @@ Arquitectura en **dos capas**, y el orden importa:
 ⚠️ **Provisional:** la tabla de mapeo (`mapping.ts`) y el vocabulario (`vocabulary.ts`) se
 derivan de las dimensiones ya escritas en el repo (brief §9, resumen §4.1). El clínico las
 valida en `PR-001` §5.
+
+---
+
+## `directory/` — PR-007, directorio de respondedores
+
+**El directorio no es un directorio de psicólogos.** La decisión **D5** establece respuesta
+escalonada por gravedad, así que hay **dos tipos de respondedor** con **nivel máximo** distinto.
+
+### Decisiones que este módulo hace cumplir
+
+- **D5 es una restricción de datos, no de UI.** Un `CAPACITATED_STAFF` con `maxCategory = ALTO`
+  se **rechaza** en el `upsert` — no se corrige en silencio. Y `listEligible` con categoría
+  `ALTO` **nunca** devuelve personal capacitado.
+- **Lista blanca de campos.** `projectProfile` descarta cualquier clave desconocida: aunque el
+  llamante pase `documento` o `direccion`, no se guardan. El perfil no tiene dónde meterlas.
+- **Contrato C con exactamente tres campos.** `publicView` devuelve solo
+  `nombreVisible`, `rol` y `especialidad`. Ni el `id`, ni la zona, ni el tipo, ni la categoría
+  máxima salen de aquí.
+- **La carga no se edita.** `ResponderLoad` se **lee** de una `LoadSource` externa (la cola,
+  `PR-009`); un intento de fijarla en el `upsert` se ignora.
+- **Toda modificación se audita**, y el evento **no** guarda contenido sensible (ni el nombre
+  ni las especialidades): solo acción, objetivo, actor y momento.
+- **Un rechazo no genera evento**, porque no hubo cambio.
+
+⚠️ **Provisional:** especialidades, zonas e idiomas (`PR-001` §7).
+**Datos de la demo ficticios** (brief §28, `PR-003` Q7): tres perfiles, todos `isFictional`.
 
 ---
 
