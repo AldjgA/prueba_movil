@@ -126,7 +126,7 @@ export class AuthService {
    * Guardia de una acción del portal (criterio 9).
    *
    * Audita **solo los rechazos**: un `VIEW_ALERTS` correcto no merece un evento, pero un
-   * intento de `ORIENTACION` de escribir notas internas sí.
+   * intento de `orientador` de escribir notas internas sí.
    */
   guard(
     session: ProfessionalSession | null,

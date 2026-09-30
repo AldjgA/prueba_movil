@@ -62,7 +62,7 @@ function fakePort(result: AuthPortResult): { port: AuthPort; signInCalls: SignIn
 const OK_RESULT: AuthPortResult = {
   ok: true,
   responderId: "psy-1",
-  role: "PSICOLOGIA",
+  role: "psicologo",
   institutionId: "ong-1",
   isDemo: false,
   refreshToken: "refresh-abc",
@@ -71,7 +71,7 @@ const OK_RESULT: AuthPortResult = {
 function makeSession(overrides: Partial<ProfessionalSession> = {}): ProfessionalSession {
   return createSession({
     responderId: "psy-1",
-    role: "PSICOLOGIA",
+    role: "psicologo",
     institutionId: "ong-1",
     isDemo: false,
     nowEpochMillis: START,
@@ -141,10 +141,10 @@ test("criterio 2b: la auditoría no guarda el correo completo en un fallo", asyn
 // ---------------------------------------------------------------------------
 // Criterio 3 — solo SUPERVISION ve el log de auditoría
 // ---------------------------------------------------------------------------
-test("criterio 3: solo SUPERVISION puede ver el log de auditoría", () => {
+test("criterio 3: solo el rol supervisor puede ver el log de auditoría", () => {
   for (const role of PROFESSIONAL_ROLES) {
     const decision = authorize(makeSession({ role }), "VIEW_AUDIT_LOG", { nowEpochMillis: START });
-    if (role === "SUPERVISION") {
+    if (role === "supervisor") {
       assert.equal(decision.allowed, true);
     } else {
       assert.equal(decision.allowed, false, `${role} no debería ver el log`);
@@ -156,8 +156,8 @@ test("criterio 3: solo SUPERVISION puede ver el log de auditoría", () => {
 // ---------------------------------------------------------------------------
 // Criterio 4 — ORIENTACION no toma casos ni escribe notas internas
 // ---------------------------------------------------------------------------
-test("criterio 4: ORIENTACION no puede tomar casos ni escribir notas internas", () => {
-  const session = makeSession({ role: "ORIENTACION" });
+test("criterio 4: el rol orientador no puede tomar casos ni escribir notas internas", () => {
+  const session = makeSession({ role: "orientador" });
 
   for (const action of ["TAKE_CASE", "WRITE_PROFESSIONAL_NOTES", "VIEW_PROFESSIONAL_NOTES"] as const) {
     const decision = authorize(session, action, { nowEpochMillis: START });
@@ -173,15 +173,15 @@ test("criterio 4: ORIENTACION no puede tomar casos ni escribir notas internas", 
 
 test("criterio 4b: la matriz se prueba por tabla completa", () => {
   const expected: Record<PortalAction, readonly ProfessionalRole[]> = {
-    VIEW_ALERTS: ["PSICOLOGIA", "TRABAJO_SOCIAL", "ORIENTACION", "SUPERVISION"],
-    VIEW_CASE_SUMMARY: ["PSICOLOGIA", "TRABAJO_SOCIAL", "ORIENTACION", "SUPERVISION"],
-    VIEW_PROFESSIONAL_NOTES: ["PSICOLOGIA", "TRABAJO_SOCIAL", "SUPERVISION"],
-    TAKE_CASE: ["PSICOLOGIA", "TRABAJO_SOCIAL", "SUPERVISION"],
-    WRITE_PROFESSIONAL_NOTES: ["PSICOLOGIA", "TRABAJO_SOCIAL", "SUPERVISION"],
-    CREATE_REFERRAL: ["PSICOLOGIA", "TRABAJO_SOCIAL", "ORIENTACION", "SUPERVISION"],
-    VIEW_AGGREGATED_REPORTS: ["PSICOLOGIA", "TRABAJO_SOCIAL", "SUPERVISION"],
-    MANAGE_DIRECTORY: ["SUPERVISION"],
-    VIEW_AUDIT_LOG: ["SUPERVISION"],
+    VIEW_ALERTS: ["psicologo", "trabajador_social", "orientador", "supervisor"],
+    VIEW_CASE_SUMMARY: ["psicologo", "trabajador_social", "orientador", "supervisor"],
+    VIEW_PROFESSIONAL_NOTES: ["psicologo", "trabajador_social", "supervisor"],
+    TAKE_CASE: ["psicologo", "trabajador_social", "supervisor"],
+    WRITE_PROFESSIONAL_NOTES: ["psicologo", "trabajador_social", "supervisor"],
+    CREATE_REFERRAL: ["psicologo", "trabajador_social", "orientador", "supervisor"],
+    VIEW_AGGREGATED_REPORTS: ["psicologo", "trabajador_social", "supervisor"],
+    MANAGE_DIRECTORY: ["supervisor"],
+    VIEW_AUDIT_LOG: ["supervisor"],
   };
 
   assert.deepEqual({ ...AUTHORIZATION_MATRIX }, expected);
@@ -198,7 +198,7 @@ test("criterio 4b: la matriz se prueba por tabla completa", () => {
 // Criterio 5 — aislamiento entre instituciones
 // ---------------------------------------------------------------------------
 test("criterio 5: un profesional no puede tocar un recurso de otra institución", () => {
-  const session = makeSession({ institutionId: "ong-1", role: "PSICOLOGIA" });
+  const session = makeSession({ institutionId: "ong-1", role: "psicologo" });
 
   const sameInstitution = authorize(session, "VIEW_CASE_SUMMARY", {
     nowEpochMillis: START,
@@ -215,8 +215,8 @@ test("criterio 5: un profesional no puede tocar un recurso de otra institución"
 });
 
 test("criterio 5b: el aislamiento se comprueba ANTES que el rol", () => {
-  // SUPERVISION puede todo… salvo salir de su institución.
-  const session = makeSession({ institutionId: "ong-1", role: "SUPERVISION" });
+  // El rol supervisor puede todo… salvo salir de su institución.
+  const session = makeSession({ institutionId: "ong-1", role: "supervisor" });
   const decision = authorize(session, "VIEW_CASE_SUMMARY", {
     nowEpochMillis: START,
     resource: { institutionId: "ong-2" },
@@ -293,7 +293,7 @@ test("criterio 6d: la sesión del portal siempre tiene caducidad (REVISION-C §5
   // Y no existe forma de crear una sesión sin caducidad.
   const immortal = createSession({
     responderId: "x",
-    role: "SUPERVISION",
+    role: "supervisor",
     institutionId: "ong-1",
     isDemo: false,
     nowEpochMillis: START,
@@ -306,7 +306,7 @@ test("criterio 6d: la sesión del portal siempre tiene caducidad (REVISION-C §5
 // Criterio 7 — el modo demo no escribe
 // ---------------------------------------------------------------------------
 test("criterio 7: una sesión demo no puede ejecutar acciones de escritura", () => {
-  const demo = makeSession({ isDemo: true, role: "SUPERVISION" });
+  const demo = makeSession({ isDemo: true, role: "supervisor" });
 
   for (const action of WRITE_ACTIONS) {
     const decision = authorize(demo, action, { nowEpochMillis: START });
@@ -346,7 +346,7 @@ test("criterio 8b: los rechazos de autorización se auditan, las acciones correc
   const audit = new InMemoryAuthAuditSink();
   const service = new AuthService({ port, audit, clock: makeClock().clock });
 
-  const orientation = makeSession({ role: "ORIENTACION" });
+  const orientation = makeSession({ role: "orientador" });
   service.guard(orientation, "VIEW_ALERTS");
   assert.equal(audit.count(), 0, "una acción permitida no genera ruido");
 
@@ -381,7 +381,7 @@ test("criterio 9b: un rechazo es un valor, no una excepción", () => {
   // `authorize` nunca lanza: el llamante está obligado a mirar el resultado.
   assert.doesNotThrow(() => authorize(null, "VIEW_ALERTS", { nowEpochMillis: START }));
   assert.doesNotThrow(() =>
-    authorize(makeSession({ role: "ORIENTACION" }), "MANAGE_DIRECTORY", { nowEpochMillis: START }),
+    authorize(makeSession({ role: "orientador" }), "MANAGE_DIRECTORY", { nowEpochMillis: START }),
   );
 });
 
@@ -412,7 +412,7 @@ test("criterio 10: la sesión profesional es independiente del token de la API J
 // Casos límite
 // ---------------------------------------------------------------------------
 test("una sesión sin responderId no es válida para la matriz", () => {
-  const session = makeSession({ role: "SUPERVISION" });
+  const session = makeSession({ role: "supervisor" });
   // El rol manda: si el rol no está en la matriz, se rechaza.
   const bogus = { ...session, role: "ADMIN" as ProfessionalRole };
   const decision = authorize(bogus, "VIEW_ALERTS", { nowEpochMillis: START });

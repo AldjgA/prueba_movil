@@ -34,8 +34,8 @@ function profile(overrides: Partial<ResponderProfile> & { id: string }): Respond
   return {
     kind: "PSYCHOLOGIST",
     displayName: `Perfil ${overrides.id}`,
-    role: "PSICOLOGIA",
-    specialties: ["TRAUMA"],
+    role: "psicologo",
+    specialties: ["trauma"],
     ageBandsServed: ["15-16"],
     languages: ["ES"],
     zone: "CENTRO",
@@ -167,9 +167,9 @@ test("criterio 3d: un caso MEDIO fuera de horario no exige escalado", () => {
 test("criterio 4: la misma entrada y los mismos pesos dan la misma propuesta", () => {
   const engine = makeEngine(
     [
-      profile({ id: "a", specialties: ["BULLYING"] }),
-      profile({ id: "b", specialties: ["GRIEF"] }),
-      profile({ id: "c", specialties: ["FAMILY"] }),
+      profile({ id: "a", specialties: ["bullying"] }),
+      profile({ id: "b", specialties: ["duelo"] }),
+      profile({ id: "c", specialties: ["familia"] }),
     ],
     { a: 2, b: 1, c: 1 },
   );
@@ -182,12 +182,12 @@ test("criterio 4: la misma entrada y los mismos pesos dan la misma propuesta", (
 
 test("criterio 4b: el orden de los candidatos no depende del orden de siembra", () => {
   const engineA = makeEngine([
-    profile({ id: "a", specialties: ["GRIEF"] }),
-    profile({ id: "b", specialties: ["BULLYING"] }),
+    profile({ id: "a", specialties: ["duelo"] }),
+    profile({ id: "b", specialties: ["bullying"] }),
   ]);
   const engineB = makeEngine([
-    profile({ id: "b", specialties: ["BULLYING"] }),
-    profile({ id: "a", specialties: ["GRIEF"] }),
+    profile({ id: "b", specialties: ["bullying"] }),
+    profile({ id: "a", specialties: ["duelo"] }),
   ]);
 
   const a = engineA.propose(context({ category: "MEDIO" }));
@@ -203,10 +203,10 @@ test("criterio 5: un respondedor con 3× la mediana de carga nunca es el primero
   const engine = makeEngine(
     [
       // El mejor emparejamiento posible… pero desbordado.
-      profile({ id: "sobrecargado", specialties: ["BULLYING"], ageBandsServed: ["15-16"] }),
+      profile({ id: "sobrecargado", specialties: ["bullying"], ageBandsServed: ["15-16"] }),
       // Peor emparejamiento, pero libre.
-      profile({ id: "libre-1", specialties: ["GRIEF"], ageBandsServed: ["15-16"] }),
-      profile({ id: "libre-2", specialties: ["FAMILY"], ageBandsServed: ["13-14"] }),
+      profile({ id: "libre-1", specialties: ["duelo"], ageBandsServed: ["15-16"] }),
+      profile({ id: "libre-2", specialties: ["familia"], ageBandsServed: ["13-14"] }),
     ],
     // mediana = 1 → el umbral "muy alta" es 2 → 6 cae en la peor banda
     { sobrecargado: 6, "libre-1": 1, "libre-2": 1 },
@@ -224,8 +224,8 @@ test("criterio 5: un respondedor con 3× la mediana de carga nunca es el primero
 test("criterio 5b: con cargas parejas decide la puntuación", () => {
   const engine = makeEngine(
     [
-      profile({ id: "bueno", specialties: ["BULLYING"], ageBandsServed: ["15-16"] }),
-      profile({ id: "regular", specialties: ["GRIEF"], ageBandsServed: ["13-14"] }),
+      profile({ id: "bueno", specialties: ["bullying"], ageBandsServed: ["15-16"] }),
+      profile({ id: "regular", specialties: ["duelo"], ageBandsServed: ["13-14"] }),
     ],
     { bueno: 1, regular: 1 },
   );
@@ -267,7 +267,7 @@ test("criterio 6: toda propuesta lleva engineVersion, weightsVersion y catalogVe
 // ---------------------------------------------------------------------------
 test("criterio 7: todos los motivos y contrapartidas salen del catálogo", () => {
   const engine = makeEngine(
-    [profile({ id: "a", specialties: ["BULLYING"], isFictional: true }), profile({ id: "b" })],
+    [profile({ id: "a", specialties: ["bullying"], isFictional: true }), profile({ id: "b" })],
     { a: 3, b: 1 },
     { a: 4, b: 0 },
   );
@@ -318,8 +318,8 @@ test("criterio 8: la propuesta no tiene ningún campo de asignación", () => {
 // ---------------------------------------------------------------------------
 test("el tipo de situación se traduce a especialidad", () => {
   const engine = makeEngine([
-    profile({ id: "trauma", specialties: ["TRAUMA"] }),
-    profile({ id: "duelo", specialties: ["GRIEF"] }),
+    profile({ id: "trauma", specialties: ["trauma"] }),
+    profile({ id: "duelo", specialties: ["duelo"] }),
   ]);
 
   const violencia = engine.propose(
@@ -344,7 +344,7 @@ test("el tipo de situación se traduce a especialidad", () => {
 });
 
 test("OTHER no mapea a ninguna especialidad: no se inventa un emparejamiento", () => {
-  const engine = makeEngine([profile({ id: "a", specialties: ["TRAUMA"] })]);
+  const engine = makeEngine([profile({ id: "a", specialties: ["trauma"] })]);
   const proposal = engine.propose(
     context({
       category: "MEDIO",
@@ -359,7 +359,7 @@ test("OTHER no mapea a ninguna especialidad: no se inventa un emparejamiento", (
 });
 
 test("sin situación declarada no se puntúa la especialidad", () => {
-  const engine = makeEngine([profile({ id: "a", specialties: ["TRAUMA"] })]);
+  const engine = makeEngine([profile({ id: "a", specialties: ["trauma"] })]);
   const proposal = engine.propose(
     context({ category: "MEDIO", features: makeFeatures({ situation: null }) }),
   );
@@ -397,8 +397,8 @@ test("idioma y zona sí puntúan cuando el caso los declara", () => {
 // ---------------------------------------------------------------------------
 test("cambiar los pesos cambia la propuesta (son configuración, no constantes)", () => {
   const profiles = [
-    profile({ id: "especialista", specialties: ["BULLYING"], ageBandsServed: ["13-14"] }),
-    profile({ id: "generalista", specialties: ["GRIEF"], ageBandsServed: ["15-16"] }),
+    profile({ id: "especialista", specialties: ["bullying"], ageBandsServed: ["13-14"] }),
+    profile({ id: "generalista", specialties: ["duelo"], ageBandsServed: ["15-16"] }),
   ];
 
   const conEspecialidad = new RoutingEngine({

@@ -28,8 +28,8 @@ const PSY: ResponderProfile = {
   id: "psy-1",
   kind: "PSYCHOLOGIST",
   displayName: "Ana López",
-  role: "PSICOLOGIA",
-  specialties: ["BULLYING"],
+  role: "psicologo",
+  specialties: ["bullying"],
   ageBandsServed: ["15-16"],
   languages: ["ES"],
   zone: "CENTRO",
@@ -383,12 +383,13 @@ test("criterio 8: un caso CERRADO no vuelve a estados anteriores", () => {
 // ---------------------------------------------------------------------------
 // Criterio 9 — la proyección no filtra nada interno
 // ---------------------------------------------------------------------------
-test("criterio 9: la proyección al joven tiene exactamente ocho campos", () => {
+test("criterio 9: la proyección al joven tiene exactamente NUEVE campos", () => {
   const { queue } = makeQueue();
   toAccepted(queue);
 
   const view = queue.projectForYouth("CASE-1");
   assert.notEqual(view, null);
+  // Nueve desde que K5 añadió `fueraDeHorario` (PR-003 §5).
   assert.deepEqual(Object.keys(view as object).sort(), [
     "actualizadoEn",
     "canalContacto",
@@ -396,9 +397,22 @@ test("criterio 9: la proyección al joven tiene exactamente ocho campos", () => 
     "categoria",
     "contratoVersion",
     "estado",
+    "fueraDeHorario",
     "mensajesNoLeidos",
     "psicologo",
   ]);
+});
+
+test("criterio 9c: fueraDeHorario se propaga tal cual desde la API (K5)", () => {
+  const { queue } = makeQueue();
+  toAccepted(queue);
+
+  assert.equal(queue.projectForYouth("CASE-1")?.fueraDeHorario, false);
+  assert.equal(
+    queue.projectForYouth("CASE-1", { outOfHours: true })?.fueraDeHorario,
+    true,
+    "el APK no debe inferir el horario: lo dice el backend",
+  );
 });
 
 test("criterio 9b: la proyección no expone estado interno, carga ni notas", () => {

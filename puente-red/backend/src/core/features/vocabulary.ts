@@ -35,15 +35,19 @@ export type Domain = (typeof DOMAINS)[number];
 
 // ---------------------------------------------------------------------------
 // Señales observables — las cuatro prioritarias del resumen (Sarfo 2026) están marcadas
+//
+// Forma canónica: `SNAKE_CASE` en MAYÚSCULAS, fijada por `PR-003` §4.1 (hallazgo K1 de B).
+// El APK **debe** emitir estas mismas claves; la correspondencia desde lo que emitía
+// (`sleep`, `isolation`, …) está en `PR-003` §4.1.
 // ---------------------------------------------------------------------------
 export const SIGNAL_TAGS = [
-  "SLEEP", //        resumen §4.1: sueño alterado por ansiedad — prioritario
-  "ISOLATION", //    resumen §4.1: aislamiento — prioritario
-  "SCHOOL_IMPACT", // deterioro escolar (PR-001 §4.2, amarillo)
-  "SUBSTANCE_USE", // resumen §4.1: consumo de alcohol — prioritario
-  "SELF_HARM", //    PR-001 §4.3 (rojo)
-  "ANXIETY",
-  "VIOLENCE_PHYSICAL", // resumen §4.1: violencia física — prioritario
+  "SLEEP", //             resumen §4.1: sueño alterado por ansiedad — prioritario
+  "ANXIETY", //           resumen §4.1: ansiedad — prioritario
+  "ISOLATION", //         resumen §4.1: aislamiento — prioritario
+  "SCHOOL_IMPACT", //     deterioro escolar (PR-001 §4.2, amarillo)
+  "SUBSTANCE_USE", //     resumen §4.1: consumo de alcohol — prioritario
+  "SELF_HARM", //         PR-001 §4.3 (rojo)
+  "PHYSICAL_VIOLENCE", // resumen §4.1: violencia física — prioritario
 ] as const;
 export type SignalTag = (typeof SIGNAL_TAGS)[number];
 

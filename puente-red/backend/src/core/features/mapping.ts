@@ -28,17 +28,42 @@ export interface FeatureHint {
 
 /** Claves de catálogo → características. Sinónimos en español e inglés. */
 export const KEY_TO_FEATURES: Readonly<Record<string, readonly FeatureHint[]>> = {
+  // === Catálogo CANÓNICO de `motivo` (PR-003 §4.2, hallazgo K2 de B) ==========
+  // Estas son las claves que el APK **debe** emitir. Provisional y versionado con
+  // `rulesetVersion`: provisional significa lista **cerrada**, no indefinida.
+  ideacion_activa: [{ kind: "signal", value: "SELF_HARM" }],
+  plan_estructurado: [{ kind: "signal", value: "SELF_HARM" }],
+  intento_reciente: [{ kind: "signal", value: "SELF_HARM" }],
+  autolesion: [{ kind: "signal", value: "SELF_HARM" }],
+  abuso: [
+    { kind: "situation", value: "VIOLENCE" },
+    { kind: "signal", value: "PHYSICAL_VIOLENCE" },
+  ],
+  peligro_inmediato: [
+    { kind: "situation", value: "VIOLENCE" },
+    { kind: "signal", value: "PHYSICAL_VIOLENCE" },
+  ],
+  violencia_no_inmediata: [
+    { kind: "situation", value: "VIOLENCE" },
+    { kind: "signal", value: "PHYSICAL_VIOLENCE" },
+  ],
+  deterioro_escolar: [{ kind: "signal", value: "SCHOOL_IMPACT" }],
+  aislamiento_persistente: [{ kind: "signal", value: "ISOLATION" }],
+
+  // === Sinónimos (tolerancia a variantes) ====================================
+  // Se conservan por defensa: si llega una variante no canónica, no se pierde la señal.
+  //
   // --- Tipo de situación -----------------------------------------------------
   bullying: [{ kind: "situation", value: "BULLYING" }],
   acoso: [{ kind: "situation", value: "BULLYING" }],
   burla: [{ kind: "situation", value: "BULLYING" }],
   violencia: [
     { kind: "situation", value: "VIOLENCE" },
-    { kind: "signal", value: "VIOLENCE_PHYSICAL" },
+    { kind: "signal", value: "PHYSICAL_VIOLENCE" },
   ],
   violencia_fisica: [
     { kind: "situation", value: "VIOLENCE" },
-    { kind: "signal", value: "VIOLENCE_PHYSICAL" },
+    { kind: "signal", value: "PHYSICAL_VIOLENCE" },
   ],
   duelo: [{ kind: "situation", value: "GRIEF" }],
   perdida: [{ kind: "situation", value: "GRIEF" }],

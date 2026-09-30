@@ -157,6 +157,42 @@ test("criterio 3c: sin nota no hay banda de edad (nunca se inventa)", async () =
 });
 
 // ---------------------------------------------------------------------------
+// K4 — el chequeo contextual se consume (hallazgo de B)
+// ---------------------------------------------------------------------------
+test("K4: las respuestas del chequeo aportan características DECLARED", async () => {
+  const extractor = new FeatureExtractor({ clock: FIXED_CLOCK });
+  const result = await extractor.extract(
+    makeReport({
+      motivo: [],
+      respuestasChequeo: [
+        { clave: "donde_ocurre", opcion: "colegio" },
+        { clave: "con_quien_puedes_contar", opcion: "amiga_cercana" },
+      ],
+    }),
+  );
+
+  assert.deepEqual(result.domains.map((f) => f.value), ["SCHOOL"]);
+  assert.deepEqual(result.protectiveFactors.map((f) => f.value), ["FRIENDSHIP"]);
+  // El joven lo declaró: procedencia DECLARED, banda HIGH.
+  assert.equal(result.domains[0]?.provenance, "DECLARED");
+  assert.equal(result.protectiveFactors[0]?.confidenceBand, "HIGH");
+});
+
+test("K4b: sin respuestas del chequeo no cambia nada (campo opcional)", async () => {
+  const extractor = new FeatureExtractor({ clock: FIXED_CLOCK });
+  const sinRespuestas = await extractor.extract(makeReport({ motivo: ["aislamiento"] }));
+  assert.deepEqual(sinRespuestas.signals.map((f) => f.value), ["ISOLATION"]);
+});
+
+test("K2: el catálogo canónico de `motivo` (PR-003 §4.2) se reconoce", async () => {
+  const extractor = new FeatureExtractor({ clock: FIXED_CLOCK });
+  const result = await extractor.extract(
+    makeReport({ motivo: ["aislamiento_persistente", "deterioro_escolar"] }),
+  );
+  assert.deepEqual(result.signals.map((f) => f.value), ["ISOLATION", "SCHOOL_IMPACT"]);
+});
+
+// ---------------------------------------------------------------------------
 // Criterio 4 — procedencia declarada vs extraída
 // ---------------------------------------------------------------------------
 test("criterio 4: se distingue lo DECLARED de lo EXTRACTED", async () => {
@@ -277,7 +313,8 @@ test("criterio 7c: el orden de salida NO depende del orden que devuelve el model
   const b = await second.extract(report);
 
   assert.deepEqual(a.signals, b.signals);
-  assert.deepEqual(a.signals.map((f) => f.value), ["SLEEP", "ISOLATION", "ANXIETY"]);
+  // Orden por vocabulario: SLEEP · ANXIETY · ISOLATION (PR-003 §4.1).
+  assert.deepEqual(a.signals.map((f) => f.value), ["SLEEP", "ANXIETY", "ISOLATION"]);
 });
 
 // ---------------------------------------------------------------------------

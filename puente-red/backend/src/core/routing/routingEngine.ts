@@ -45,14 +45,19 @@ export const SYSTEM_CLOCK: Clock = { nowEpochMillis: () => Date.now() };
 
 /**
  * Tipo de situación → especialidad del respondedor.
+ *
+ * `SituationType` es vocabulario **propio de `PR-006`** (estilo de código, mayúsculas);
+ * `Specialty` es **valor de contrato** (`PR-003` §6.1, minúsculas). La tabla es la frontera
+ * entre los dos, y por eso existe.
+ *
  * `OTHER` no mapea a ninguna: no se inventa una especialidad para lo que no se entiende.
  */
 const SITUATION_TO_SPECIALTY: Partial<Record<SituationType, Specialty>> = {
-  BULLYING: "BULLYING",
-  VIOLENCE: "TRAUMA",
-  GRIEF: "GRIEF",
-  FAMILY_CONFLICT: "FAMILY",
-  SUBSTANCE: "SUBSTANCE",
+  BULLYING: "bullying",
+  VIOLENCE: "trauma",
+  GRIEF: "duelo",
+  FAMILY_CONFLICT: "familia",
+  SUBSTANCE: "adicciones",
 };
 
 export interface RoutingEngineDeps {

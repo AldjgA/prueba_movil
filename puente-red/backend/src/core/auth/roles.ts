@@ -10,15 +10,20 @@
  * suelta en un endpoint se olvide.
  *
  * Los cuatro roles son los del brief §20. La matriz es una **propuesta** a ratificar por la
- * ONG: `ORIENTACION` queda restringida a lo no clínico por prudencia, y eso es una decisión
+ * ONG: `orientador` queda restringida a lo no clínico por prudencia, y eso es una decisión
  * de producto, no técnica.
+ *
+ * ⚠️ **Forma canónica de `PR-003` §6.1** (hallazgo **K6** de B): claves **cerradas en
+ * minúsculas**, las mismas que el Contrato C entrega al APK. Antes había dos vocabularios
+ * (`PSICOLOGIA`, una disciplina, frente a `psicologo`, un rol) y el APK habría mostrado claves
+ * de enum a un adolescente. El **copy visible** vive en el APK (`strings.xml`).
  */
 
 export const PROFESSIONAL_ROLES = [
-  "PSICOLOGIA",
-  "TRABAJO_SOCIAL",
-  "ORIENTACION",
-  "SUPERVISION",
+  "psicologo",
+  "trabajador_social",
+  "orientador",
+  "supervisor",
 ] as const;
 
 export type ProfessionalRole = (typeof PROFESSIONAL_ROLES)[number];
@@ -55,15 +60,15 @@ export const WRITE_ACTIONS: readonly PortalAction[] = [
  * explícita es auditable y no sorprende a nadie.
  */
 export const AUTHORIZATION_MATRIX: Readonly<Record<PortalAction, readonly ProfessionalRole[]>> = {
-  VIEW_ALERTS: ["PSICOLOGIA", "TRABAJO_SOCIAL", "ORIENTACION", "SUPERVISION"],
-  VIEW_CASE_SUMMARY: ["PSICOLOGIA", "TRABAJO_SOCIAL", "ORIENTACION", "SUPERVISION"],
-  VIEW_PROFESSIONAL_NOTES: ["PSICOLOGIA", "TRABAJO_SOCIAL", "SUPERVISION"],
-  TAKE_CASE: ["PSICOLOGIA", "TRABAJO_SOCIAL", "SUPERVISION"],
-  WRITE_PROFESSIONAL_NOTES: ["PSICOLOGIA", "TRABAJO_SOCIAL", "SUPERVISION"],
-  CREATE_REFERRAL: ["PSICOLOGIA", "TRABAJO_SOCIAL", "ORIENTACION", "SUPERVISION"],
-  VIEW_AGGREGATED_REPORTS: ["PSICOLOGIA", "TRABAJO_SOCIAL", "SUPERVISION"],
-  MANAGE_DIRECTORY: ["SUPERVISION"],
-  VIEW_AUDIT_LOG: ["SUPERVISION"],
+  VIEW_ALERTS: ["psicologo", "trabajador_social", "orientador", "supervisor"],
+  VIEW_CASE_SUMMARY: ["psicologo", "trabajador_social", "orientador", "supervisor"],
+  VIEW_PROFESSIONAL_NOTES: ["psicologo", "trabajador_social", "supervisor"],
+  TAKE_CASE: ["psicologo", "trabajador_social", "supervisor"],
+  WRITE_PROFESSIONAL_NOTES: ["psicologo", "trabajador_social", "supervisor"],
+  CREATE_REFERRAL: ["psicologo", "trabajador_social", "orientador", "supervisor"],
+  VIEW_AGGREGATED_REPORTS: ["psicologo", "trabajador_social", "supervisor"],
+  MANAGE_DIRECTORY: ["supervisor"],
+  VIEW_AUDIT_LOG: ["supervisor"],
 };
 
 export function isProfessionalRole(value: string): value is ProfessionalRole {

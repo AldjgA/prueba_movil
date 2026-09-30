@@ -296,11 +296,17 @@ export class CaseQueue {
   /**
    * **Contrato B** (`PR-003` §5).
    *
-   * Ocho campos exactos. `psicologo` aparece desde `ACEPTADO` (R5); `canalContacto`, solo desde
-   * `CONTACTO_HABILITADO` (R1). El estado interno, la carga y las notas internas **no tienen
+   * Nueve campos exactos. `psicologo` aparece desde `ACEPTADO` (R5); `canalContacto`, solo desde
+   * que el psicólogo lo abre (R1). El estado interno, la carga y las notas internas **no tienen
    * dónde ir** (criterio 9).
+   *
+   * `outOfHours` se recibe del exterior (hallazgo **K5** de B): el horario es una regla del
+   * equipo y el APK **no debe inferirla**. Se propaga tal cual en `fueraDeHorario`.
    */
-  projectForYouth(caseToken: string): YouthVisibleCaseStatus | null {
+  projectForYouth(
+    caseToken: string,
+    options: { readonly outOfHours?: boolean } = {},
+  ): YouthVisibleCaseStatus | null {
     const ticket = this.#store.get(caseToken);
     if (ticket === null) return null;
 
@@ -323,6 +329,7 @@ export class CaseQueue {
       actualizadoEn: new Date(ticket.updatedAtEpochMillis).toISOString(),
       psicologo,
       canalContacto: showsChannel ? "IN_APP" : null,
+      fueraDeHorario: options.outOfHours === true,
       mensajesNoLeidos: 0,
     };
   }

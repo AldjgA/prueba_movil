@@ -83,23 +83,6 @@ export const ZERO_LOAD_SOURCE: LoadSource = {
   }),
 };
 
-/** Rol interno → valor del **Contrato C** (`PR-003` §6.1). */
-const PUBLIC_ROLE: Readonly<Record<ProfessionalRole, string>> = {
-  PSICOLOGIA: "psicologo",
-  TRABAJO_SOCIAL: "trabajador_social",
-  ORIENTACION: "orientador",
-  SUPERVISION: "supervisor",
-};
-
-/** Especialidad interna → etiqueta pública. */
-const PUBLIC_SPECIALTY: Readonly<Record<Specialty, string>> = {
-  TRAUMA: "trauma",
-  GRIEF: "duelo",
-  BULLYING: "bullying",
-  FAMILY: "familia",
-  SUBSTANCE: "adicciones",
-};
-
 /**
  * Proyección por lista blanca.
  *
@@ -233,16 +216,19 @@ export class Directory {
    *
    * Devuelve exactamente tres campos. Ni el `id`, ni la `zone`, ni la `maxCategory`, ni la
    * `kind` salen de aquí.
+   *
+   * Los valores de `rol` y `especialidad` son los **canónicos de `PR-003` §6.1** (minúsculas):
+   * **no hay tabla de conversión** porque el vocabulario interno **es** el del contrato
+   * (hallazgo **K6** de B).
    */
   publicView(responderId: ResponderId): PublicProfessional | null {
     const profile = this.#profiles.get(responderId);
     if (profile === undefined) return null;
 
-    const primarySpecialty = profile.specialties[0];
     return {
       nombreVisible: profile.displayName,
-      rol: PUBLIC_ROLE[profile.role],
-      especialidad: primarySpecialty === undefined ? "" : PUBLIC_SPECIALTY[primarySpecialty],
+      rol: profile.role,
+      especialidad: profile.specialties[0] ?? "",
     };
   }
 

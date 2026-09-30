@@ -24,7 +24,8 @@ autorizado, con vocabulario cerrado.
 ## 2. Alcance
 
 ### Dentro
-- Extraer del `ResumenAutorizado` un `CaseFeatureSet` con vocabulario **cerrado**:
+- Extraer del `ResumenAutorizado` **y de las `respuestasChequeo`** un `CaseFeatureSet` con
+  vocabulario **cerrado**:
   - **tipo de situación** (bullying, violencia, duelo, conflicto familiar, adicciones, otro);
   - **ámbito** (colegio, casa, comunidad, digital);
   - **señales** (sueño, aislamiento, impacto escolar, consumo, autolesión, ansiedad);
@@ -40,6 +41,18 @@ autorizado, con vocabulario cerrado.
 - No decidir la derivación.
 - No extraer nada del chat no autorizado. Solo del `ResumenAutorizado`.
 - No inferir características no declaradas (p. ej. "probable depresión").
+
+> **Corrección por el hallazgo K4 de B.** `respuestasChequeo` viajaba en el Contrato A
+> (`PR-003` §4) y **ningún consumidor lo leía**: era superficie de exposición sin contrapartida.
+> Se consume aquí, y con razón — son **claves de catálogo declaradas por el joven**, la fuente
+> estructurada más limpia del sistema (brief §9). Procedencia `DECLARED`.
+>
+> **Corrección por el hallazgo K1 de B.** Las claves de señal son las **canónicas de
+> `PR-003` §4.1** (`SNAKE_CASE` en mayúsculas). `frequency` se **retira**: era una *dimensión de
+> análisis* (brief §10), no un tipo de señal.
+>
+> **Corrección por el hallazgo K2 de B.** El catálogo de `motivo` es el de **`PR-003` §4.2**
+> (provisional y versionado con `rulesetVersion`), no una lista por definir.
 
 ---
 

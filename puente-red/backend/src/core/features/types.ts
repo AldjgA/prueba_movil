@@ -25,6 +25,18 @@ import type {
 export interface ReportForExtraction {
   readonly caseToken: string;
   readonly motivo: readonly string[];
+  /**
+   * Respuestas del chequeo contextual (Contrato A, `PR-003` §4).
+   *
+   * **Añadido por el hallazgo K4 de B.** El campo viajaba en el contrato y **nadie lo
+   * consumía** — superficie de exposición sin contrapartida. Y es la fuente estructurada más
+   * limpia que tiene el sistema: son claves de catálogo, sin texto libre, y **el joven las
+   * declaró** (brief §9).
+   */
+  readonly respuestasChequeo?: readonly {
+    readonly clave: string;
+    readonly opcion: string;
+  }[];
   /** Alcance autorizado. `scope` es CERRADO. */
   readonly resumenAutorizado: {
     readonly scope: readonly string[];

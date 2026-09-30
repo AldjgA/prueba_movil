@@ -80,8 +80,12 @@ export class FeatureExtractor {
 
     // ------------------------------------------------------------------
     // 1. Extracción base, determinista.
+    //
+    // Entradas: `motivo` (catálogo canónico de PR-003 §4.2) **y** las respuestas del
+    // chequeo contextual (hallazgo K4 de B). Las dos son claves de catálogo declaradas
+    // por el joven, así que su procedencia es `DECLARED`.
     // ------------------------------------------------------------------
-    const hints = hintsForKeys(report.motivo);
+    const hints = hintsForKeys([...report.motivo, ...checkAnswerKeys(report)]);
 
     const situation = firstSituation(hints);
     const domains = collect(hints, "domain", isDomain);
@@ -164,6 +168,25 @@ export class FeatureExtractor {
 // ---------------------------------------------------------------------------
 
 type Hint = { readonly kind: string; readonly value: string };
+
+/**
+ * Claves que aportan las respuestas del chequeo contextual (K4).
+ *
+ * Se prueban **dos formas** por respuesta: la opción sola (`colegio`) y la combinación
+ * pregunta+opción (`donde_ocurre_colegio`). La tabla de `mapping.ts` tiene entradas para las
+ * dos, y así el vocabulario del chequeo puede evolucionar sin tocar el extractor.
+ */
+function checkAnswerKeys(report: ReportForExtraction): string[] {
+  const answers = report.respuestasChequeo ?? [];
+  const keys: string[] = [];
+  for (const answer of answers) {
+    if (answer.opcion.trim() !== "") keys.push(answer.opcion);
+    if (answer.clave.trim() !== "" && answer.opcion.trim() !== "") {
+      keys.push(`${answer.clave}_${answer.opcion}`);
+    }
+  }
+  return keys;
+}
 
 function hintsOfKind(hints: readonly Hint[], kind: string): string[] {
   return hints.filter((h) => h.kind === kind).map((h) => h.value);

@@ -33,7 +33,8 @@ una ONG ni una autoridad.
 - **Retención** explícita y política de purga, con reloj inyectable (mismo patrón que
   `RetentionRepository` del APK).
 - **Sin contenido sensible**: un evento nunca guarda texto del chat, notas internas ni el resumen
-  autorizado. Guarda **referencias y metadatos** (`metadataWithoutSensitiveContent` en el APK).
+  autorizado. Guarda **referencias y metadatos** — el mismo criterio que aplica `TASK-017` en el
+  APK (`AdverseEvent` no admite texto libre).
 - **Visor de auditoría** para `SUPERVISION`.
 - **Exportación** para autoridad competente, con marca de quién exportó.
 

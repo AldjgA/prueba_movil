@@ -38,8 +38,8 @@ const BASE: ResponderProfile = {
   id: "r-1",
   kind: "PSYCHOLOGIST",
   displayName: "Profesional de prueba",
-  role: "PSICOLOGIA",
-  specialties: ["TRAUMA"],
+  role: "psicologo",
+  specialties: ["trauma"],
   ageBandsServed: ["15-16"],
   languages: ["ES"],
   zone: "CENTRO",
@@ -159,7 +159,7 @@ test("criterio 4c: el evento de auditoría no contiene datos sensibles", () => {
 
   const serialized = JSON.stringify(audit.events()[0]);
   assert.ok(!serialized.includes("Profesional de prueba"), "no debe guardar el nombre");
-  assert.ok(!serialized.includes("TRAUMA"), "no debe guardar las especialidades");
+  assert.ok(!serialized.includes("trauma"), "no debe guardar las especialidades");
 });
 
 // ---------------------------------------------------------------------------
@@ -285,18 +285,14 @@ test("criterio 8b: publicView no filtra id, zona, tipo ni categoría máxima", (
   }
 });
 
-test("criterio 8c: publicView traduce los cuatro roles del brief §20", () => {
+test("criterio 8c: publicView devuelve el rol y la especialidad CANÓNICOS de PR-003 §6.1", () => {
   const { directory } = makeDirectory();
-  const roles = [
-    ["PSICOLOGIA", "psicologo"],
-    ["TRABAJO_SOCIAL", "trabajador_social"],
-    ["ORIENTACION", "orientador"],
-    ["SUPERVISION", "supervisor"],
-  ] as const;
+  const roles = ["psicologo", "trabajador_social", "orientador", "supervisor"] as const;
 
-  for (const [internal, expected] of roles) {
-    directory.upsert({ ...BASE, id: `r-${internal}`, role: internal });
-    assert.equal(directory.publicView(`r-${internal}`)?.rol, expected);
+  for (const role of roles) {
+    directory.upsert({ ...BASE, id: `r-${role}`, role });
+    // Sin tabla de conversión: el vocabulario interno ES el del contrato (hallazgo K6 de B).
+    assert.equal(directory.publicView(`r-${role}`)?.rol, role);
   }
 });
 
@@ -341,7 +337,7 @@ test("listEligible devuelve siempre el mismo orden (determinista)", () => {
 test("los filtros de emparejamiento acotan la lista", () => {
   const { directory } = seedDirectory();
 
-  const bySpecialty = directory.listEligible({ category: "MEDIO", specialties: ["GRIEF"] });
+  const bySpecialty = directory.listEligible({ category: "MEDIO", specialties: ["duelo"] });
   assert.deepEqual(bySpecialty.map((p) => p.id), ["demo-psicologo-familia"]);
 
   const byZone = directory.listEligible({ category: "MEDIO", zone: "MIRAFLORES" });

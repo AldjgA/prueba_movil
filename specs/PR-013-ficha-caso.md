@@ -29,7 +29,7 @@ Las **7 secciones** del brief §24, en este orden:
 | 2 | **Evolución longitudinal** | `PR-006` + historial de `PR-009` |
 | 3 | **Señales observadas** | `PR-006` (`SignalTag`) |
 | 4 | **Factores protectores** | `PR-006` (`ProtectiveFactor`) |
-| 5 | **Herramientas utilizadas en Puente** | paquete de alerta (TASK-015, de B) |
+| 5 | **Herramientas utilizadas en Puente** | las entradas `Tool` del **`scope` autorizado** del Contrato A |
 | 6 | **Resumen autorizado** | Contrato A (`PR-003` §4), solo el scope consentido |
 | 7 | **Historial de acciones** | `PR-015` (timeline) |
 
@@ -39,6 +39,14 @@ Las **7 secciones** del brief §24, en este orden:
 - Enlace a *"Abrir ficha de acompañamiento"* → `PR-014`.
 - **Bloqueo explícito:** la sección 6 muestra **solo** el scope autorizado; lo no autorizado dice
   *"No autorizado para compartir"*, no se omite en silencio.
+
+> ⚠️ **Corrección por el hallazgo K3 de B.** La sección 5 **no tiene campo propio** en el Contrato A
+> (`PR-003` §4): las herramientas solo pueden llegar **dentro del `scope` autorizado**
+> (`ShareScopeEntry.Tool(key)`) y **solo si el joven las autorizó**.
+>
+> Consecuencia: **la sección 5 estará vacía en la mayoría de los casos**, y eso es correcto. El
+> criterio 3 (*"No autorizado para compartir"*) **aplica explícitamente aquí**. Pedir herramientas
+> fuera del scope sería una ampliación del contrato y rompería `PR-003` §9.1.
 
 ### Fuera
 - **La conversación completa.** Prohibido por guardrail #5 y brief §24.

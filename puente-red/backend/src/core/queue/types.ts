@@ -67,9 +67,9 @@ export interface CaseTicket {
 /**
  * **Contrato B** (`PR-003` §5): lo que el joven ve del caso.
  *
- * Ocho campos, ni uno más. `psicologo` no nulo desde `ACEPTADO` (R5); `canalContacto` no nulo
- * solo desde `CONTACTO_HABILITADO` (R1). Que el joven vea los datos del profesional **no** le
- * da canal.
+ * Nueve campos, ni uno más. `psicologo` no nulo desde `ACEPTADO` (R5); `canalContacto` no nulo
+ * solo desde `CONTACTO_HABILITADO` (R1). Que el joven vea los datos del profesional **no** le da
+ * canal.
  */
 export interface YouthVisibleCaseStatus {
   readonly caseToken: string;
@@ -79,6 +79,14 @@ export interface YouthVisibleCaseStatus {
   readonly actualizadoEn: string; // ISO-8601
   readonly psicologo: PublicProfessional | null;
   readonly canalContacto: string | null;
+  /**
+   * **Añadido el 2026-09-30** (hallazgo **K5** de B, `PR-003` §5).
+   *
+   * Sin este campo, el APK tendría que **inferir el horario del equipo** para ser honesto con
+   * los tiempos (`PR-001` P5 y §9). Eso sería copiar localmente una regla de negocio ajena, y
+   * se desincronizaría el primer día.
+   */
+  readonly fueraDeHorario: boolean;
   readonly mensajesNoLeidos: number;
 }
 

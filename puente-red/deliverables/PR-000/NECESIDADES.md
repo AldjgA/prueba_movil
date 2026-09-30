@@ -103,15 +103,33 @@ ingesta acepta `ROJO`+`AMARILLO`, `sessionToken` sin caducidad, `caseToken` = UL
 
 **Hallazgos F1–F4**: los cuatro son de A (`REVISION-C.md` §6) y **ninguno exige rehacer una spec de C**.
 
-### 9.2 Fase 1 — estado (actualizado 2026-09-30)
+### 9.2 Fase 1 — estado (actualizado 2026-09-30, tras el esqueleto de A)
 
 | # | Pregunta | Estado |
 |---|---|---|
-| 6 | **El backend no existe.** `puente-red/backend/` no tenía módulo. `backend/main` y `shared/**` son de **A** | ⚠️ **abierto**. C creó su parte (`backend/core/package.json` + `classification/`) pero **no puede exponer nada sin el servidor de A**. Detalle en `deliverables/PR-005/NECESIDADES.md` §7.2 |
-| 7 | ⚠️ **Go no está instalado** (solo Node v22.22.2) | ✅ **resuelto**: el dueño confirmó **Node/Bun + Hono** (2026-09-30), que `PR-INFRA` §3 ya permitía. Ventaja: sin toolchain extra y un solo lenguaje con el portal |
-| 8 | ¿Dónde vive el `package.json` del backend? | ⚠️ **abierto**. C creó el suyo en `backend/core/` (su árbol). Falta que A decida **cómo lo consume `main`**: workspace npm, `file:` o ruta relativa |
-| 9 | 🆕 ¿La **guarda de secretos de `TASK-014`** cubrirá `puente-red/backend/core/**`? | ⚠️ abierto — el criterio 9 de `PR-005` depende de esto (hallazgo **F2**) |
-| 10 | 🆕 ¿El **catálogo de `rationaleKeys`** y la **metodología del prompt** de `PR-001` §5–§6 ya existen? | ⚠️ pendiente del clínico. Hoy son `provisional` en `catalog.ts` y `prompt.ts`, derivados solo de lo ya escrito en el repo |
+| 6 | El backend no existía | ✅ **resuelto**: A creó `puente-red/backend/` (Node 22 + Hono) con `src/core/` para C. Mis módulos se movieron allí y las **151 pruebas pasan juntas** |
+| 7 | Runtime | ✅ **resuelto**: Node/Bun + Hono, confirmado por el dueño y materializado por A |
+| 8 | Cómo consume `main` a `@puente-red/core` | ✅ **resuelto**: **un solo paquete** (`puente-red-backend`). Mi `package.json` separado se retiró |
+| 9 | Guarda de secretos sobre `puente-red/**` | ⚠️ **abierto** — `TASK-014` (A), hallazgo **F2** |
+| 10 | Catálogo clínico de `rationaleKeys` | ⚠️ **parcial**: A publicó el catálogo **provisional** de `motivo` (`PR-003` §4.2). El de `rationaleKeys` sigue pendiente |
+| **11** | **Flujo de rechazo** (`PR-009` §7.2): `ASIGNADO` no vuelve a `EN_COLA` | ⚠️ **abierto** — `PR-003` §3.1 no lo define |
+| **12** | **Idioma y zona** en el Contrato A (`PR-008` §7.2) | ⚠️ **abierto** — el Contrato A no los trae; los pesos no puntúan |
+| **13** | **Cliente de Supabase** en `src/shared/**` | ⚠️ **abierto** — sin él no hay persistencia real ni RLS |
+
+### 9.3 Hallazgos de B (`REVISION-C-POR-B.md`) — estado
+
+| # | Hallazgo | Estado |
+|---|---|---|
+| **K1** | Vocabulario de señales no coincidía | ✅ **resuelto por A** (`PR-003` §4.1, forma canónica). **Aplicado por C**: `PHYSICAL_VIOLENCE`, orden de `SIGNAL_TAGS` |
+| **K2** | Catálogo de `motivo` no existía | ✅ **resuelto por A** (`PR-003` §4.2, provisional y versionado). **Aplicado por C** en `mapping.ts` |
+| **K3** | `PR-013` sección 5 sin fuente | ✅ **corregido por C** (spec) |
+| **K4** | `respuestasChequeo` sin consumidor | ✅ **corregido por C**: `PR-006` lo consume (procedencia `DECLARED`) |
+| **K5** | Contrato B sin `fueraDeHorario` | ✅ **resuelto por A**. **Aplicado por C**: la proyección tiene **9 campos** |
+| **K6** | Dos vocabularios para `rol`/`especialidad` | ✅ **resuelto por A** (`PR-003` §6.1). **Aplicado por C**: un solo vocabulario, sin tabla de conversión |
+| **K7** | Directorio con dos dueños | ✅ B corrigió su `TASK-011`; el directorio es de C (`PR-016`) |
+| **K8** | Specs de C desfasadas vs `REVISION-C` | ✅ **corregido por C** antes de esta revisión |
+| **K9** | `PR-018` citaba un campo inexistente | ✅ **corregido por C** (spec) |
+| **K10** | ¿Se ajustó `PR-001` al firmar? | ✅ **resuelto por A**: el dueño confirmó que **no se ajustó** → el fichero tal como está **es** el texto firmado |
 
 ## 10. Lo que C se compromete a NO tocar
 

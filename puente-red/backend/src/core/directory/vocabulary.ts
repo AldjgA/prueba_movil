@@ -42,15 +42,22 @@ export function categoryAtLeast(
 
 // ---------------------------------------------------------------------------
 // Atributos de emparejamiento (PLAN-PUENTE-RED §3.3)
+//
+// ⚠️ **Forma canónica fijada por `PR-003` §6.1** (hallazgo **K6** de B): claves **cerradas en
+// minúsculas**. Antes había dos vocabularios para el mismo campo (`PSICOLOGIA`, una disciplina,
+// frente a `psicologo`, un rol) y el APK habría mostrado claves de enum en mayúsculas a un
+// adolescente. Ahora hay **uno solo** y `publicView` no necesita tabla de conversión.
+//
+// El **copy visible** vive en el APK (`strings.xml`); A publica el catálogo de etiquetas.
 // ---------------------------------------------------------------------------
-export const SPECIALTIES = ["TRAUMA", "GRIEF", "BULLYING", "FAMILY", "SUBSTANCE"] as const;
+export const SPECIALTIES = ["trauma", "duelo", "bullying", "familia", "adicciones"] as const;
 export type Specialty = (typeof SPECIALTIES)[number];
 
 export const PROFESSIONAL_ROLES = [
-  "PSICOLOGIA",
-  "TRABAJO_SOCIAL",
-  "ORIENTACION",
-  "SUPERVISION",
+  "psicologo",
+  "trabajador_social",
+  "orientador",
+  "supervisor",
 ] as const;
 export type ProfessionalRole = (typeof PROFESSIONAL_ROLES)[number];
 
