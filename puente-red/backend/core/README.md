@@ -12,7 +12,7 @@ El núcleo del pipeline de triaje de Puente Red. Aquí viven las tareas `PR-005`
 | Tarea | Carpeta | Estado |
 |---|---|---|
 | `PR-005` Clasificador LLM | `classification/` | ✅ implementado |
-| `PR-006` Extracción de características | `features/` | ⏳ |
+| `PR-006` Extracción de características | `features/` | ✅ implementado |
 | `PR-007` Directorio de profesionales | `directory/` | ⏳ |
 | `PR-008` Motor de derivación | `routing/` | ⏳ |
 | `PR-009` Cola, SLA y trazabilidad | `queue/` | ⏳ |
@@ -30,12 +30,15 @@ directamente (type stripping nativo, estable desde Node 22.18).
 
 ```bash
 cd puente-red/backend/core
-npm test          # 22 pruebas: criterios de aceptación de PR-005
+npm test          # 40 pruebas: PR-005 (22) + PR-006 (18)
 ```
 
 > **Limitación del type stripping:** no se pueden usar `enum`, `namespace` ni *parameter
 > properties*. Por eso los "enums" son uniones de literales + objetos `as const`. Los imports
 > llevan extensión `.ts` explícita.
+>
+> **Nota sobre `node --test`:** en esta versión hay que pasar un **glob**, no un directorio
+> (`node --test "features/**/*.test.ts"`).
 
 ---
 
@@ -74,6 +77,36 @@ de aceptación del profesional (`ACEPTADO`, `PR-003` §3.1).
 
 ---
 
+## `features/` — PR-006, extracción de características
+
+Arquitectura en **dos capas**, y el orden importa:
+
+1. **Extracción base determinista** (`mapping.ts`): una **tabla** de claves de catálogo →
+   vocabulario cerrado. Reproducible y auditable — el clínico puede corregirla sin tocar
+   código de IA.
+2. **Enriquecimiento opcional por LLM** (`extractionPort.ts`): deduce características de la
+   **nota ya redactada**. Si falla o hay timeout, **la extracción base sigue en pie**.
+
+### Decisiones que este módulo hace cumplir
+
+- **Sin texto libre en la salida.** Todo campo es un valor de un vocabulario cerrado o `null`.
+  Es una propiedad del **tipo**, no una promesa de estilo. Un modelo que devuelve prosa ve su
+  texto descartado.
+- **Redacción antes del modelo.** `redactForModel` convierte la edad exacta en **banda**,
+  y elimina institución, teléfono, correo y usuario. La edad exacta nunca llega al proveedor
+  ni al resultado.
+- **Procedencia explícita.** `DECLARED` (el joven lo afirmó) vs `EXTRACTED` (se dedujo).
+  Una característica declarada **no** se degrada al fusionar.
+- **Orden por vocabulario.** La salida **no** depende del orden en que el modelo devolvió las
+  claves; sin eso, no sería reproducible.
+- **Normalización de acentos.** `sueño`, `SUEÑO` y `sueno` son la misma clave.
+
+⚠️ **Provisional:** la tabla de mapeo (`mapping.ts`) y el vocabulario (`vocabulary.ts`) se
+derivan de las dimensiones ya escritas en el repo (brief §9, resumen §4.1). El clínico las
+valida en `PR-001` §5.
+
+---
+
 ## Variables de entorno
 
 La clave **nunca** está en el repositorio ni en la configuración: solo su **nombre**.
@@ -99,6 +132,7 @@ prompts para mejorar productos de Google, lo que no cumple la decisión D3
 | Qué | Dónde |
 |---|---|
 | El **catálogo de `rationaleKeys` definitivo** | `PR-001` §5 (clínico). Hoy es **provisional** |
+| El **vocabulario de características** y su **tabla de mapeo** | `PR-001` §5 (clínico). Hoy son **provisionales** |
 | La **metodología del prompt** | `PR-001` §6 (clínico). Hoy implementa solo lo cerrado |
 | El **esqueleto de `backend/`** (`main`, `shared`, despliegue) | Agente A |
 | La **guarda de secretos para `puente-red/**`** | `TASK-014` (A) — hallazgo F2 |

@@ -135,9 +135,37 @@ como probabilidad clínica, que es lo que el brief §15 prohíbe mostrar.
 
 ## 10. Definition of Done
 
-- [ ] Spec **Aprobada** por otro agente
-- [ ] Compila (`go build ./...`) y pasa lint
-- [ ] Pruebas de los 7 criterios en verde
-- [ ] `NECESIDADES.md` entregado a A y aplicado (si aplica)
-- [ ] Sin secretos ni endpoints hardcodeados
-- [ ] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+- [x] Spec **Aprobada** por otro agente (`REVISION-C.md`)
+- [x] Compila y pasa pruebas — `npm test`: **40/40 en verde** (18 de este módulo)
+- [x] Pruebas de los 7 criterios en verde
+- [ ] `NECESIDADES.md` entregado a A y aplicado — **entregado**
+  (`deliverables/PR-006/NECESIDADES.md`); no añade necesidades nuevas
+- [x] Sin secretos ni endpoints hardcodeados
+- [x] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+
+### Estado de implementación (2026-09-30)
+
+**Implementado** en `puente-red/backend/core/features/` (dueño: C), Node ≥ 22.18, sin
+dependencias ni build step.
+
+Arquitectura en dos capas:
+
+1. **Extracción base determinista** (`mapping.ts`): tabla de claves de catálogo → vocabulario
+   cerrado. Es lo que da el **criterio 7** (determinismo) y hace la extracción **auditable por
+   el clínico** sin tocar código de IA.
+2. **Enriquecimiento opcional por LLM** (`extractionPort.ts`): deduce de la nota **ya
+   redactada**. Un fallo o timeout **no** invalida la extracción base.
+
+Decisiones que hacen verificables los criterios:
+
+- **Criterio 2:** la salida no tiene ningún campo de texto libre — es una propiedad del tipo.
+  Un modelo que devuelve prosa ve su texto descartado (probado).
+- **Criterio 3:** `redactForModel` convierte la edad exacta en **banda** y elimina institución,
+  teléfono, correo y usuario **antes** de que el texto llegue al proveedor (probado
+  interceptando la petición).
+- **Criterio 4:** `DECLARED` vs `EXTRACTED` con bandas de confianza distintas; una
+  característica declarada **no** se degrada al fusionar (probado).
+- **Criterio 7c:** la salida se **reordena por vocabulario**, así que no depende del orden en
+  que el modelo devolvió las claves. *(Esto corrigió un bug real detectado por las pruebas.)*
+
+**Provisional, pendiente del clínico (`PR-001` §5):** el vocabulario y la tabla de mapeo.
