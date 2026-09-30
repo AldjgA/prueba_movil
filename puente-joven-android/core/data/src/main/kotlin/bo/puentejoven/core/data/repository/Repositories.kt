@@ -81,6 +81,35 @@ interface YouthRepository {
      * mañana puede llegar desde `JurisdictionPolicy` de backend sin cambiar la firma.
      */
     suspend fun getRetentionPolicy(): AppResult<RetentionPolicy>
+
+    // -----------------------------------------------------------------------
+    // Multi-perfil (TASK-025): varios jóvenes por instalación, aislados.
+    // -----------------------------------------------------------------------
+
+    /**
+     * Todos los perfiles de la instalación.
+     *
+     * ⚠️ **Producto:** mostrar esta lista en la pantalla de entrada revelaría
+     * *quién usa la app*, que es un activo a proteger (`TASK-021` §5.1). El
+     * desbloqueo debe resolverse con [unlockSessionFor] (alias + PIN), **no**
+     * listando. Este `Flow` es para Ajustes (`TASK-009`), no para el login.
+     */
+    fun observeProfiles(): Flow<List<YouthProfile>>
+
+    /** Cambia el perfil activo. El anterior queda bloqueado. */
+    suspend fun switchProfile(profileId: ProfileId): AppResult<Unit>
+
+    /** Borra un perfil (contenido, PIN y entrada). **No** toca los demás. */
+    suspend fun deleteProfile(profileId: ProfileId): AppResult<Unit>
+
+    /**
+     * Desbloquea el perfil que corresponde a ese **alias + PIN**, sin listar alias.
+     *
+     * Es la vía de la pantalla de entrada en un dispositivo compartido. Si dos
+     * perfiles comparten alias y PIN, se desbloquea el primero creado; el
+     * desambiguador queda pendiente (`TASK-025` §10 Q1).
+     */
+    suspend fun unlockSessionFor(alias: String, pin: String): AppResult<Unit>
 }
 
 /** Contrato de la conversación estructurada (privada y localmente cifrada). */

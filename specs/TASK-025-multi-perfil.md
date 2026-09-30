@@ -1,7 +1,10 @@
 # TASK-025 · Multi-perfil en dispositivo compartido
 
-**Estado:** Borrador · **Autor:** Agente A — Núcleo y contratos · **Revisor:** (pendiente)
+**Estado:** Implementada (2026-09-30) · **Autor:** Agente A — Núcleo y contratos · **Revisor:** (pendiente)
 **Fecha:** 2026-09-30
+**Implementación (nivel de datos):** `:core:data` — `LocalPuenteRepository`, `PuenteLocalStore`, `PersistenceModels`; `YouthRepository` gana `observeProfiles` / `switchProfile` / `deleteProfile` / `unlockSessionFor`.
+**Verificado:** `:core:data:test` → **25 pruebas en verde** (7 nuevas de multi-perfil); `:feature:auth:test`, `:feature:home:test` y `:app:compileDemoDebugKotlin` → `BUILD SUCCESSFUL`.
+**Fuera de esta entrega:** la UI de selección/creación de perfil es de `TASK-009` (B) → se declara en `NECESIDADES.md`.
 **Ola:** 1 · **Depende de:** `TASK-003b`, `TASK-021` · **Bloquea:** el piloto con dispositivos compartidos
 
 ---
@@ -62,12 +65,15 @@ teclea. La identidad sigue siendo el `ProfileId`.
 
 ### 4.2 Aislamiento del contenido
 
-**Un almacén de contenido por perfil**, con el `ProfileId` en el nombre:
-`puente_content_<profileId>.preferences_pb`.
+**Una entrada de contenido por perfil**, con el `ProfileId` (opaco) dentro de la clave del
+almacén.
 
-Ventajas: aislamiento **físico** (no depende de un filtro que alguien pueda olvidar), y
-borrar un perfil = borrar su fichero. Los `ProfileId` son opacos, así que el nombre del fichero
-no filtra nada.
+> **Cambio respecto a la revisión inicial (implementación, 2026-09-30).** Se había propuesto
+> **un fichero por perfil** (`puente_content_<profileId>.preferences_pb`). Se descartó: los
+> `DataStore` creados dinámicamente **no se pueden cerrar ni borrar con seguridad**, y borrar un
+> perfil dejaría el fichero abierto. El aislamiento se garantiza igual porque **la API del
+> almacén obliga a decir de qué perfil** (`readContent(profileId)`): no existe "un filtro que
+> alguien pueda olvidar".
 
 ### 4.3 PIN por perfil
 
@@ -141,7 +147,7 @@ Si finalmente hiciera falta un método nuevo en `YouthRepository`, se **declara*
 
 | # | Pregunta |
 |---|---|
-| **Q1** | Si dos perfiles comparten **alias y PIN**, ¿cómo se desambigua? Opciones: un `iconKey` elegido al crear el perfil; un identificador corto; o aceptar la colisión como caso extremo |
+| **Q1** | Si dos perfiles comparten **alias y PIN**, ¿cómo se desambigua? **Implementado:** se desbloquea el **primero que verifica** (`unlockSessionFor`). El desambiguador real (p. ej. un `iconKey` elegido al crear) queda pendiente |
 | **Q2** | ¿Hay un **límite** de perfiles por instalación? (¿3? ¿5?) |
 | **Q3** | ¿El perfil se puede **eliminar** desde la app o solo desde ajustes? |
 

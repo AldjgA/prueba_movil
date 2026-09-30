@@ -86,7 +86,7 @@ class PersistenceTest {
         requireSuccess(repository.appendYouthMessage(conversationId, YOUTH_TEXT))
         requireSuccess(repository.recordCompletion(DemoFixtures.briefTools.first().key, REFLECTION))
 
-        val snapshot = store.readContent()!!
+        val snapshot = store.readContent(DemoFixtures.DEMO_YOUTH_ID)!!
 
         val storedMessage = snapshot.conversation!!.messages.single().content
         assertNotEquals("El mensaje no puede guardarse en claro", YOUTH_TEXT, storedMessage)
@@ -113,7 +113,10 @@ class PersistenceTest {
         requireSuccess(repository.deleteAllLocalContent())
 
         assertNull("El almacén de sesión debe quedar vacío", store.readSession())
-        assertNull("El almacén de contenido debe quedar vacío", store.readContent())
+        assertNull(
+            "El almacén de contenido debe quedar vacío",
+            store.readContent(DemoFixtures.DEMO_YOUTH_ID),
+        )
     }
 
     @Test
@@ -140,8 +143,9 @@ class PersistenceTest {
     fun `un esquema desconocido no revienta y arranca vacio`() = runTest {
         val store = InMemoryPuenteLocalStore()
         // Snapshot de una versión futura que este código no entiende.
-        store.writeSession(SessionSnapshot(schemaVersion = 999, profile = null))
+        store.writeSession(SessionSnapshot(schemaVersion = 999))
         store.writeContent(
+            "perfil-futuro",
             ContentSnapshot(
                 conversation = ConversationDto(
                     id = "conv-futura",

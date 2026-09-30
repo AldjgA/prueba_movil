@@ -53,9 +53,24 @@ const val PUENTE_SCHEMA_VERSION = 1
 @Serializable
 data class SessionSnapshot(
     val schemaVersion: Int = PUENTE_SCHEMA_VERSION,
-    val profile: ProfileDto? = null,
-    val lastChatAccessEpochMillis: Long? = null,
+    /** Todos los perfiles de la instalación (TASK-025). */
+    val profiles: List<ProfileEntryDto> = emptyList(),
+    /** Perfil activo. `null` si no hay ninguno. */
+    val activeProfileId: String? = null,
+    /** Contador de ids, global a la instalación. */
     val idCounter: Int = 0,
+)
+
+/**
+ * Perfil persistido con su metadata propia.
+ *
+ * El último acceso al chat es **por perfil**: cada uno tiene su propio reloj de
+ * retención (`TASK-003`), no uno compartido con los demás.
+ */
+@Serializable
+data class ProfileEntryDto(
+    val profile: ProfileDto,
+    val lastChatAccessEpochMillis: Long? = null,
 )
 
 @Serializable

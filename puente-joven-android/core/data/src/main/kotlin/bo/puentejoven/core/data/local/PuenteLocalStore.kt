@@ -8,11 +8,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
 
 /**
- * Snapshot persistente del estado local (TASK-003b).
+ * Snapshot persistente del estado local (`TASK-003b`, ampliado en `TASK-025`).
  *
  * Dos almacenes deliberadamente separados:
- * - **sesión**: pequeño y se lee al arrancar; decide si hay perfil sin cargar el contenido.
- * - **contenido**: el grueso, y lo que la retención destruye.
+ * - **sesión**: pequeño y se lee al arrancar; decide si hay perfiles sin cargar contenido.
+ * - **contenido**: el grueso, **aislado por perfil**, y lo que la retención destruye.
  *
  * El contenido guarda **sobres cifrados**, nunca texto en claro del joven.
  */
@@ -22,9 +22,13 @@ interface PuenteLocalStore {
 
     suspend fun writeSession(snapshot: SessionSnapshot)
 
-    suspend fun readContent(): ContentSnapshot?
+    /** Contenido de **un** perfil. No existe forma de leer el de otro. */
+    suspend fun readContent(profileId: String): ContentSnapshot?
 
-    suspend fun writeContent(snapshot: ContentSnapshot)
+    suspend fun writeContent(profileId: String, snapshot: ContentSnapshot)
+
+    /** Borra el contenido de un perfil **sin** tocar los demás. */
+    suspend fun deleteContent(profileId: String)
 
     /** Borra los dos almacenes. No toca el `SecureLocalStore` (eso es del repositorio). */
     suspend fun clearAll()
@@ -37,7 +41,7 @@ interface PuenteLocalStore {
 class InMemoryPuenteLocalStore : PuenteLocalStore {
 
     private var session: SessionSnapshot? = null
-    private var content: ContentSnapshot? = null
+    private val content = mutableMapOf<String, ContentSnapshot>()
 
     override suspend fun readSession(): SessionSnapshot? = session
 
@@ -45,23 +49,33 @@ class InMemoryPuenteLocalStore : PuenteLocalStore {
         session = snapshot
     }
 
-    override suspend fun readContent(): ContentSnapshot? = content
+    override suspend fun readContent(profileId: String): ContentSnapshot? = content[profileId]
 
-    override suspend fun writeContent(snapshot: ContentSnapshot) {
-        content = snapshot
+    override suspend fun writeContent(profileId: String, snapshot: ContentSnapshot) {
+        content[profileId] = snapshot
+    }
+
+    override suspend fun deleteContent(profileId: String) {
+        content.remove(profileId)
     }
 
     override suspend fun clearAll() {
         session = null
-        content = null
+        content.clear()
     }
 }
 
 /**
  * Implementación real sobre **Preferences DataStore**.
  *
- * Cada almacén guarda un snapshot JSON bajo una clave raíz. La escritura reemplaza
- * el snapshot completo: simple y suficiente para la escala del MVP (≤5 usuarios).
+ * El almacén de contenido guarda **una entrada por perfil**, con el `ProfileId`
+ * (opaco) dentro de la clave. El aislamiento lo garantiza la propia API: no hay
+ * forma de leer contenido sin decir de qué perfil, así que no existe "un filtro
+ * que alguien pueda olvidar". Se prefirió esto a un fichero por perfil porque los
+ * `DataStore` dinámicos no se pueden cerrar ni borrar con seguridad.
+ *
+ * La escritura reemplaza el snapshot completo de ese perfil: simple y suficiente
+ * para la escala del MVP (≤5 usuarios).
  */
 class DataStorePuenteLocalStore(
     private val sessionStore: DataStore<Preferences>,
@@ -81,12 +95,18 @@ class DataStorePuenteLocalStore(
         sessionStore.edit { it[KEY_SESSION] = encoded }
     }
 
-    override suspend fun readContent(): ContentSnapshot? =
-        read(contentStore, KEY_CONTENT) { json.decodeFromString(ContentSnapshot.serializer(), it) }
+    override suspend fun readContent(profileId: String): ContentSnapshot? =
+        read(contentStore, contentKey(profileId)) {
+            json.decodeFromString(ContentSnapshot.serializer(), it)
+        }
 
-    override suspend fun writeContent(snapshot: ContentSnapshot) {
+    override suspend fun writeContent(profileId: String, snapshot: ContentSnapshot) {
         val encoded = json.encodeToString(ContentSnapshot.serializer(), snapshot)
-        contentStore.edit { it[KEY_CONTENT] = encoded }
+        contentStore.edit { it[contentKey(profileId)] = encoded }
+    }
+
+    override suspend fun deleteContent(profileId: String) {
+        contentStore.edit { it.remove(contentKey(profileId)) }
     }
 
     override suspend fun clearAll() {
@@ -109,6 +129,9 @@ class DataStorePuenteLocalStore(
 
     companion object {
         val KEY_SESSION = stringPreferencesKey("puente_session_snapshot")
-        val KEY_CONTENT = stringPreferencesKey("puente_content_snapshot")
+
+        /** Clave de contenido **de un perfil**. El `ProfileId` es opaco. */
+        fun contentKey(profileId: String): Preferences.Key<String> =
+            stringPreferencesKey("puente_content_$profileId")
     }
 }

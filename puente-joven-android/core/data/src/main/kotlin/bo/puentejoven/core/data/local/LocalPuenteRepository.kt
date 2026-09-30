@@ -68,6 +68,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -107,14 +108,30 @@ class LocalPuenteRepository @Inject constructor(
     ChatAccessRepository,
     RetentionRepository {
 
+    /** Todos los perfiles de la instalación (`TASK-025`). */
+    private val profilesState =
+        MutableStateFlow<List<YouthProfile>>(listOf(DemoFixtures.youthProfile))
+
+    /** Id del perfil activo. `null` si no hay ninguno. */
+    private val activeProfileIdState = MutableStateFlow<String?>(DemoFixtures.DEMO_YOUTH_ID)
+
+    /** Perfil activo, derivado de [profilesState] + [activeProfileIdState]. */
     private val profileState = MutableStateFlow<YouthProfile?>(DemoFixtures.youthProfile)
+
     private val sessionUnlocked = MutableStateFlow(false)
 
-    /** Derivado del PIN en memoria. Nunca el PIN en claro. */
-    private var pinSecret: PinSecret? = null
+    /**
+     * Último acceso al chat **por perfil**: cada uno tiene su propio reloj de
+     * retención (`TASK-003`). Es un mapa y no un valor único porque el perfil
+     * activo puede cambiar sin perder el de los demás.
+     */
+    private val lastChatAccessByProfile = mutableMapOf<String, Long?>()
 
-    /** Último acceso al chat: base de la política de retención. */
-    private var lastChatAccessEpochMillis: Long? = null
+    private var lastChatAccessEpochMillis: Long?
+        get() = activeProfileIdState.value?.let { lastChatAccessByProfile[it] }
+        set(value) {
+            activeProfileIdState.value?.let { lastChatAccessByProfile[it] = value }
+        }
 
     private val conversationState = MutableStateFlow<Conversation?>(null)
 
@@ -182,37 +199,85 @@ class LocalPuenteRepository @Inject constructor(
             // Esquema que no entendemos: se ignora por completo.
             return
         }
-        session?.let {
-            it.profile?.let { dto -> profileState.value = dto.toDomain() }
-            lastChatAccessEpochMillis = it.lastChatAccessEpochMillis
-            idCounter = it.idCounter
+        if (session == null || session.profiles.isEmpty()) {
+            // Sin perfiles persistidos: se conserva el perfil de demostración con
+            // el que arranca el repositorio (mismo comportamiento que antes).
+            return
         }
 
-        val content = store.readContent() ?: return
-        conversationState.value = content.conversation?.toDomain()
-        responsesState.value = content.responses.map { it.toDomain() }
-        completionsState.value = content.completions.map { it.toDomain() }
-        summariesState.value = content.summaries.associateBy({ it.id }, { it.toDomain() })
-        summaryNotesState.value = content.summaryNotes
-        consentsState.value = content.consents.map { it.toDomain() }
-        requestsState.value = content.requests.map { it.toDomain() }
-        chatAccessRequestsState.value = content.chatAccessRequests.map { it.toDomain() }
-        chatAccessGrantsState.value = content.chatAccessGrants.map { it.toDomain() }
+        profilesState.value = session.profiles.map { it.profile.toDomain() }
+        idCounter = session.idCounter
+        session.profiles.forEach { entry ->
+            lastChatAccessByProfile[entry.profile.profileId] = entry.lastChatAccessEpochMillis
+        }
+        val active = session.activeProfileId
+            ?.takeIf { candidate -> profilesState.value.any { it.id.value == candidate } }
+            ?: profilesState.value.first().id.value
+        activeProfileIdState.value = active
+        syncActiveProfile()
+        loadContentFor(active)
+    }
+
+    /** Deja [profileState] apuntando al perfil activo. */
+    private fun syncActiveProfile() {
+        val id = activeProfileIdState.value
+        profileState.value = profilesState.value.firstOrNull { it.id.value == id }
+    }
+
+    /**
+     * Carga el contenido de **un** perfil.
+     *
+     * Si no hay contenido persistido, el estado queda **vacío** — nunca el de otro
+     * perfil. Ese es el aislamiento: no hay una rama que "reutilice" lo anterior.
+     */
+    private suspend fun loadContentFor(profileId: String) {
+        val content = store.readContent(profileId)
+        conversationState.value = content?.conversation?.toDomain()
+        responsesState.value = content?.responses?.map { it.toDomain() } ?: emptyList()
+        completionsState.value = content?.completions?.map { it.toDomain() } ?: emptyList()
+        summariesState.value =
+            content?.summaries?.associateBy({ it.id }, { it.toDomain() }) ?: emptyMap()
+        summaryNotesState.value = content?.summaryNotes ?: emptyMap()
+        consentsState.value = content?.consents?.map { it.toDomain() } ?: emptyList()
+        requestsState.value = content?.requests?.map { it.toDomain() } ?: emptyList()
+        chatAccessRequestsState.value =
+            content?.chatAccessRequests?.map { it.toDomain() } ?: emptyList()
+        chatAccessGrantsState.value = content?.chatAccessGrants?.map { it.toDomain() } ?: emptyList()
+    }
+
+    /** Vacía el estado de contenido en memoria (cambio de perfil o borrado). */
+    private fun clearContentState() {
+        conversationState.value = null
+        responsesState.value = emptyList()
+        completionsState.value = emptyList()
+        summariesState.value = emptyMap()
+        summaryNotesState.value = emptyMap()
+        consentsState.value = emptyList()
+        requestsState.value = emptyList()
+        chatAccessRequestsState.value = emptyList()
+        chatAccessGrantsState.value = emptyList()
     }
 
     private suspend fun persistSession() {
         store.writeSession(
             SessionSnapshot(
                 schemaVersion = PUENTE_SCHEMA_VERSION,
-                profile = profileState.value?.toDto(),
-                lastChatAccessEpochMillis = lastChatAccessEpochMillis,
+                profiles = profilesState.value.map { profile ->
+                    ProfileEntryDto(
+                        profile = profile.toDto(),
+                        lastChatAccessEpochMillis = lastChatAccessByProfile[profile.id.value],
+                    )
+                },
+                activeProfileId = activeProfileIdState.value,
                 idCounter = idCounter,
             ),
         )
     }
 
     private suspend fun persistContent() {
+        val profileId = activeProfileIdState.value ?: return
         store.writeContent(
+            profileId,
             ContentSnapshot(
                 conversation = conversationState.value?.toDto(),
                 responses = responsesState.value.map { it.toDto() },
@@ -261,17 +326,28 @@ class LocalPuenteRepository @Inject constructor(
             // Nunca se devuelve el PIN ni su longitud concreta en el error.
             return AppResult.Failure(UiError.Validation(technical = "pin malformed"))
         }
+        // TASK-025: id OPACO y único por perfil. Antes era la constante de demo,
+        // que con varios perfiles los haría indistinguibles entre sí.
         val profile = YouthProfile(
-            id = ProfileId(DemoFixtures.DEMO_YOUTH_ID),
+            id = ProfileId(UUID.randomUUID().toString()),
             alias = YouthAlias(trimmed),
             ageBand = ageBand,
             createdAtEpochMillis = clock.nowEpochMillis(),
         )
-        profileState.value = profile
-        persistPinSecret(pinHasher.createSecret(pin))
+        // El perfil de demostración es un modo de entrada, no un perfil real:
+        // al crear el primer perfil de verdad, se retira de la lista.
+        profilesState.value = profilesState.value
+            .filterNot { it.id.value == DemoFixtures.DEMO_YOUTH_ID } + profile
+        activeProfileIdState.value = profile.id.value
+        syncActiveProfile()
+        // Un perfil nuevo empieza con SU contenido vacío; el anterior ya está persistido.
+        clearContentState()
+        lastChatAccessByProfile.remove(profile.id.value)
+        persistPinSecret(profile.id.value, pinHasher.createSecret(pin))
         // Crear perfil = empezar de cero: el cifrado debe quedar operativo.
         prepareCipher()
         persistSession()
+        persistContent()
         return AppResult.Success(profile)
     }
 
@@ -290,14 +366,8 @@ class LocalPuenteRepository @Inject constructor(
 
     override suspend fun isPinConfigured(): Boolean {
         ensureLoaded()
-        if (pinSecret != null) return true
-        val salt = secureStore.read(SecureLocalStore.KEY_PIN_SALT) ?: return false
-        val hash = secureStore.read(SecureLocalStore.KEY_PIN_HASH) ?: return false
-        val iterations = secureStore.read(SecureLocalStore.KEY_PIN_ITERATIONS)
-            ?.toIntOrNull()
-            ?: return false
-        pinSecret = PinSecret(salt = salt, hash = hash, iterations = iterations)
-        return true
+        val profileId = activeProfileIdState.value ?: return false
+        return readPinSecret(profileId) != null
     }
 
     override suspend fun unlockSession(pin: String): AppResult<Unit> {
@@ -305,17 +375,15 @@ class LocalPuenteRepository @Inject constructor(
         if (!PinPolicy.isWellFormed(pin)) {
             return AppResult.Failure(UiError.Validation(technical = "pin malformed"))
         }
-        val secret = pinSecret
-            ?: restorePinSecret()
+        val profileId = activeProfileIdState.value
+            ?: return AppResult.Failure(UiError.NotFound(technical = "no profile"))
+        val secret = readPinSecret(profileId)
             ?: return AppResult.Failure(UiError.NotFound(technical = "pin not configured"))
 
         if (!pinHasher.verify(pin, secret)) {
             // Mensaje idéntico para cualquier fallo: no revela si el alias existe,
             // cuántos dígitos fallaron ni cuántos intentos quedan.
             return AppResult.Failure(UiError.Authentication(technical = "pin mismatch"))
-        }
-        if (profileState.value == null) {
-            return AppResult.Failure(UiError.NotFound(technical = "no profile to unlock"))
         }
         sessionUnlocked.value = true
         return AppResult.Success(Unit)
@@ -331,6 +399,85 @@ class LocalPuenteRepository @Inject constructor(
 
     override suspend fun getRetentionPolicy(): AppResult<RetentionPolicy> =
         AppResult.Success(RetentionPolicy.MVP_DEFAULT)
+
+    // -----------------------------------------------------------------------
+    // Multi-perfil (TASK-025)
+    // -----------------------------------------------------------------------
+
+    override fun observeProfiles(): Flow<List<YouthProfile>> = profilesState.asStateFlow()
+
+    override suspend fun switchProfile(profileId: ProfileId): AppResult<Unit> {
+        ensureLoaded()
+        val id = profileId.value
+        if (profilesState.value.none { it.id.value == id }) {
+            return AppResult.Failure(UiError.NotFound(technical = "profile not found"))
+        }
+        if (activeProfileIdState.value == id) return AppResult.Success(Unit)
+
+        // Guarda el contenido del perfil que se abandona ANTES de cambiar de activo.
+        persistContent()
+        persistSession()
+        activeProfileIdState.value = id
+        syncActiveProfile()
+        // Cambiar de perfil es cambiar de sesión: el nuevo empieza bloqueado.
+        sessionUnlocked.value = false
+        loadContentFor(id)
+        return AppResult.Success(Unit)
+    }
+
+    override suspend fun deleteProfile(profileId: ProfileId): AppResult<Unit> {
+        ensureLoaded()
+        val id = profileId.value
+        if (profilesState.value.none { it.id.value == id }) {
+            return AppResult.Failure(UiError.NotFound(technical = "profile not found"))
+        }
+        profilesState.value = profilesState.value.filterNot { it.id.value == id }
+        lastChatAccessByProfile.remove(id)
+        // El PIN y el contenido de ESTE perfil; los demás quedan intactos.
+        deletePinSecret(id)
+        store.deleteContent(id)
+
+        if (activeProfileIdState.value == id) {
+            activeProfileIdState.value = profilesState.value.firstOrNull()?.id?.value
+            syncActiveProfile()
+            clearContentState()
+            sessionUnlocked.value = false
+            activeProfileIdState.value?.let { loadContentFor(it) }
+        }
+        persistSession()
+        return AppResult.Success(Unit)
+    }
+
+    override suspend fun unlockSessionFor(alias: String, pin: String): AppResult<Unit> {
+        ensureLoaded()
+        if (!PinPolicy.isWellFormed(pin)) {
+            return AppResult.Failure(UiError.Validation(technical = "pin malformed"))
+        }
+        val trimmed = alias.trim()
+        // Se prueban los perfiles con ese alias; gana el que verifique el PIN.
+        // NO se lista nada: el joven teclea alias + PIN y el sistema resuelve.
+        val match = if (trimmed.isEmpty()) {
+            null
+        } else {
+            profilesState.value
+                .filter { it.alias.value == trimmed }
+                .firstOrNull { profile ->
+                    readPinSecret(profile.id.value)?.let { pinHasher.verify(pin, it) } == true
+                }
+        }
+        // Un único mensaje para todos los fallos: no filtra si el alias existe.
+        if (match == null) {
+            return AppResult.Failure(UiError.Authentication(technical = "pin mismatch"))
+        }
+        if (activeProfileIdState.value != match.id.value) {
+            when (val switched = switchProfile(match.id)) {
+                is AppResult.Success -> Unit
+                is AppResult.Failure -> return AppResult.Failure(switched.error)
+            }
+        }
+        sessionUnlocked.value = true
+        return AppResult.Success(Unit)
+    }
 
     // -----------------------------------------------------------------------
     // RetentionRepository (TASK-003)
@@ -456,20 +603,14 @@ class LocalPuenteRepository @Inject constructor(
         // Orden deliberado: primero el contenido, después el material de claves.
         // Así un "borrar todo" no deja derivados huérfanos.
         ensureLoaded()
-        conversationState.value = null
-        responsesState.value = emptyList()
-        completionsState.value = emptyList()
-        consentsState.value = emptyList()
-        requestsState.value = emptyList()
-        summariesState.value = emptyMap()
-        summaryNotesState.value = emptyMap()
-        chatAccessRequestsState.value = emptyList()
-        chatAccessGrantsState.value = emptyList()
+        clearContentState()
         // El alias lo escribió el joven: también es contenido local. Borrar todo
         // y conservarlo sería un borrado a medias.
+        profilesState.value = emptyList()
+        activeProfileIdState.value = null
         profileState.value = null
-        lastChatAccessEpochMillis = null
-        pinSecret = null
+        lastChatAccessByProfile.clear()
+        // `clear()` destruye los derivados de PIN de TODOS los perfiles (TASK-025).
         secureStore.clear()
         // Guardrail #4: sin clave, lo que quedara cifrado es irrecuperable.
         cipher.destroyKeyMaterial()
@@ -480,24 +621,36 @@ class LocalPuenteRepository @Inject constructor(
     }
 
     // -----------------------------------------------------------------------
-    // PIN: persistencia del derivado (nunca del PIN)
+    // PIN: persistencia del derivado (nunca del PIN), ESPACIADO POR PERFIL
+    // (TASK-025). El derivado de un perfil no sirve para desbloquear otro.
     // -----------------------------------------------------------------------
 
-    private suspend fun persistPinSecret(secret: PinSecret) {
-        pinSecret = secret
-        secureStore.write(SecureLocalStore.KEY_PIN_SALT, secret.salt)
-        secureStore.write(SecureLocalStore.KEY_PIN_HASH, secret.hash)
-        secureStore.write(SecureLocalStore.KEY_PIN_ITERATIONS, secret.iterations.toString())
+    private fun pinSaltKey(profileId: String) = "${SecureLocalStore.KEY_PIN_SALT}.$profileId"
+
+    private fun pinHashKey(profileId: String) = "${SecureLocalStore.KEY_PIN_HASH}.$profileId"
+
+    private fun pinIterationsKey(profileId: String) =
+        "${SecureLocalStore.KEY_PIN_ITERATIONS}.$profileId"
+
+    private suspend fun persistPinSecret(profileId: String, secret: PinSecret) {
+        secureStore.write(pinSaltKey(profileId), secret.salt)
+        secureStore.write(pinHashKey(profileId), secret.hash)
+        secureStore.write(pinIterationsKey(profileId), secret.iterations.toString())
     }
 
-    private suspend fun restorePinSecret(): PinSecret? {
-        val salt = secureStore.read(SecureLocalStore.KEY_PIN_SALT) ?: return null
-        val hash = secureStore.read(SecureLocalStore.KEY_PIN_HASH) ?: return null
-        val iterations = secureStore.read(SecureLocalStore.KEY_PIN_ITERATIONS)
+    private suspend fun readPinSecret(profileId: String): PinSecret? {
+        val salt = secureStore.read(pinSaltKey(profileId)) ?: return null
+        val hash = secureStore.read(pinHashKey(profileId)) ?: return null
+        val iterations = secureStore.read(pinIterationsKey(profileId))
             ?.toIntOrNull()
             ?: return null
         return PinSecret(salt = salt, hash = hash, iterations = iterations)
-            .also { pinSecret = it }
+    }
+
+    private suspend fun deletePinSecret(profileId: String) {
+        secureStore.remove(pinSaltKey(profileId))
+        secureStore.remove(pinHashKey(profileId))
+        secureStore.remove(pinIterationsKey(profileId))
     }
 
     // -----------------------------------------------------------------------
