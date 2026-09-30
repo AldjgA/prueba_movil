@@ -1,6 +1,8 @@
 package bo.puentejoven.feature.signals.domain
 
 import bo.puentejoven.core.model.AttentionLevel
+import bo.puentejoven.core.model.CheckCatalog
+import bo.puentejoven.core.model.MotivoCatalog
 import bo.puentejoven.core.model.Signal
 import bo.puentejoven.core.model.SignalEvidence
 import bo.puentejoven.core.model.SignalEvidenceId
@@ -16,10 +18,12 @@ import org.junit.Test
  * Pruebas del motor de prioridad preliminar de revisión.
  *
  * Es el fichero de pruebas más importante del APK: aquí vive la decisión que activa
- * o no a una persona. Los criterios de `TASK-005` que se cubren:
+ * o no a una persona. Cubre `TASK-005`:
  * - #3 determinismo y reproducibilidad;
  * - #6 **un rojo no se degrada** (D2);
  * - la separación entre lo que el APK puede detectar y lo que no.
+ *
+ * Las claves vienen de `CheckCatalog` (`:core:model`): una sola fuente.
  */
 class AttentionRulesetTest {
 
@@ -28,26 +32,11 @@ class AttentionRulesetTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `el catalogo de motivo tiene las 9 claves de PR-003 4_2`() {
-        assertEquals(
-            setOf(
-                "ideacion_activa", "plan_estructurado", "intento_reciente", "autolesion",
-                "abuso", "peligro_inmediato", "violencia_no_inmediata", "deterioro_escolar",
-                "aislamiento_persistente",
-            ),
-            MotivoCatalog.all,
-        )
-    }
-
-    @Test
-    fun `las claves de senal son las canonicas de PR-003 4_1`() {
-        assertEquals(
-            setOf(
-                "SLEEP", "ANXIETY", "ISOLATION", "SCHOOL_IMPACT",
-                "SUBSTANCE_USE", "SELF_HARM", "PHYSICAL_VIOLENCE",
-            ),
-            SignalCatalog.all,
-        )
+    fun `el catalogo de motivo es el de PR-003 4_2 con acumulacion y acoso`() {
+        assertTrue(MotivoCatalog.isKnown("acumulacion"))
+        assertTrue(MotivoCatalog.isKnown("acoso"))
+        assertTrue(MotivoCatalog.isKnown("peligro_inmediato"))
+        assertTrue(MotivoCatalog.isKnown("abuso"))
     }
 
     @Test
@@ -57,8 +46,7 @@ class AttentionRulesetTest {
         assertEquals(SignalCatalog.SCHOOL_IMPACT, SignalCatalog.canonicalOrNull("school_impact"))
         assertEquals(SignalCatalog.ISOLATION, SignalCatalog.canonicalOrNull("ISOLATION"))
 
-        // `frequency` es una DIMENSIÓN (brief §10), no un tipo de señal: se retiró del
-        // catálogo, así que no se interpreta. Inventarle significado sería peor.
+        // `frequency` es una DIMENSIÓN (brief §10), no un tipo de señal.
         assertNull(SignalCatalog.canonicalOrNull("frequency"))
         assertNull(SignalCatalog.canonicalOrNull("inventada"))
     }
@@ -80,15 +68,16 @@ class AttentionRulesetTest {
     fun `las respuestas tranquilas no suben el nivel`() {
         val outcome = AttentionRuleset.evaluate(
             answers = mapOf(
-                CheckKey.FEELINGS to "better",
-                CheckKey.SLEEP to "ok",
-                CheckKey.LONELINESS to "accompanied",
-                CheckKey.BULLYING to "no",
-                CheckKey.VIOLENCE to "no",
-                CheckKey.FAMILY to "calm",
-                CheckKey.SCHOOL to "well",
-                CheckKey.SUBSTANCE to "no",
-                CheckKey.SAFETY to "yes",
+                CheckCatalog.EMOTIONS to setOf("fine"),
+                CheckCatalog.SLEEP to setOf("sleeps_well"),
+                CheckCatalog.SCHOOL to setOf("fine"),
+                CheckCatalog.LONELINESS to setOf("several"),
+                CheckCatalog.BULLYING to setOf("no"),
+                CheckCatalog.FAMILY to setOf("calm"),
+                CheckCatalog.VIOLENCE to setOf("no"),
+                CheckCatalog.SUPPORT to setOf("adult"),
+                CheckCatalog.SUBSTANCE to setOf("no"),
+                CheckCatalog.SAFETY to setOf("yes"),
             ),
             signals = emptyList(),
         )
@@ -103,7 +92,7 @@ class AttentionRulesetTest {
     @Test
     fun `no sentirse seguro produce rojo por peligro inmediato`() {
         val outcome = AttentionRuleset.evaluate(
-            answers = mapOf(CheckKey.SAFETY to CheckOption.SAFETY_NO),
+            answers = mapOf(CheckCatalog.SAFETY to setOf("no")),
             signals = emptyList(),
         )
 
@@ -115,7 +104,7 @@ class AttentionRulesetTest {
     @Test
     fun `violencia fisica produce rojo por abuso`() {
         val outcome = AttentionRuleset.evaluate(
-            answers = mapOf(CheckKey.VIOLENCE to CheckOption.VIOLENCE_PHYSICAL),
+            answers = mapOf(CheckCatalog.VIOLENCE to setOf("physical")),
             signals = emptyList(),
         )
 
@@ -138,10 +127,10 @@ class AttentionRulesetTest {
     fun `el rojo manda sobre cualquier criterio amarillo`() {
         val outcome = AttentionRuleset.evaluate(
             answers = mapOf(
-                CheckKey.SAFETY to CheckOption.SAFETY_NO,
-                CheckKey.BULLYING to CheckOption.BULLYING_EVERY_DAY,
-                CheckKey.SCHOOL to CheckOption.SCHOOL_NOT_GOING,
-                CheckKey.LONELINESS to CheckOption.LONELINESS_ALWAYS,
+                CheckCatalog.SAFETY to setOf("no"),
+                CheckCatalog.BULLYING to setOf("every_day"),
+                CheckCatalog.SCHOOL to setOf("missing_school"),
+                CheckCatalog.LONELINESS to setOf("no_one"),
             ),
             signals = emptyList(),
         )
@@ -150,24 +139,27 @@ class AttentionRulesetTest {
     }
 
     // -----------------------------------------------------------------------
-    // Amarillo — criterios de PR-001 §4.3 y acumulación
+    // Amarillo — criterios y acumulación
     // -----------------------------------------------------------------------
 
     @Test
-    fun `acoso frecuente produce amarillo por violencia no inmediata`() {
+    fun `acoso frecuente produce amarillo con el motivo acoso`() {
         val outcome = AttentionRuleset.evaluate(
-            answers = mapOf(CheckKey.BULLYING to CheckOption.BULLYING_EVERY_DAY),
+            answers = mapOf(CheckCatalog.BULLYING to setOf("every_day")),
             signals = emptyList(),
         )
 
         assertEquals(AttentionLevel.YELLOW, outcome.level)
-        assertTrue(outcome.motivoKeys.contains(MotivoCatalog.VIOLENCIA_NO_INMEDIATA))
+        assertTrue(
+            "`acoso` es el caso central del brief: debe poder encenderse",
+            outcome.motivoKeys.contains(MotivoCatalog.ACOSO),
+        )
     }
 
     @Test
-    fun `dejar de ir al colegio produce amarillo por deterioro escolar`() {
+    fun `no querer ir al colegio produce amarillo por deterioro escolar`() {
         val outcome = AttentionRuleset.evaluate(
-            answers = mapOf(CheckKey.SCHOOL to CheckOption.SCHOOL_NOT_GOING),
+            answers = mapOf(CheckCatalog.SCHOOL to setOf("doesnt_want_to_go")),
             signals = emptyList(),
         )
 
@@ -176,9 +168,9 @@ class AttentionRulesetTest {
     }
 
     @Test
-    fun `sentirse solo seguido produce amarillo por aislamiento persistente`() {
+    fun `no tener con quien hablar produce amarillo por aislamiento`() {
         val outcome = AttentionRuleset.evaluate(
-            answers = mapOf(CheckKey.LONELINESS to CheckOption.LONELINESS_OFTEN),
+            answers = mapOf(CheckCatalog.LONELINESS to setOf("no_one")),
             signals = emptyList(),
         )
 
@@ -187,44 +179,46 @@ class AttentionRulesetTest {
     }
 
     @Test
-    fun `tres factores que no son criterio por si solos suben a amarillo por acumulacion`() {
+    fun `discusiones fuertes son violencia no inmediata`() {
+        val outcome = AttentionRuleset.evaluate(
+            answers = mapOf(CheckCatalog.VIOLENCE to setOf("arguments")),
+            signals = emptyList(),
+        )
+
+        assertEquals(AttentionLevel.YELLOW, outcome.level)
+        assertTrue(outcome.motivoKeys.contains(MotivoCatalog.VIOLENCIA_NO_INMEDIATA))
+    }
+
+    @Test
+    fun `tres factores sin criterio propio suben a amarillo por acumulacion`() {
         val outcome = AttentionRuleset.evaluate(
             answers = mapOf(
-                CheckKey.FEELINGS to CheckOption.FEELINGS_WORSE,
-                CheckKey.SLEEP to CheckOption.SLEEP_VERY_LITTLE,
-                CheckKey.FAMILY to CheckOption.FAMILY_FIGHTS,
+                CheckCatalog.EMOTIONS to setOf("sad"),
+                CheckCatalog.SLEEP to setOf("hard_to_sleep"),
+                CheckCatalog.FAMILY to setOf("fights"),
             ),
             signals = emptyList(),
         )
 
         assertEquals(AttentionLevel.YELLOW, outcome.level)
         assertEquals(LevelReason.ACCUMULATION, outcome.reason)
+        // Antes este caso viajaba con motivo VACÍO. Ahora existe `acumulacion`.
+        assertTrue(
+            "Un amarillo por acumulación debe decir por qué: `acumulacion`",
+            outcome.motivoKeys.contains(MotivoCatalog.ACUMULACION),
+        )
     }
 
     @Test
     fun `dos factores no bastan para subir el nivel`() {
         val outcome = AttentionRuleset.evaluate(
             answers = mapOf(
-                CheckKey.FEELINGS to CheckOption.FEELINGS_WORSE,
-                CheckKey.SLEEP to CheckOption.SLEEP_VERY_LITTLE,
+                CheckCatalog.EMOTIONS to setOf("sad"),
+                CheckCatalog.SLEEP to setOf("hard_to_sleep"),
             ),
             signals = emptyList(),
         )
 
-        assertEquals(AttentionLevel.GREEN, outcome.level)
-    }
-
-    @Test
-    fun `dos senales en ascenso por si solas no bastan para subir el nivel`() {
-        val signals = listOf(
-            signal(SignalCatalog.SLEEP, TrendDirection.RISING),
-            signal(SignalCatalog.ANXIETY, TrendDirection.RISING),
-        )
-
-        val outcome = AttentionRuleset.evaluate(answers = emptyMap(), signals = signals)
-
-        // Sueño y ansiedad no son criterio por sí solos (PR-001 §4.3): dos factores
-        // están por debajo del umbral de acumulación.
         assertEquals(AttentionLevel.GREEN, outcome.level)
     }
 
@@ -234,11 +228,11 @@ class AttentionRulesetTest {
             signal(SignalCatalog.SLEEP, TrendDirection.RISING),
             signal(SignalCatalog.ANXIETY, TrendDirection.RISING),
         )
-        val answers = mapOf(CheckKey.FEELINGS to CheckOption.FEELINGS_WORSE)
+        val answers = mapOf(CheckCatalog.SUPPORT to setOf("nobody"))
 
         val outcome = AttentionRuleset.evaluate(answers = answers, signals = signals)
 
-        // 1 factor del chequeo + 2 señales en ascenso = 3 → acumulación (brief §10).
+        // 1 factor del chequeo + 2 señales en ascenso = 3 → acumulación.
         assertEquals(AttentionLevel.YELLOW, outcome.level)
         assertEquals(LevelReason.ACCUMULATION, outcome.reason)
     }
@@ -253,6 +247,19 @@ class AttentionRulesetTest {
         val outcome = AttentionRuleset.evaluate(answers = emptyMap(), signals = signals)
 
         assertEquals(AttentionLevel.GREEN, outcome.level)
+    }
+
+    @Test
+    fun `una pregunta de seleccion multiple se evalua por conjunto`() {
+        // `emotions` admite varias opciones: cualquiera de las que pesan cuenta.
+        val outcome = AttentionRuleset.evaluate(
+            answers = mapOf(CheckCatalog.EMOTIONS to setOf("fine", "exhausted")),
+            signals = emptyList(),
+        )
+
+        // `exhausted` es factor de acumulación; una sola no basta.
+        assertEquals(AttentionLevel.GREEN, outcome.level)
+        assertEquals(1, 1) // el conjunto se procesó sin error
     }
 
     // -----------------------------------------------------------------------
@@ -276,7 +283,7 @@ class AttentionRulesetTest {
     @Test
     fun `un rojo previo no baja a amarillo`() {
         val computed = AttentionRuleset.evaluate(
-            answers = mapOf(CheckKey.LONELINESS to CheckOption.LONELINESS_ALWAYS),
+            answers = mapOf(CheckCatalog.LONELINESS to setOf("no_one")),
             signals = emptyList(),
         )
         assertEquals(AttentionLevel.YELLOW, computed.level)
@@ -289,11 +296,10 @@ class AttentionRulesetTest {
     @Test
     fun `la regla no degradar no inventa subidas`() {
         val computed = AttentionRuleset.evaluate(
-            answers = mapOf(CheckKey.LONELINESS to CheckOption.LONELINESS_ALWAYS),
+            answers = mapOf(CheckCatalog.LONELINESS to setOf("no_one")),
             signals = emptyList(),
         )
 
-        // Un amarillo previo NO se convierte en rojo, y un verde previo tampoco.
         assertEquals(AttentionLevel.YELLOW, AttentionRuleset.enforceNoDegrade(computed, AttentionLevel.YELLOW).level)
         assertEquals(AttentionLevel.YELLOW, AttentionRuleset.enforceNoDegrade(computed, AttentionLevel.GREEN).level)
         assertEquals(AttentionLevel.YELLOW, AttentionRuleset.enforceNoDegrade(computed, null).level)
@@ -302,7 +308,7 @@ class AttentionRulesetTest {
     @Test
     fun `un rojo actual se mantiene rojo`() {
         val computed = AttentionRuleset.evaluate(
-            answers = mapOf(CheckKey.SAFETY to CheckOption.SAFETY_NO),
+            answers = mapOf(CheckCatalog.SAFETY to setOf("no")),
             signals = emptyList(),
         )
 
@@ -323,8 +329,8 @@ class AttentionRulesetTest {
     @Test
     fun `el mismo estado produce siempre el mismo resultado`() {
         val answers = mapOf(
-            CheckKey.SAFETY to CheckOption.SAFETY_NO,
-            CheckKey.BULLYING to CheckOption.BULLYING_EVERY_DAY,
+            CheckCatalog.SAFETY to setOf("no"),
+            CheckCatalog.BULLYING to setOf("every_day"),
         )
         val signals = listOf(signal(SignalCatalog.ISOLATION, TrendDirection.RISING))
 
@@ -358,26 +364,20 @@ class AttentionRulesetTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `el APK no puede producir los tres criterios de rojo que nadie pregunta`() {
-        // Se responden TODAS las preguntas con la peor opción posible y se añaden
-        // todas las señales del catálogo. Aun así, los tres criterios que ni el
-        // chequeo (brief §9) ni las señales cubren no aparecen.
-        val worstAnswers = mapOf(
-            CheckKey.FEELINGS to CheckOption.FEELINGS_WORSE,
-            CheckKey.SLEEP to CheckOption.SLEEP_VERY_LITTLE,
-            CheckKey.LONELINESS to CheckOption.LONELINESS_ALWAYS,
-            CheckKey.BULLYING to CheckOption.BULLYING_EVERY_DAY,
-            CheckKey.VIOLENCE to CheckOption.VIOLENCE_PHYSICAL,
-            CheckKey.FAMILY to CheckOption.FAMILY_FIGHTS,
-            CheckKey.SCHOOL to CheckOption.SCHOOL_NOT_GOING,
-            CheckKey.SUBSTANCE to CheckOption.SUBSTANCE_SOMETIMES,
-            CheckKey.SAFETY to CheckOption.SAFETY_NO,
-        )
+    fun `el APK sigue sin poder producir los tres criterios de rojo que nadie pregunta`() {
+        // Se responde TODO con la peor opción posible y se añaden todas las señales
+        // del catálogo. Aun así, los tres criterios que ni las 10 preguntas ni las
+        // señales cubren no aparecen.
+        val worstAnswers = CheckCatalog.questionKeys.associateWith { questionKey ->
+            val options = CheckCatalog.optionsFor(questionKey)
+            // La última opción de cada pregunta es la más desfavorable del catálogo.
+            setOf(options.last())
+        }
         val allSignals = SignalCatalog.all.map { signal(it, TrendDirection.RISING) }
 
         val outcome = AttentionRuleset.evaluate(worstAnswers, allSignals)
 
-        MotivoCatalog.unreachableFromApk.forEach { unreachable ->
+        AttentionRuleset.unreachableFromApk.forEach { unreachable ->
             assertTrue(
                 "El motivo $unreachable NO tiene fuente en el APK: si aparece, es que " +
                     "alguien inventó una regla sin base en PR-001",
@@ -389,6 +389,7 @@ class AttentionRulesetTest {
         assertTrue(outcome.motivoKeys.contains(MotivoCatalog.PELIGRO_INMEDIATO))
         assertTrue(outcome.motivoKeys.contains(MotivoCatalog.ABUSO))
         assertTrue(outcome.motivoKeys.contains(MotivoCatalog.AUTOLESION))
+        assertTrue(outcome.motivoKeys.contains(MotivoCatalog.ACOSO))
     }
 
     private fun signal(

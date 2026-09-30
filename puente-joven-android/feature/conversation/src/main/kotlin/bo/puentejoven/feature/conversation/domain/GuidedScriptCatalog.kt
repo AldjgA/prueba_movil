@@ -1,27 +1,8 @@
 package bo.puentejoven.feature.conversation.domain
 
 import androidx.annotation.StringRes
+import bo.puentejoven.core.model.CheckCatalog
 import bo.puentejoven.feature.conversation.R
-
-/**
- * Dimensiones que explora el chequeo contextual — brief §9.
- *
- * `catalogKey` es un identificador de código (inglés/minúsculas), nunca copy.
- * La lista es **cerrada**: añadir una dimensión es una decisión de producto, no un
- * detalle de implementación (mismo criterio que `ShareScopeEntry`).
- */
-enum class CheckDimension(val catalogKey: String) {
-    FEELINGS("feelings"),
-    SLEEP("sleep"),
-    LONELINESS("loneliness"),
-    BULLYING("bullying"),
-    VIOLENCE("violence"),
-    FAMILY_CONFLICT("family_conflict"),
-    SCHOOL("school"),
-    AVAILABLE_SUPPORT("available_support"),
-    SUBSTANCE_USE("substance_use"),
-    PERSONAL_SAFETY("personal_safety"),
-}
 
 /**
  * Opción de respuesta del chequeo.
@@ -38,13 +19,15 @@ data class CheckOption(
  * Pregunta del chequeo contextual.
  *
  * El MVP **no** acepta texto libre interpretado por IA (guardrail #3): toda
- * respuesta es una opción predefinida de esta lista.
+ * respuesta es una opción cerrada del catálogo.
  */
 data class CheckQuestion(
+    /** Clave de `CheckCatalog`. Nunca un literal de esta feature. */
     val key: String,
-    val dimension: CheckDimension,
     @StringRes val promptResId: Int,
     val options: List<CheckOption>,
+    /** `PR-003` §4.3 regla 3: `emotions` admite más de una opción. */
+    val isMultiSelect: Boolean,
 )
 
 /**
@@ -58,16 +41,18 @@ data class ScriptedTurn(
 )
 
 /**
- * Guion de la Ruta A: catálogo **cerrado y versionado** de turnos y preguntas.
+ * Guion de la Ruta A: catálogo de turnos y preguntas.
  *
- * Reglas de diseño:
- * - Determinista: la misma entrada produce siempre el mismo turno. Sin IA, sin azar.
- * - Auditable: cada turno lleva `promptId`; cada pregunta y opción, su clave.
- * - **No calcula niveles de atención.** Eso es `TASK-005`. Aquí solo se recogen
- *   respuestas; confundir ambas cosas metería reglas clínicas en la capa de UI.
+ * **El vocabulario NO está aquí.** Las claves de pregunta y de opción viven en
+ * `CheckCatalog` (`:core:model`), que es la única fuente. Aquí solo hay **copy**
+ * (`@StringRes`) y el guion de Puente.
  *
- * `VERSION` se declara para que el catálogo pueda correlacionarse con
- * `rulesetVersion` cuando `TASK-005` lo pida (`TASK-004` §9 Q1, aún abierta).
+ * Por qué importa: si las claves se duplicaran entre esta feature y
+ * `feature:signals`, una regla podría dejar de dispararse **en silencio**. Ya pasó
+ * una vez (P0 de `TASK-005`) y por eso las claves son ahora de A.
+ *
+ * `VERSION` se declara para poder correlacionar el guion con `rulesetVersion`
+ * cuando `TASK-005` lo pida.
  */
 object GuidedScriptCatalog {
 
@@ -77,9 +62,6 @@ object GuidedScriptCatalog {
     const val PROMPT_OPENING = "conversation.opening"
     const val PROMPT_ACKNOWLEDGE = "conversation.acknowledge"
     const val PROMPT_CHECK_INTRO = "conversation.check_intro"
-
-    /** Clave de la opción «prefiero no responder», disponible en **todas** las preguntas. */
-    const val OPTION_SKIP = "skip"
 
     /** Texto de un turno por su `promptId`, o `null` si el id no pertenece al guion. */
     @StringRes
@@ -110,147 +92,141 @@ object GuidedScriptCatalog {
         else -> null
     }
 
-    /** Opción de salto. Se añade a todas las preguntas: poder no responder es un derecho. */
-    private val skipOption = CheckOption(OPTION_SKIP, R.string.check_skip)
-
     /**
-     * Las 10 dimensiones del brief §9, una pregunta cada una.
+     * Las 10 preguntas del brief §9, construidas desde `CheckCatalog`.
      *
-     * Nota de producto: el brief dice que el consumo de sustancias se explora
-     * «cuando corresponda», pero **no define la regla** de cuándo corresponde
-     * (`TASK-004` §9 Q5, abierta). Hasta que se decida, la pregunta existe y el
-     * joven puede saltarla — no se activa por perfil ni por edad, porque eso sería
-     * una regla inventada.
+     * Si el catálogo gana una clave y aquí falta el copy, la pregunta **no aparece**
+     * en vez de romper la app. Eso no es silencioso: `GuidedScriptCatalogTest`
+     * comprueba que el número de opciones con copy coincide con el del catálogo.
      */
-    val questions: List<CheckQuestion> = listOf(
-        CheckQuestion(
-            key = "check.feelings",
-            dimension = CheckDimension.FEELINGS,
-            promptResId = R.string.check_feelings_prompt,
-            options = listOf(
-                CheckOption("better", R.string.check_feelings_better),
-                CheckOption("same", R.string.check_feelings_same),
-                CheckOption("worse", R.string.check_feelings_worse),
-                CheckOption("mixed", R.string.check_feelings_mixed),
-                skipOption,
-            ),
-        ),
-        CheckQuestion(
-            key = "check.sleep",
-            dimension = CheckDimension.SLEEP,
-            promptResId = R.string.check_sleep_prompt,
-            options = listOf(
-                CheckOption("ok", R.string.check_sleep_ok),
-                CheckOption("falling_asleep", R.string.check_sleep_falling_asleep),
-                CheckOption("waking_up", R.string.check_sleep_waking_up),
-                CheckOption("very_little", R.string.check_sleep_very_little),
-                skipOption,
-            ),
-        ),
-        CheckQuestion(
-            key = "check.loneliness",
-            dimension = CheckDimension.LONELINESS,
-            promptResId = R.string.check_loneliness_prompt,
-            options = listOf(
-                CheckOption("accompanied", R.string.check_loneliness_accompanied),
-                CheckOption("sometimes", R.string.check_loneliness_sometimes),
-                CheckOption("often", R.string.check_loneliness_often),
-                CheckOption("always", R.string.check_loneliness_always),
-                skipOption,
-            ),
-        ),
-        CheckQuestion(
-            key = "check.bullying",
-            dimension = CheckDimension.BULLYING,
-            promptResId = R.string.check_bullying_prompt,
-            options = listOf(
-                CheckOption("no", R.string.check_bullying_no),
-                CheckOption("sometimes", R.string.check_bullying_sometimes),
-                CheckOption("often", R.string.check_bullying_often),
-                CheckOption("every_day", R.string.check_bullying_every_day),
-                skipOption,
-            ),
-        ),
-        CheckQuestion(
-            key = "check.violence",
-            dimension = CheckDimension.VIOLENCE,
-            promptResId = R.string.check_violence_prompt,
-            options = listOf(
-                CheckOption("no", R.string.check_violence_no),
-                CheckOption("arguments", R.string.check_violence_arguments),
-                CheckOption("physical", R.string.check_violence_physical),
-                skipOption,
-            ),
-        ),
-        CheckQuestion(
-            key = "check.family",
-            dimension = CheckDimension.FAMILY_CONFLICT,
-            promptResId = R.string.check_family_prompt,
-            options = listOf(
-                CheckOption("calm", R.string.check_family_calm),
-                CheckOption("tense", R.string.check_family_tense),
-                CheckOption("fights", R.string.check_family_fights),
-                skipOption,
-            ),
-        ),
-        CheckQuestion(
-            key = "check.school",
-            dimension = CheckDimension.SCHOOL,
-            promptResId = R.string.check_school_prompt,
-            options = listOf(
-                CheckOption("well", R.string.check_school_well),
-                CheckOption("focus", R.string.check_school_focus),
-                CheckOption("missing", R.string.check_school_missing),
-                CheckOption("not_going", R.string.check_school_not_going),
-                skipOption,
-            ),
-        ),
-        CheckQuestion(
-            key = "check.support",
-            dimension = CheckDimension.AVAILABLE_SUPPORT,
-            promptResId = R.string.check_support_prompt,
-            options = listOf(
-                CheckOption("adult", R.string.check_support_adult),
-                CheckOption("friend", R.string.check_support_friend),
-                CheckOption("not_sure", R.string.check_support_not_sure),
-                CheckOption("nobody", R.string.check_support_nobody),
-                skipOption,
-            ),
-        ),
-        CheckQuestion(
-            key = "check.substance",
-            dimension = CheckDimension.SUBSTANCE_USE,
-            promptResId = R.string.check_substance_prompt,
-            options = listOf(
-                CheckOption("no", R.string.check_substance_no),
-                CheckOption("once", R.string.check_substance_once),
-                CheckOption("sometimes", R.string.check_substance_sometimes),
-                skipOption,
-            ),
-        ),
-        CheckQuestion(
-            key = "check.safety",
-            dimension = CheckDimension.PERSONAL_SAFETY,
-            promptResId = R.string.check_safety_prompt,
-            options = listOf(
-                CheckOption("yes", R.string.check_safety_yes),
-                CheckOption("mostly", R.string.check_safety_mostly),
-                CheckOption("not_always", R.string.check_safety_not_always),
-                CheckOption("no", R.string.check_safety_no),
-                skipOption,
-            ),
-        ),
-    )
+    val questions: List<CheckQuestion> = CheckCatalog.questionKeys.mapNotNull(::buildQuestion)
 
     /** Todas las claves de pregunta, en orden. */
     val questionKeys: List<String> = questions.map { it.key }
 
     fun question(key: String): CheckQuestion? = questions.firstOrNull { it.key == key }
 
-    /**
-     * Primera pregunta **sin decidir** según [answeredKeys].
-     * `null` cuando ya se ha respondido o saltado todas.
-     */
+    /** Primera pregunta **sin decidir** según [answeredKeys]. `null` si ya están todas. */
     fun nextQuestion(answeredKeys: Set<String>): CheckQuestion? =
         questions.firstOrNull { it.key !in answeredKeys }
+
+    private fun buildQuestion(questionKey: String): CheckQuestion? {
+        val promptResId = promptResIdFor(questionKey) ?: return null
+
+        val options = CheckCatalog.optionsFor(questionKey)
+            .mapNotNull { optionKey ->
+                optionLabelResIdFor(questionKey, optionKey)?.let { CheckOption(optionKey, it) }
+            }
+            // Poder no responder es un derecho: se añade al final de todas.
+            .plus(CheckOption(CheckCatalog.OPTION_SKIP, R.string.check_skip))
+
+        return CheckQuestion(
+            key = questionKey,
+            promptResId = promptResId,
+            options = options,
+            isMultiSelect = CheckCatalog.isMultiSelect(questionKey),
+        )
+    }
+
+    @StringRes
+    private fun promptResIdFor(questionKey: String): Int? = when (questionKey) {
+        CheckCatalog.EMOTIONS -> R.string.check_emotions_prompt
+        CheckCatalog.SLEEP -> R.string.check_sleep_prompt
+        CheckCatalog.SCHOOL -> R.string.check_school_prompt
+        CheckCatalog.LONELINESS -> R.string.check_loneliness_prompt
+        CheckCatalog.BULLYING -> R.string.check_bullying_prompt
+        CheckCatalog.FAMILY -> R.string.check_family_prompt
+        CheckCatalog.VIOLENCE -> R.string.check_violence_prompt
+        CheckCatalog.SUPPORT -> R.string.check_support_prompt
+        CheckCatalog.SUBSTANCE -> R.string.check_substance_prompt
+        CheckCatalog.SAFETY -> R.string.check_safety_prompt
+        else -> null
+    }
+
+    @StringRes
+    private fun optionLabelResIdFor(questionKey: String, optionKey: String): Int? = when (questionKey) {
+        CheckCatalog.EMOTIONS -> when (optionKey) {
+            "sad" -> R.string.check_emotions_sad
+            "anxious" -> R.string.check_emotions_anxious
+            "angry" -> R.string.check_emotions_angry
+            "confused" -> R.string.check_emotions_confused
+            "exhausted" -> R.string.check_emotions_exhausted
+            "lonely" -> R.string.check_emotions_lonely
+            "fine" -> R.string.check_emotions_fine
+            "dont_know" -> R.string.check_emotions_dont_know
+            else -> null
+        }
+
+        CheckCatalog.SLEEP -> when (optionKey) {
+            "sleeps_well" -> R.string.check_sleep_sleeps_well
+            "hard_to_sleep" -> R.string.check_sleep_hard_to_sleep
+            "sleeps_too_much" -> R.string.check_sleep_sleeps_too_much
+            "nightmares" -> R.string.check_sleep_nightmares
+            "varies" -> R.string.check_sleep_varies
+            else -> null
+        }
+
+        CheckCatalog.SCHOOL -> when (optionKey) {
+            "fine" -> R.string.check_school_fine
+            "so_so" -> R.string.check_school_so_so
+            "struggling" -> R.string.check_school_struggling
+            "missing_school" -> R.string.check_school_missing_school
+            "doesnt_want_to_go" -> R.string.check_school_doesnt_want_to_go
+            else -> null
+        }
+
+        CheckCatalog.LONELINESS -> when (optionKey) {
+            "several" -> R.string.check_loneliness_several
+            "one_or_two" -> R.string.check_loneliness_one_or_two
+            "rarely" -> R.string.check_loneliness_rarely
+            "usually_not" -> R.string.check_loneliness_usually_not
+            "no_one" -> R.string.check_loneliness_no_one
+            else -> null
+        }
+
+        CheckCatalog.BULLYING -> when (optionKey) {
+            "no" -> R.string.check_bullying_no
+            "sometimes" -> R.string.check_bullying_sometimes
+            "often" -> R.string.check_bullying_often
+            "every_day" -> R.string.check_bullying_every_day
+            else -> null
+        }
+
+        CheckCatalog.FAMILY -> when (optionKey) {
+            "calm" -> R.string.check_family_calm
+            "tense" -> R.string.check_family_tense
+            "fights" -> R.string.check_family_fights
+            else -> null
+        }
+
+        CheckCatalog.VIOLENCE -> when (optionKey) {
+            "no" -> R.string.check_violence_no
+            "arguments" -> R.string.check_violence_arguments
+            "physical" -> R.string.check_violence_physical
+            else -> null
+        }
+
+        CheckCatalog.SUPPORT -> when (optionKey) {
+            "adult" -> R.string.check_support_adult
+            "friend" -> R.string.check_support_friend
+            "not_sure" -> R.string.check_support_not_sure
+            "nobody" -> R.string.check_support_nobody
+            else -> null
+        }
+
+        CheckCatalog.SUBSTANCE -> when (optionKey) {
+            "no" -> R.string.check_substance_no
+            "once" -> R.string.check_substance_once
+            "sometimes" -> R.string.check_substance_sometimes
+            else -> null
+        }
+
+        CheckCatalog.SAFETY -> when (optionKey) {
+            "yes" -> R.string.check_safety_yes
+            "no" -> R.string.check_safety_no
+            else -> null
+        }
+
+        else -> null
+    }
 }

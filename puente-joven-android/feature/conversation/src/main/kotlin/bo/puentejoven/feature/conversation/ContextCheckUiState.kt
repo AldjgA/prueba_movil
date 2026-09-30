@@ -17,6 +17,13 @@ data class ContextCheckContent(
 /** Estado del chequeo contextual (brief §9). */
 data class ContextCheckUiState(
     val content: FeatureUiState<ContextCheckContent> = FeatureUiState.Loading,
+    /**
+     * Opciones marcadas en la pregunta vigente.
+     *
+     * En las de selección múltiple puede haber más de una (`PR-003` §4.3 regla 3);
+     * en las de una sola opción, el conjunto tiene un único elemento.
+     */
+    val selectedOptions: Set<String> = emptySet(),
     val isSaving: Boolean = false,
     val saveError: UiError? = null,
 )

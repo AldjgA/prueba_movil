@@ -3,7 +3,11 @@
     <!-- TASK-004 · Conversación estructurada + chequeo contextual.
          Regla de la casa #2: TODO texto visible vive aquí, nunca como literal en Kotlin.
          Ningún texto de este fichero contiene datos personales ni términos clínicos
-         (PR-001 §15: el sistema detecta señales, no diagnostica). -->
+         (PR-001 §15: el sistema detecta señales, no diagnostica).
+
+         El VOCABULARIO de claves vive en :core:model (CheckCatalog), no aquí: aquí
+         solo está el copy. Las 5 primeras preguntas son las del prototipo; las 5
+         siguientes completan las 10 dimensiones del brief §9 (PR-003 §4.3). -->
 
     <!-- Encuadre de transparencia (brief §7, etapa 1) -->
     <string name="conversation_title">Contarlo</string>
@@ -34,10 +38,12 @@
     <string name="conversation_puente_acknowledge">Quiero ayudarte a ordenar esto.</string>
     <string name="conversation_puente_check_intro">Vamos a ver algunas cosas, una por una. Puedes saltar cualquiera.</string>
 
-    <!-- Chequeo contextual (brief §9) -->
+    <!-- Chequeo contextual (brief §9 · PR-003 §4.3) -->
     <string name="check_title">Entendamos lo que está pasando</string>
     <string name="check_progress">Pregunta %1$d de %2$d</string>
     <string name="check_skip">Prefiero no responder</string>
+    <string name="check_multi_select_hint">Puedes marcar más de una.</string>
+    <string name="check_confirm">Continuar</string>
     <string name="check_loading">Preparando las preguntas…</string>
     <string name="check_done_title">Gracias por contarlo.</string>
     <string name="check_done_body">Con esto ya podemos ordenar lo que está pasando. Nada de esto es un diagnóstico.</string>
@@ -50,70 +56,75 @@
     <string name="check_retry">Volver a intentar</string>
     <string name="check_save_error">Tu respuesta no se guardó. Vuelve a intentarlo.</string>
 
-    <!-- Dimensión: cómo se siente -->
-    <string name="check_feelings_prompt">¿Cómo te has sentido estos días?</string>
-    <string name="check_feelings_better">Mejor que antes</string>
-    <string name="check_feelings_same">Más o menos igual</string>
-    <string name="check_feelings_worse">Peor que antes</string>
-    <string name="check_feelings_mixed">Depende del día</string>
+    <!-- emotions · ¿Cómo describirías cómo te has sentido esta semana? (multi-selección) -->
+    <string name="check_emotions_prompt">¿Cómo describirías cómo te has sentido esta semana?</string>
+    <string name="check_emotions_sad">Triste</string>
+    <string name="check_emotions_anxious">Con ansiedad</string>
+    <string name="check_emotions_angry">Con rabia</string>
+    <string name="check_emotions_confused">Confundido o confundida</string>
+    <string name="check_emotions_exhausted">Agotado o agotada</string>
+    <string name="check_emotions_lonely">Solo o sola</string>
+    <string name="check_emotions_fine">Bien</string>
+    <string name="check_emotions_dont_know">No sé</string>
 
-    <!-- Dimensión: sueño -->
-    <string name="check_sleep_prompt">¿Cómo estás durmiendo?</string>
-    <string name="check_sleep_ok">Bien</string>
-    <string name="check_sleep_falling_asleep">Me cuesta dormirme</string>
-    <string name="check_sleep_waking_up">Me despierto en la noche</string>
-    <string name="check_sleep_very_little">Duermo muy poco</string>
+    <!-- sleep · ¿Cómo ha estado tu sueño últimamente? -->
+    <string name="check_sleep_prompt">¿Cómo ha estado tu sueño últimamente?</string>
+    <string name="check_sleep_sleeps_well">Duermo bien</string>
+    <string name="check_sleep_hard_to_sleep">Me cuesta dormirme</string>
+    <string name="check_sleep_sleeps_too_much">Duermo demasiado</string>
+    <string name="check_sleep_nightmares">Tengo pesadillas</string>
+    <string name="check_sleep_varies">Depende del día</string>
 
-    <!-- Dimensión: soledad -->
-    <string name="check_loneliness_prompt">¿Te sientes acompañado o solo?</string>
-    <string name="check_loneliness_accompanied">Acompañado</string>
-    <string name="check_loneliness_sometimes">A veces solo</string>
-    <string name="check_loneliness_often">Me siento solo seguido</string>
-    <string name="check_loneliness_always">Me siento solo casi siempre</string>
+    <!-- school · ¿Cómo está yendo en el colegio? -->
+    <string name="check_school_prompt">¿Cómo está yendo en el colegio?</string>
+    <string name="check_school_fine">Bien</string>
+    <string name="check_school_so_so">Más o menos</string>
+    <string name="check_school_struggling">Me está costando</string>
+    <string name="check_school_missing_school">Estoy faltando</string>
+    <string name="check_school_doesnt_want_to_go">No quiero ir</string>
 
-    <!-- Dimensión: acoso -->
+    <!-- loneliness · ¿Tienes personas con quienes hablar cuando algo te preocupa? -->
+    <string name="check_loneliness_prompt">¿Tienes personas con quienes hablar cuando algo te preocupa?</string>
+    <string name="check_loneliness_several">Sí, varias</string>
+    <string name="check_loneliness_one_or_two">Sí, una o dos</string>
+    <string name="check_loneliness_rarely">Casi nunca</string>
+    <string name="check_loneliness_usually_not">Normalmente no</string>
+    <string name="check_loneliness_no_one">Con nadie</string>
+
+    <!-- bullying · ¿Alguien te molesta o se ríe de ti? -->
     <string name="check_bullying_prompt">¿Alguien te molesta o se ríe de ti?</string>
     <string name="check_bullying_no">No</string>
     <string name="check_bullying_sometimes">A veces</string>
     <string name="check_bullying_often">Seguido</string>
     <string name="check_bullying_every_day">Casi todos los días</string>
 
-    <!-- Dimensión: violencia -->
-    <string name="check_violence_prompt">¿Has vivido algo violento, en casa o fuera?</string>
-    <string name="check_violence_no">No</string>
-    <string name="check_violence_arguments">Discusiones fuertes</string>
-    <string name="check_violence_physical">Algo físico</string>
-
-    <!-- Dimensión: conflicto familiar -->
+    <!-- family · ¿Cómo están las cosas en casa? -->
     <string name="check_family_prompt">¿Cómo están las cosas en casa?</string>
     <string name="check_family_calm">Tranquilas</string>
     <string name="check_family_tense">Un poco tensas</string>
     <string name="check_family_fights">Hay peleas seguidas</string>
 
-    <!-- Dimensión: escuela -->
-    <string name="check_school_prompt">¿Cómo va el colegio?</string>
-    <string name="check_school_well">Bien</string>
-    <string name="check_school_focus">Me cuesta concentrarme</string>
-    <string name="check_school_missing">Estoy faltando algunos días</string>
-    <string name="check_school_not_going">Casi no estoy yendo</string>
+    <!-- violence · ¿Has vivido algo violento, en casa o fuera? -->
+    <string name="check_violence_prompt">¿Has vivido algo violento, en casa o fuera?</string>
+    <string name="check_violence_no">No</string>
+    <string name="check_violence_arguments">Discusiones fuertes</string>
+    <string name="check_violence_physical">Algo físico</string>
 
-    <!-- Dimensión: apoyo disponible -->
+    <!-- support · ¿Hay alguien con quien puedas contar? -->
     <string name="check_support_prompt">¿Hay alguien con quien puedas contar?</string>
     <string name="check_support_adult">Sí, un adulto</string>
     <string name="check_support_friend">Sí, un amigo o amiga</string>
     <string name="check_support_not_sure">No estoy seguro</string>
     <string name="check_support_nobody">Ahora mismo no</string>
 
-    <!-- Dimensión: consumo (brief §9: «cuando corresponda») -->
+    <!-- substance · ¿Has consumido algo para sentirte mejor? -->
     <string name="check_substance_prompt">¿Has consumido algo para sentirte mejor?</string>
     <string name="check_substance_no">No</string>
     <string name="check_substance_once">Alguna vez</string>
     <string name="check_substance_sometimes">Varias veces</string>
 
-    <!-- Dimensión: seguridad personal -->
-    <string name="check_safety_prompt">¿Te sientes seguro ahora mismo?</string>
+    <!-- safety · ¿Te sientes seguro/a en tu entorno habitual? -->
+    <string name="check_safety_prompt">¿Te sientes seguro/a en tu entorno habitual?</string>
     <string name="check_safety_yes">Sí</string>
-    <string name="check_safety_mostly">Casi siempre</string>
-    <string name="check_safety_not_always">No siempre</string>
     <string name="check_safety_no">No</string>
 </resources>

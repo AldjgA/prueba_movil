@@ -251,15 +251,31 @@ significa indefinido — significa que la lista es **cerrada** y cambia de **ver
 > disparado por **acumulación** viajaba con `motivo` **vacío** — el equipo no sabría por qué se
 > encendió. Y `acoso` es el caso central del brief: no podía faltar en el catálogo.
 
-### 4.3 Catálogo de claves del chequeo (duplicación resuelta el 2026-09-30)
+### 4.3 Catálogo de claves del chequeo (duplicación resuelta · ampliado a 10 el 2026-09-30)
 
 **Un solo vocabulario, una sola fuente.** Verificado: el prototipo (`ContextCheckScreen.tsx`) define
 **5 preguntas** y `LocalPuenteRepository.availableQuestionKeys()` devolvía **otras 4**
 (`hoy_como_estas`, `donde_ocurre`, `cada_cuanto`, `con_quien_puedes_contar`). Dos vocabularios para
 lo mismo: si derivan, **una regla deja de dispararse en silencio**.
 
-**Canónico = el del prototipo.** Se publica en código en `:core:model` (`CheckCatalog`), de modo que
-`feature:conversation` y `feature:signals` **consuman la misma constante** en vez de duplicarla.
+**Se publica en código en `:core:model` (`CheckCatalog`)**, de modo que `feature:conversation` y
+`feature:signals` **consuman la misma constante** en vez de duplicarla.
+
+#### Ampliación a 10 dimensiones — decisión del dueño del producto
+
+La primera versión canonizó las **5 del prototipo**. Al compararlas con `PR-001` §4.3 aparecieron
+**dos criterios de `PR-001` §4.3 sin ninguna fuente**:
+
+| Criterio | Pregunta que lo producía | Con las 5 del prototipo |
+|---|---|---|
+| `abuso` (rojo) | `violence = physical` | ❌ **sin fuente** |
+| `acoso` (amarillo, *el caso central del brief*) | `bullying ∈ {often, every_day}` | ❌ **sin fuente** |
+
+Es decir: se había añadido el `motivo` `acoso` **sin ninguna respuesta capaz de encenderlo**.
+El **brief §9** lista **10 dimensiones** y `TASK-004` criterio #4 las exige.
+
+**Se amplía a las 10 dimensiones del brief §9.** Las 5 del prototipo se mantienen **exactamente**
+como estaban: el prototipo no se contradice, **se completa**.
 
 | Clave de pregunta | Pregunta (copy, vive en el APK) | Opciones (claves cerradas) |
 |---|---|---|
@@ -267,17 +283,33 @@ lo mismo: si derivan, **una regla deja de dispararse en silencio**.
 | `sleep` | ¿Cómo ha estado tu sueño últimamente? | `sleeps_well` · `hard_to_sleep` · `sleeps_too_much` · `nightmares` · `varies` |
 | `school` | ¿Cómo está yendo en el colegio? | `fine` · `so_so` · `struggling` · `missing_school` · `doesnt_want_to_go` |
 | `loneliness` | ¿Tienes personas con quienes hablar cuando algo te preocupa? | `several` · `one_or_two` · `rarely` · `usually_not` · `no_one` |
+| **`bullying`** 🆕 | ¿Alguien te molesta o se ríe de ti? | `no` · `sometimes` · `often` · `every_day` |
+| **`family`** 🆕 | ¿Cómo están las cosas en casa? | `calm` · `tense` · `fights` |
+| **`violence`** 🆕 | ¿Has vivido algo violento, en casa o fuera? | `no` · `arguments` · `physical` |
+| **`support`** 🆕 | ¿Hay alguien con quien puedas contar? | `adult` · `friend` · `not_sure` · `nobody` |
+| **`substance`** 🆕 | ¿Has consumido algo para sentirte mejor? | `no` · `once` · `sometimes` |
 | `safety` | ¿Te sientes seguro/a en tu entorno habitual? | `yes` · `no` |
 
 **Reglas:**
 
 1. **La clave es un identificador, no copy.** El texto de la pregunta y de las opciones **nunca**
    viaja en el contrato: vive en `strings.xml` del APK (regla de la casa #2).
-2. **`safety` es la pregunta crítica**: es la única cuya respuesta puede elevar a rojo por sí sola.
+2. **`safety` es la pregunta crítica del chequeo**: es la única cuya respuesta puede elevar a rojo
+   por sí sola *desde el formulario*. `violence = physical` también eleva a rojo (`abuso`), y una
+   señal `SELF_HARM` también (`autolesion`) — pero eso no viene de una respuesta del chequeo.
    Que su clave sea estable es lo que garantiza que **no se pierda un peligro inmediato**.
-3. `emotions` admite **selección múltiple**; las otras cuatro, una sola.
-4. El catálogo se versiona con `rulesetVersion`: añadir o quitar una clave **es** un cambio de
+3. `emotions` admite **selección múltiple**; las otras nueve, una sola.
+4. **`skip` es válido en cualquier pregunta.** Poder no responder es un derecho; el salto se
+   registra como una decisión más para que el chequeo avance y el hueco no sea silencioso.
+5. El catálogo se versiona con `rulesetVersion`: añadir o quitar una clave **es** un cambio de
    versión, no un ajuste de copy.
+6. **Un `motivo` sin ninguna fuente es peor que no tenerlo**: sugiere una capacidad que no existe.
+   Los que hoy no tienen fuente están declarados y protegidos por prueba en `feature:signals`.
+
+> **Lo que este catálogo sigue sin cubrir (declarado, no olvidado):** `ideacion_activa`,
+> `plan_estructurado` e `intento_reciente` son criterios de rojo de `PR-001` §4.3 y **ninguna de
+> las 10 preguntas los detecta**. Cómo preguntar por autolesión e ideación a un adolescente es una
+> decisión **clínica** (`PR-001` §13). Ver `REVISION-B.md` H5 y `TASK-005/NECESIDADES.md` §0.1.
 
 ---
 

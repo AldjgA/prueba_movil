@@ -30,8 +30,10 @@ import bo.puentejoven.core.designsystem.component.EmptyState
 import bo.puentejoven.core.designsystem.component.ErrorState
 import bo.puentejoven.core.designsystem.component.LoadingState
 import bo.puentejoven.core.designsystem.component.PrimaryAction
+import bo.puentejoven.core.designsystem.component.PuenteButtonState
 import bo.puentejoven.core.designsystem.component.SignalChip
 import bo.puentejoven.core.designsystem.theme.PuenteTheme
+import bo.puentejoven.core.model.CheckCatalog
 import bo.puentejoven.core.navigation.AppNavigator
 import bo.puentejoven.feature.conversation.domain.GuidedScriptCatalog
 
@@ -156,23 +158,56 @@ private fun CheckQuestionView(
             question.options.forEach { option ->
                 SignalChip(
                     label = stringResource(option.labelResId),
+                    selected = option.key in state.selectedOptions,
                     onClick = {
-                        onAction(
-                            ContextCheckUiAction.Decide(
-                                questionKey = question.key,
-                                optionKey = option.key,
-                            ),
-                        )
+                        if (question.isMultiSelect) {
+                            // Selección múltiple: se marca y se confirma aparte, porque
+                            // el joven puede elegir más de una emoción.
+                            onAction(ContextCheckUiAction.ToggleOption(option.key))
+                        } else {
+                            onAction(
+                                ContextCheckUiAction.Decide(
+                                    questionKey = question.key,
+                                    optionKeys = setOf(option.key),
+                                ),
+                            )
+                        }
                     },
                     // «Prefiero no responder» se distingue del resto para que saltar
                     // sea una opción visible y no un gesto escondido.
-                    accentColor = if (option.key == GuidedScriptCatalog.OPTION_SKIP) {
+                    accentColor = if (option.key == CheckCatalog.OPTION_SKIP) {
                         colors.ink4
                     } else {
                         colors.indigo
                     },
                 )
             }
+        }
+
+        if (question.isMultiSelect) {
+            Spacer(Modifier.height(spacing.xs))
+            Text(
+                text = stringResource(R.string.check_multi_select_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.ink4,
+            )
+            Spacer(Modifier.height(spacing.xs))
+            PrimaryAction(
+                text = stringResource(R.string.check_confirm),
+                onClick = {
+                    onAction(
+                        ContextCheckUiAction.Decide(
+                            questionKey = question.key,
+                            optionKeys = state.selectedOptions,
+                        ),
+                    )
+                },
+                state = if (state.selectedOptions.isEmpty()) {
+                    PuenteButtonState.Disabled
+                } else {
+                    PuenteButtonState.Enabled
+                },
+            )
         }
 
         if (state.saveError != null) {

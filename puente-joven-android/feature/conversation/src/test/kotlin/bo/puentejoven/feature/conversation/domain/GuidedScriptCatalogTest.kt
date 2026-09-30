@@ -1,5 +1,6 @@
 package bo.puentejoven.feature.conversation.domain
 
+import bo.puentejoven.core.model.CheckCatalog
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -10,25 +11,28 @@ import org.junit.Test
  * Pruebas del guion de la Ruta A.
  *
  * Criterios de `TASK-004`:
- * - #4 el catálogo cubre las dimensiones del brief §9;
  * - #2 todo turno de Puente nace de una plantilla con `promptId`;
+ * - #4 una pregunta por cada dimensión del brief §9, y todas permiten no responder;
  * - el guion es **determinista**: sin IA, sin azar.
+ *
+ * Y una prueba que protege el contrato con `:core:model`: si `CheckCatalog` gana una
+ * clave y aquí falta el copy, **esta clase falla** en vez de perder la pregunta en
+ * silencio.
  */
 class GuidedScriptCatalogTest {
 
     @Test
-    fun `cubre las 10 dimensiones del brief 9 con una pregunta cada una`() {
-        val dimensionesCubiertas = GuidedScriptCatalog.questions.map { it.dimension }.toSet()
-
+    fun `hay una pregunta por cada dimension del brief 9`() {
+        // brief §9 tiene 10 dimensiones; CheckCatalog es la única fuente de claves.
         assertEquals(
-            "Cada dimensión del brief §9 debe tener su pregunta",
-            CheckDimension.entries.toSet(),
-            dimensionesCubiertas,
+            "Cada dimensión del brief §9 debe tener su pregunta con copy",
+            CheckCatalog.questionKeys.size,
+            GuidedScriptCatalog.questions.size,
         )
         assertEquals(
-            "Una pregunta por dimensión: el brief §9 no pide más",
-            CheckDimension.entries.size,
-            GuidedScriptCatalog.questions.size,
+            "El orden debe ser el del catálogo: la UI lo usa para el progreso",
+            CheckCatalog.questionKeys,
+            GuidedScriptCatalog.questionKeys,
         )
     }
 
@@ -36,11 +40,25 @@ class GuidedScriptCatalogTest {
     fun `todas las preguntas permiten no responder`() {
         GuidedScriptCatalog.questions.forEach { question ->
             assertTrue(
-                "La pregunta ${question.key} debe ofrecer «${GuidedScriptCatalog.OPTION_SKIP}»: " +
+                "La pregunta ${question.key} debe ofrecer «${CheckCatalog.OPTION_SKIP}»: " +
                     "poder no responder es un derecho, no una excepción",
-                question.options.any { it.key == GuidedScriptCatalog.OPTION_SKIP },
+                question.options.any { it.key == CheckCatalog.OPTION_SKIP },
             )
         }
+    }
+
+    @Test
+    fun `todas las opciones del catalogo tienen copy`() {
+        // La prueba que evita la pérdida silenciosa: si se añade una opción al
+        // catálogo y aquí falta la etiqueta, el número no cuadra.
+        val esperadas = CheckCatalog.questionKeys.sumOf { CheckCatalog.optionsFor(it).size + 1 }
+        val reales = GuidedScriptCatalog.questions.sumOf { it.options.size }
+        assertEquals(
+            "Falta copy para alguna opción del catálogo: la pregunta quedaría " +
+                "parcialmente irrespondible",
+            esperadas,
+            reales,
+        )
     }
 
     @Test
@@ -56,6 +74,16 @@ class GuidedScriptCatalogTest {
                 optionKeys.toSet().size,
             )
         }
+    }
+
+    @Test
+    fun `solo emotions admite seleccion multiple`() {
+        val multi = GuidedScriptCatalog.questions.filter { it.isMultiSelect }.map { it.key }
+        assertEquals(
+            "PR-003 §4.3 regla 3: solo emotions admite varias opciones",
+            listOf(CheckCatalog.EMOTIONS),
+            multi,
+        )
     }
 
     @Test

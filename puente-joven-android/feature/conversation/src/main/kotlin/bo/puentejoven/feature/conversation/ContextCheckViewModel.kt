@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import bo.puentejoven.core.common.AppResult
 import bo.puentejoven.core.common.FeatureUiState
 import bo.puentejoven.core.model.ConversationId
+import bo.puentejoven.feature.conversation.domain.CheckQuestion
 import bo.puentejoven.feature.conversation.domain.ContextCheckUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -48,34 +49,72 @@ class ContextCheckViewModel @Inject constructor(
         viewModelScope.launch {
             contextCheck.observeProgress().collect { progress ->
                 _uiState.update { current ->
+                    val nextQuestion = progress.question
+                    val previousKey = currentQuestionKey()
                     current.copy(
                         content = FeatureUiState.Content(
                             ContextCheckContent(
-                                question = progress.question,
+                                question = nextQuestion,
                                 decidedCount = progress.decidedCount,
                                 totalCount = progress.totalCount,
                             ),
                         ),
+                        // Al cambiar de pregunta se limpia la selección: si no, lo que
+                        // el joven marcó en la anterior aparecería marcado en la nueva.
+                        selectedOptions = if (nextQuestion?.key == previousKey) {
+                            current.selectedOptions
+                        } else {
+                            emptySet()
+                        },
                     )
                 }
             }
         }
     }
 
+    /** Pregunta vigente, o `null` si el chequeo terminó o aún está cargando. */
+    fun currentQuestion(): CheckQuestion? =
+        (_uiState.value.content as? FeatureUiState.Content)?.data?.question
+
+    private fun currentQuestionKey(): String? = currentQuestion()?.key
+
     fun onAction(action: ContextCheckUiAction) {
         when (action) {
             is ContextCheckUiAction.Decide ->
-                decide(action.questionKey, action.optionKey)
+                decide(action.questionKey, action.optionKeys)
 
             is ContextCheckUiAction.RetryDecision ->
-                decide(action.questionKey, action.optionKey)
+                decide(action.questionKey, action.optionKeys)
+
+            is ContextCheckUiAction.ToggleOption -> toggle(action.optionKey)
 
             ContextCheckUiAction.DismissSaveError ->
                 _uiState.update { it.copy(saveError = null) }
         }
     }
 
-    private fun decide(questionKey: String, optionKey: String) {
+    /**
+     * Marca o desmarca una opción.
+     *
+     * En una pregunta de una sola opción, marcar **reemplaza**: no tiene sentido
+     * acumular selecciones donde el catálogo dice que solo cabe una.
+     */
+    private fun toggle(optionKey: String) {
+        val question = currentQuestion() ?: return
+
+        _uiState.update { state ->
+            val current = state.selectedOptions
+            val next = if (question.isMultiSelect) {
+                if (optionKey in current) current - optionKey else current + optionKey
+            } else {
+                // El salto no se combina con otras opciones: o responde, o salta.
+                setOf(optionKey)
+            }
+            state.copy(selectedOptions = next)
+        }
+    }
+
+    private fun decide(questionKey: String, optionKeys: Set<String>) {
         if (_uiState.value.isSaving) return
 
         viewModelScope.launch {
@@ -83,7 +122,7 @@ class ContextCheckViewModel @Inject constructor(
 
             val result = contextCheck(
                 questionKey = questionKey,
-                optionKey = optionKey,
+                optionKeys = optionKeys,
                 conversationId = conversationId,
             )
 
@@ -91,7 +130,11 @@ class ContextCheckViewModel @Inject constructor(
                 when (result) {
                     // El avance lo produce el flujo de respuestas, no esta línea: si
                     // falla el guardado, la pregunta NO avanza y el joven lo ve.
-                    is AppResult.Success -> current.copy(isSaving = false)
+                    is AppResult.Success -> current.copy(
+                        isSaving = false,
+                        selectedOptions = emptySet(),
+                    )
+
                     is AppResult.Failure -> current.copy(isSaving = false, saveError = result.error)
                 }
             }

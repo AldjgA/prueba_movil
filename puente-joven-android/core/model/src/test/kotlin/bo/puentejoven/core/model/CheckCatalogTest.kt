@@ -74,4 +74,75 @@ class CheckCatalogTest {
         assertFalse(CheckCatalog.isKnownOption(CheckCatalog.SLEEP, "inventada"))
         assertFalse(MotivoCatalog.isKnown("inventado"))
     }
+
+    // -----------------------------------------------------------------------
+    // Ampliación del 2026-09-30: las 10 dimensiones del brief §9
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `el catalogo cubre las 10 dimensiones del brief 9`() {
+        // brief §9: cómo se siente · sueño · soledad · acoso · violencia · conflicto
+        // familiar · escuela · apoyo disponible · consumo · seguridad personal.
+        val dimensionesDelBrief = listOf(
+            CheckCatalog.EMOTIONS,
+            CheckCatalog.SLEEP,
+            CheckCatalog.LONELINESS,
+            CheckCatalog.BULLYING,
+            CheckCatalog.VIOLENCE,
+            CheckCatalog.FAMILY,
+            CheckCatalog.SCHOOL,
+            CheckCatalog.SUPPORT,
+            CheckCatalog.SUBSTANCE,
+            CheckCatalog.SAFETY,
+        )
+
+        assertEquals(
+            "Cada dimensión del brief §9 debe tener su pregunta: con 5, dos criterios de " +
+                "PR-001 §4.3 se quedan sin fuente",
+            dimensionesDelBrief.size,
+            CheckCatalog.questionKeys.size,
+        )
+        dimensionesDelBrief.forEach { clave ->
+            assertTrue("Falta la dimensión $clave", CheckCatalog.isKnownQuestion(clave))
+        }
+    }
+
+    @Test
+    fun `acoso y abuso tienen una pregunta que puede producirlos`() {
+        // `acoso` es el caso central del brief. Si no hay pregunta de acoso, el motivo
+        // existe pero NINGUNA respuesta puede encenderlo — una etiqueta sin fuente.
+        assertTrue(
+            "Sin pregunta de acoso, el motivo `acoso` es inalcanzable",
+            CheckCatalog.isKnownQuestion(CheckCatalog.BULLYING),
+        )
+        assertTrue(
+            "Sin pregunta de violencia, el motivo `abuso` es inalcanzable",
+            CheckCatalog.isKnownQuestion(CheckCatalog.VIOLENCE),
+        )
+        assertTrue(CheckCatalog.isKnownOption(CheckCatalog.BULLYING, "every_day"))
+        assertTrue(CheckCatalog.isKnownOption(CheckCatalog.VIOLENCE, "physical"))
+    }
+
+    @Test
+    fun `saltar es valido en cualquier pregunta`() {
+        for (clave in CheckCatalog.questionKeys) {
+            assertTrue(
+                "Poder no responder es un derecho: $clave debe admitir el salto",
+                CheckCatalog.isKnownOption(clave, CheckCatalog.OPTION_SKIP),
+            )
+        }
+    }
+
+    @Test
+    fun `solo emotions admite seleccion multiple`() {
+        assertTrue(CheckCatalog.isMultiSelect(CheckCatalog.EMOTIONS))
+        CheckCatalog.questionKeys
+            .filterNot { it == CheckCatalog.EMOTIONS }
+            .forEach { clave ->
+                assertFalse(
+                    "$clave no debe admitir selección múltiple (PR-003 §4.3 regla 3)",
+                    CheckCatalog.isMultiSelect(clave),
+                )
+            }
+    }
 }

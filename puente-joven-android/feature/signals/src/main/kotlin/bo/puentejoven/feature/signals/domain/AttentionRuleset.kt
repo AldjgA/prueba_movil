@@ -2,52 +2,12 @@ package bo.puentejoven.feature.signals.domain
 
 import androidx.annotation.StringRes
 import bo.puentejoven.core.model.AttentionLevel
+import bo.puentejoven.core.model.CheckCatalog
+import bo.puentejoven.core.model.MotivoCatalog
 import bo.puentejoven.core.model.Signal
 import bo.puentejoven.core.model.SignalEvidence
 import bo.puentejoven.core.model.TrendDirection
 import bo.puentejoven.feature.signals.R
-
-/**
- * Claves de pregunta del chequeo contextual (`TASK-004`) que estas reglas interpretan,
- * y los valores de opción que las activan.
- *
- * ⚠️ **Estas claves son un contrato con `feature:conversation`.** Hoy están declaradas
- * aquí porque el vocabulario compartido todavía no vive en `:core:model`. Si las dos
- * listas se separan, la consecuencia **no es un fallo visible: es una regla que deja
- * de dispararse en silencio**, que en el caso del rojo es un fallo de seguridad.
- * Por eso está declarado como necesidad P0 en `deliverables/TASK-005/NECESIDADES.md`.
- */
-internal object CheckKey {
-    const val FEELINGS = "check.feelings"
-    const val SLEEP = "check.sleep"
-    const val LONELINESS = "check.loneliness"
-    const val BULLYING = "check.bullying"
-    const val VIOLENCE = "check.violence"
-    const val FAMILY = "check.family"
-    const val SCHOOL = "check.school"
-    const val SUBSTANCE = "check.substance"
-    const val SAFETY = "check.safety"
-}
-
-/** Opciones que el motor interpreta, agrupadas por la regla que activan. */
-internal object CheckOption {
-    const val FEELINGS_WORSE = "worse"
-    const val SLEEP_WAKING_UP = "waking_up"
-    const val SLEEP_VERY_LITTLE = "very_little"
-    const val LONELINESS_OFTEN = "often"
-    const val LONELINESS_ALWAYS = "always"
-    const val BULLYING_OFTEN = "often"
-    const val BULLYING_EVERY_DAY = "every_day"
-    const val VIOLENCE_ARGUMENTS = "arguments"
-    const val VIOLENCE_PHYSICAL = "physical"
-    const val FAMILY_TENSE = "tense"
-    const val FAMILY_FIGHTS = "fights"
-    const val SCHOOL_MISSING = "missing"
-    const val SCHOOL_NOT_GOING = "not_going"
-    const val SUBSTANCE_ONCE = "once"
-    const val SUBSTANCE_SOMETIMES = "sometimes"
-    const val SAFETY_NO = "no"
-}
 
 /** Por qué el motor llegó a ese nivel. Permite explicarlo sin inventar copy. */
 enum class LevelReason {
@@ -94,12 +54,15 @@ data class RuleOutcome(
  * decisión D1/D2: el rojo lo determinan **reglas**, nunca un modelo de lenguaje.
  *
  * `VERSION` se propaga a `AttentionAssessment.rulesetVersion` y viaja en el reporte
- * (`PR-003` §4`): sin ella, una prioridad no es trazable a la regla que la emitió.
+ * (`PR-003` §4): sin ella, una prioridad no es trazable a la regla que la emitió.
  *
- * **Lo que este motor NO puede hacer hoy** — ver `MotivoCatalog.unreachableFromApk`:
+ * **Las claves vienen de `CheckCatalog`.** Ni una sola se declara aquí: si se
+ * duplicaran y derivasen, la regla dejaría de dispararse **en silencio**.
+ *
+ * **Lo que este motor NO puede hacer hoy** — ver `unreachableFromApk`:
  * `ideacion_activa`, `plan_estructurado` e `intento_reciente` son criterios de rojo de
- * `PR-001` §4.3 para los que **no existe ninguna fuente** en el APK: ni el chequeo
- * (brief §9) ni las señales preguntan por ellos.
+ * `PR-001` §4.3 para los que **no existe ninguna fuente** en el APK: ni las 10
+ * preguntas del catálogo ni las señales cubren la autolesión o la ideación.
  */
 object AttentionRuleset {
 
@@ -116,8 +79,26 @@ object AttentionRuleset {
      */
     const val ACCUMULATION_THRESHOLD = 3
 
+    /**
+     * Criterios de `PR-001` §4.3 que **ninguna respuesta del chequeo puede producir**.
+     *
+     * Es una constante y no un comentario para que la carencia sea visible en el
+     * código y comprobable en una prueba.
+     */
+    val unreachableFromApk: Set<String> = setOf(
+        MotivoCatalog.IDEACION_ACTIVA,
+        MotivoCatalog.PLAN_ESTRUCTURADO,
+        MotivoCatalog.INTENTO_RECIENTE,
+    )
+
+    /**
+     * Evalúa la prioridad.
+     *
+     * @param answers pregunta → **conjunto** de opciones elegidas. Es un conjunto porque
+     *   `emotions` admite selección múltiple (`PR-003` §4.3 regla 3).
+     */
     fun evaluate(
-        answers: Map<String, String>,
+        answers: Map<String, Set<String>>,
         signals: List<Signal>,
     ): RuleOutcome {
         val motivos = linkedSetOf<String>()
@@ -130,10 +111,10 @@ object AttentionRuleset {
         }
 
         // --- Criterios de ROJO (PR-001 §4.3) ---
-        if (answers[CheckKey.SAFETY] == CheckOption.SAFETY_NO) {
+        if (answers[CheckCatalog.SAFETY]?.contains("no") == true) {
             motivos += MotivoCatalog.PELIGRO_INMEDIATO
         }
-        if (answers[CheckKey.VIOLENCE] == CheckOption.VIOLENCE_PHYSICAL) {
+        if (answers[CheckCatalog.VIOLENCE]?.contains("physical") == true) {
             motivos += MotivoCatalog.ABUSO
         }
         canonicalSignals.forEach { (canonical, _) ->
@@ -142,23 +123,23 @@ object AttentionRuleset {
 
         val hasRedCriterion = motivos.any { it in redMotivos }
 
-        // --- Criterios de AMARILLO (PR-001 §4.3) ---
+        // --- Criterios de AMARILLO (PR-001 §4.2 / §4.3) ---
         if (!hasRedCriterion) {
-            if (answers[CheckKey.BULLYING] == CheckOption.BULLYING_OFTEN ||
-                answers[CheckKey.BULLYING] == CheckOption.BULLYING_EVERY_DAY
-            ) {
+            if (answers[CheckCatalog.BULLYING]?.any { it == "often" || it == "every_day" } == true) {
+                // `acoso` existe en el catálogo desde el 2026-09-30: es el caso central
+                // del brief y, sin la pregunta de acoso, era una etiqueta sin fuente.
+                motivos += MotivoCatalog.ACOSO
+            }
+            if (answers[CheckCatalog.VIOLENCE]?.contains("arguments") == true) {
                 motivos += MotivoCatalog.VIOLENCIA_NO_INMEDIATA
             }
-            if (answers[CheckKey.VIOLENCE] == CheckOption.VIOLENCE_ARGUMENTS) {
-                motivos += MotivoCatalog.VIOLENCIA_NO_INMEDIATA
-            }
-            if (answers[CheckKey.SCHOOL] == CheckOption.SCHOOL_MISSING ||
-                answers[CheckKey.SCHOOL] == CheckOption.SCHOOL_NOT_GOING
+            if (answers[CheckCatalog.SCHOOL]
+                    ?.any { it == "missing_school" || it == "doesnt_want_to_go" } == true
             ) {
                 motivos += MotivoCatalog.DETERIORO_ESCOLAR
             }
-            if (answers[CheckKey.LONELINESS] == CheckOption.LONELINESS_OFTEN ||
-                answers[CheckKey.LONELINESS] == CheckOption.LONELINESS_ALWAYS
+            if (answers[CheckCatalog.LONELINESS]
+                    ?.any { it == "usually_not" || it == "no_one" } == true
             ) {
                 motivos += MotivoCatalog.AISLAMIENTO_PERSISTENTE
             }
@@ -171,6 +152,12 @@ object AttentionRuleset {
             motivos.isNotEmpty() -> LevelReason.CRITERION
             accumulation >= ACCUMULATION_THRESHOLD -> LevelReason.ACCUMULATION
             else -> LevelReason.NOTHING
+        }
+
+        // Un amarillo por acumulación **sí** lleva motivo desde que `acumulacion`
+        // existe en el catálogo: antes viajaba vacío y el equipo no sabía por qué.
+        if (reason == LevelReason.ACCUMULATION) {
+            motivos += MotivoCatalog.ACUMULACION
         }
 
         val level = when (reason) {
@@ -199,46 +186,6 @@ object AttentionRuleset {
     }
 
     /**
-     * Factores que, sumados, suben la prioridad sin ser criterio por sí solos.
-     *
-     * Del chequeo: ánimo peor, sueño alterado, conflicto en casa, consumo.
-     * De las señales: **cada señal en ascenso es un factor** (brief §10: «frecuencia»,
-     * «persistencia», «cambios»).
-     *
-     * Se cuenta una a una y no como un bloque: un factor es un factor, y agruparlas
-     * haría que el umbral significara cosas distintas según cuántas señales hubiera.
-     * Con tres señales en ascenso se llega a amarillo **sin ningún motivo concreto**,
-     * que es exactamente lo que `PR-001` §4.2 llama «varios factores acumulados».
-     */
-    private fun accumulationFactors(
-        answers: Map<String, String>,
-        signals: List<Signal>,
-    ): Int {
-        var factors = 0
-
-        if (answers[CheckKey.FEELINGS] == CheckOption.FEELINGS_WORSE) factors++
-        if (answers[CheckKey.SLEEP] == CheckOption.SLEEP_WAKING_UP ||
-            answers[CheckKey.SLEEP] == CheckOption.SLEEP_VERY_LITTLE
-        ) {
-            factors++
-        }
-        if (answers[CheckKey.FAMILY] == CheckOption.FAMILY_TENSE ||
-            answers[CheckKey.FAMILY] == CheckOption.FAMILY_FIGHTS
-        ) {
-            factors++
-        }
-        if (answers[CheckKey.SUBSTANCE] == CheckOption.SUBSTANCE_ONCE ||
-            answers[CheckKey.SUBSTANCE] == CheckOption.SUBSTANCE_SOMETIMES
-        ) {
-            factors++
-        }
-
-        factors += signals.count { it.trendDirection == TrendDirection.RISING }
-
-        return factors
-    }
-
-    /**
      * **D2 aplicado al APK: un rojo no se degrada solo.**
      *
      * `PR-003` §9.4 dice que *el LLM no puede bajar un rojo*. La misma lógica vale
@@ -251,9 +198,6 @@ object AttentionRuleset {
      * - la evaluación siga siendo determinista y sin estado (criterio #3);
      * - la secuencia (quién observó qué antes) la aporte quien corresponde, no el motor;
      * - el invariante se pueda probar solo, sin montar la secuencia entera.
-     *
-     * El rojo se mantiene **hasta que una persona lo revise**. El APK no puede
-     * confirmarlo (`AttentionAssessment.requiresHumanConfirmation` es `true`).
      */
     fun enforceNoDegrade(
         computed: RuleOutcome,
@@ -271,6 +215,46 @@ object AttentionRuleset {
             whatChangedResId = R.string.attention_red_what_changed,
             nextStepResId = R.string.attention_red_next_step,
         )
+    }
+
+    /**
+     * Factores que, sumados, suben la prioridad sin ser criterio por sí solos.
+     *
+     * Del chequeo: emociones afectadas, sueño alterado, colegio costando, conflicto
+     * en casa, consumo, y **apoyo escaso** (un factor protector que falta también
+     * cuenta — brief §10).
+     * De las señales: **cada señal en ascenso es un factor**.
+     *
+     * Con tres señales en ascenso se llega a amarillo **sin ningún motivo concreto**,
+     * que es exactamente lo que `PR-001` §4.2 llama «varios factores acumulados» y lo
+     * que ahora viaja como `acumulacion`.
+     */
+    private fun accumulationFactors(
+        answers: Map<String, Set<String>>,
+        signals: List<Signal>,
+    ): Int {
+        var factors = 0
+
+        if (answers[CheckCatalog.EMOTIONS]
+                ?.any { it in setOf("sad", "anxious", "exhausted", "lonely") } == true
+        ) {
+            factors++
+        }
+        if (answers[CheckCatalog.SLEEP]
+                ?.any { it == "hard_to_sleep" || it == "sleeps_too_much" || it == "nightmares" } == true
+        ) {
+            factors++
+        }
+        if (answers[CheckCatalog.SCHOOL]?.contains("struggling") == true) factors++
+        if (answers[CheckCatalog.FAMILY]?.any { it == "tense" || it == "fights" } == true) factors++
+        if (answers[CheckCatalog.SUPPORT]?.any { it == "not_sure" || it == "nobody" } == true) factors++
+        if (answers[CheckCatalog.SUBSTANCE]?.any { it == "once" || it == "sometimes" } == true) {
+            factors++
+        }
+
+        factors += signals.count { it.trendDirection == TrendDirection.RISING }
+
+        return factors
     }
 
     /**

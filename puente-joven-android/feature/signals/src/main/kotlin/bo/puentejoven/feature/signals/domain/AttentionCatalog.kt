@@ -1,12 +1,15 @@
 package bo.puentejoven.feature.signals.domain
 
+import bo.puentejoven.core.model.MotivoCatalog
+
 /**
- * Catálogos compartidos con el backend, tal como los publica `PR-003`.
+ * Catálogo de claves de señal — `PR-003` §4.1 — y su correspondencia con los motivos.
  *
- * Existen aquí porque el APK **emite** estas claves (`TASK-015`) y **razona** con
- * ellas (`TASK-005`). Están en un solo sitio para que no haya dos listas que se
- * desincronicen — que es exactamente el problema que tuvo `PR-006` con
- * `SignalTag` (ver `REVISION-C-POR-B.md` K1).
+ * **Lo que NO está aquí:** el catálogo de `motivo` (vive en `:core:model`,
+ * `MotivoCatalog`) ni el de preguntas del chequeo (vive en `:core:model`,
+ * `CheckCatalog`). Antes este fichero duplicaba el de motivos; la duplicación era
+ * exactamente el problema que `REVISION-C-POR-B.md` K1 detectó y que A resolvió
+ * publicando los catálogos en `:core:model`.
  */
 
 /**
@@ -38,7 +41,7 @@ object SignalCatalog {
      * **Por qué existe:** `DemoFixtures` sigue emitiendo `SignalKey("isolation")` en
      * minúsculas, y `PR-003` §4.1 fijó MAYÚSCULAS. En vez de asumir que A lo
      * arreglará antes de que esto se integre, la normalización es explícita y está
-     * probada. Cuando A canonicalice las fixtures, esto sigue funcionando.
+     * probada.
      *
      * Devuelve `null` si la clave no pertenece al catálogo (p. ej. `FREQUENCY`): una
      * clave desconocida **no se interpreta como una señal**, porque inventar
@@ -51,61 +54,11 @@ object SignalCatalog {
 }
 
 /**
- * Claves del catálogo de `motivo` — `PR-003` §4.2 (provisional y versionado con
- * `rulesetVersion`, derivado de `PR-001` §4.3).
- *
- * `motivo` es lo que le dice al equipo **por qué** se activó la alerta. Viaja en el
- * reporte (`PR-003` §4) y nunca como texto libre.
- */
-object MotivoCatalog {
-
-    // --- Criterios de ROJO (PR-001 §4.3) ---
-    const val IDEACION_ACTIVA = "ideacion_activa"
-    const val PLAN_ESTRUCTURADO = "plan_estructurado"
-    const val INTENTO_RECIENTE = "intento_reciente"
-    const val AUTOLESION = "autolesion"
-    const val ABUSO = "abuso"
-    const val PELIGRO_INMEDIATO = "peligro_inmediato"
-
-    // --- Criterios de AMARILLO (PR-001 §4.3) ---
-    const val VIOLENCIA_NO_INMEDIATA = "violencia_no_inmediata"
-    const val DETERIORO_ESCOLAR = "deterioro_escolar"
-    const val AISLAMIENTO_PERSISTENTE = "aislamiento_persistente"
-
-    val all: Set<String> = setOf(
-        IDEACION_ACTIVA, PLAN_ESTRUCTURADO, INTENTO_RECIENTE, AUTOLESION, ABUSO, PELIGRO_INMEDIATO,
-        VIOLENCIA_NO_INMEDIATA, DETERIORO_ESCOLAR, AISLAMIENTO_PERSISTENTE,
-    )
-
-    /**
-     * Motivos que **el APK no puede producir hoy**, y por qué. Es una constante y no
-     * un comentario para que la carencia sea visible en el código y comprobable en
-     * una prueba (ver `AttentionRulesetTest`).
-     *
-     * Los cuatro son criterios de rojo de `PR-001` §4.3. Ni el chequeo contextual
-     * (`TASK-004`, brief §9) ni las señales preguntan por ellos, así que **no hay
-     * ninguna fuente**: un joven puede escribir «quiero morir» en la conversación y
-     * el APK no lo detecta, porque nada lee texto libre (guardrail #3).
-     *
-     * `SELF_HARM` sí llega por señal — pero nadie emite esa señal hoy.
-     */
-    val unreachableFromApk: Set<String> = setOf(
-        IDEACION_ACTIVA,
-        PLAN_ESTRUCTURADO,
-        INTENTO_RECIENTE,
-    )
-}
-
-/**
  * Correspondencia señal canónica → motivo.
  *
  * Solo las señales que **son** un criterio de `PR-001` §4.3 tienen motivo. Las demás
  * (sueño, ansiedad, consumo) **acumulan** sin ser motivo por sí solas: el brief §10
  * habla de «acumulación de señales», no de que una sola baste.
- *
- * Nota de producto: `PR-003` §4.2 **no tiene clave para acoso**, aunque el brief hace
- * del bullying el caso central. El acoso se mapea a `violencia_no_inmediata`, que es
- * lo más cercano en `PR-001` §4.2. Es una decisión de mapeo, no un hecho del contrato.
  */
 internal val signalToMotivo: Map<String, String> = mapOf(
     SignalCatalog.ISOLATION to MotivoCatalog.AISLAMIENTO_PERSISTENTE,

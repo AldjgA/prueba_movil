@@ -3,6 +3,7 @@ package bo.puentejoven.feature.conversation.domain
 import bo.puentejoven.core.common.AppResult
 import bo.puentejoven.core.common.UiError
 import bo.puentejoven.core.data.repository.ContextCheckRepository
+import bo.puentejoven.core.model.CheckCatalog
 import bo.puentejoven.core.model.ConversationId
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -51,32 +52,48 @@ class ContextCheckUseCase @Inject constructor(
     /**
      * Registra una decisión del joven.
      *
-     * Valida que la pregunta pertenezca al catálogo: sin esto, una clave arbitraria
-     * podría llegar a `ContextResponse` y `TASK-005` la interpretaría como una
-     * dimensión real. La clave de opción se valida contra las opciones de esa
-     * pregunta por el mismo motivo.
+     * Valida contra `CheckCatalog`: sin esto, una clave arbitraria podría llegar a
+     * `ContextResponse` y `TASK-005` la interpretaría como una dimensión real.
+     *
+     * [optionKeys] es un **conjunto** porque `emotions` admite selección múltiple
+     * (`PR-003` §4.3 regla 3). Cada opción elegida se guarda como una respuesta
+     * propia: el modelo `ContextResponse` guarda una opción por fila, así que la
+     * multi-selección son varias filas con la misma `questionKey`.
      */
     suspend operator fun invoke(
         questionKey: String,
-        optionKey: String,
+        optionKeys: Set<String>,
         conversationId: ConversationId?,
     ): AppResult<Unit> {
-        val question = GuidedScriptCatalog.question(questionKey)
-            ?: return AppResult.Failure(UiError.Validation(technical = "unknown question key"))
-
-        if (question.options.none { it.key == optionKey }) {
-            return AppResult.Failure(UiError.Validation(technical = "unknown option key"))
+        if (optionKeys.isEmpty()) {
+            return AppResult.Failure(UiError.Validation(technical = "no option selected"))
         }
 
-        return when (
+        if (!CheckCatalog.isKnownQuestion(questionKey)) {
+            return AppResult.Failure(UiError.Validation(technical = "unknown question key"))
+        }
+
+        val invalid = optionKeys.firstOrNull { !CheckCatalog.isKnownOption(questionKey, it) }
+        if (invalid != null) {
+            return AppResult.Failure(UiError.Validation(technical = "unknown option key: $invalid"))
+        }
+
+        // Una sola opción elegida no puede ir junto al salto: o responde, o salta.
+        if (optionKeys.size > 1 && CheckCatalog.OPTION_SKIP in optionKeys) {
+            return AppResult.Failure(
+                UiError.Validation(technical = "skip cannot be combined with options"),
+            )
+        }
+
+        for (optionKey in optionKeys) {
             val recorded = contextCheckRepository.recordResponse(
                 questionKey = questionKey,
                 optionKey = optionKey,
                 conversationId = conversationId,
             )
-        ) {
-            is AppResult.Failure -> recorded
-            is AppResult.Success -> AppResult.Success(Unit)
+            if (recorded is AppResult.Failure) return recorded
         }
+
+        return AppResult.Success(Unit)
     }
 }

@@ -47,9 +47,12 @@ class ObserveSignalsUseCase @Inject constructor(
             signalsRepository.observeSignals(),
             contextCheckRepository.observeResponses(),
         ) { signals, responses ->
-            // El mapa toma la ÚLTIMA decisión por pregunta: si el joven responde dos
-            // veces, vale lo más reciente, no la primera.
-            val answers = responses.associate { it.questionKey.value to it.optionKey.value }
+            // Una pregunta puede tener VARIAS respuestas: `emotions` es de selección
+            // múltiple (PR-003 §4.3 regla 3) y cada opción elegida es una fila propia
+            // en ContextResponse. Se agrupan en un conjunto.
+            val answers = responses
+                .groupBy { it.questionKey.value }
+                .mapValues { (_, rows) -> rows.map { it.optionKey.value }.toSet() }
 
             signals to AttentionRuleset.evaluate(answers = answers, signals = signals)
         }
