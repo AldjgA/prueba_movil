@@ -169,3 +169,33 @@ ubicación, lo muevo.**
    vacío. El `AuthService` se construía con el sumidero nulo por defecto.
 
 Ambos están corregidos y fijados con pruebas.
+
+---
+
+## 10. 🆕 El portal: primer paquete con dependencias del proyecto
+
+He montado **`puente-red/portal/`** (dueño: C, `PR-000` §1). Es el **primer paquete del
+proyecto con dependencias reales**: hasta ahora el backend funcionaba sin ninguna (Node ejecuta
+`.ts` con type stripping).
+
+**Lo que A debería saber:**
+
+| Punto | Detalle |
+|---|---|
+| **Dependencias** | `react` 19.3, `react-dom` 19.3, `vite` 8.3, `typescript` 7.0, `@vitejs/plugin-react`, `@types/*`. `package-lock.json` **commiteado** para que `npm ci` sea reproducible |
+| **Aislamiento** | El portal tiene **su propio `package.json` y su propio `node_modules`**. **No** comparte árbol con `backend/`. Si A quiere un workspace npm raíz, es su decisión y lo adapto |
+| **Proxy de desarrollo** | `vite.config.ts` proxya `/profesional/**` a `http://127.0.0.1:8080` (o `PUENTE_API_URL`). Así el portal no necesita CORS |
+| **En producción** | El portal es estático (`dist/`) y necesita servir `/profesional/**` contra la API. **Quién sirve los dos y cómo (mismo origen, subdominio, CORS) es una decisión de despliegue de A** |
+| **Variables** | `VITE_ES_DEMO` (`false` solo con personas reales atendiendo) y `PUENTE_API_URL` en desarrollo |
+
+**Nada del portal se compila en el APK** ni toca `settings.gradle.kts` (`PR-003` §9.10).
+
+### 10.1 Verificación
+
+- `npm test` en el portal: **20/20** (lógica pura: cliente de API e inactividad).
+- `npm run build`: **correcto** (`tsc` + `vite build` → `dist/`, 236 kB).
+- **Extremo a extremo**: backend en `:8080` + portal en `:5173` → el portal sirve la app y
+  proxya `/profesional/**` correctamente (200 en el marcador, 401 en la ruta guardada sin token).
+
+⚠️ **La interfaz no se ha verificado visualmente** (no hay navegador en este entorno). Lo que
+está verificado es que **compila**, que **la lógica es correcta** y que **la conexión funciona**.

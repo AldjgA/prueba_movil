@@ -173,19 +173,50 @@ selector de rol, CTA *"Entrar a Puente Red"*, demo `demo@puentered.org`.
   (`deliverables/PR-010/NECESIDADES.md`)
 - [x] Sin secretos ni endpoints hardcodeados
 - [x] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
-- [ ] **Interfaz de login** (`puente-red/portal/auth`) — **pendiente**: requiere montar el
-  portal (React + Vite), que es un cambio de naturaleza (dependencias y build step)
+- [x] **Interfaz de login** (`puente-red/portal/`) — **implementada**
 
 ### Estado de implementación (2026-09-30)
 
-**Implementado** en `puente-red/backend/core/auth/` (dueño: C), Node ≥ 22.18, sin dependencias.
+**Completo.** Núcleo de seguridad en `puente-red/backend/src/core/auth/`, rutas en
+`puente-red/backend/src/routes/profesional.js` e **interfaz en `puente-red/portal/`**.
 
-**Alcance de este incremento: el núcleo de seguridad**, que es donde viven los 10 criterios.
-La **interfaz** de login queda pendiente del montaje del portal.
+**Verificado:**
+- `npm test` en el backend: **177/177 en verde** (21 de este módulo, + 20 de la superficie).
+- `npm test` en el portal: **20/20 en verde** (lógica pura, sin React).
+- `npm run build` del portal: **correcto** (`tsc` + `vite build` → `dist/`).
+- **Extremo a extremo**: el backend arranca y el portal sirve la app y **proxya
+  `/profesional/**`** a la API (`/profesional` → 200, `/profesional/session` sin token → 401).
 
-**Nota de ubicación:** la spec situaba el módulo en `puente-red/portal/auth`. El **núcleo** está
-en `backend/core/auth` a propósito: la guardia protege **rutas de la API**, no pantallas. Si
-viviera en el portal, la API Profesional dependería del front-end para autorizar.
+**Rutas de la superficie `/profesional`:**
+
+| Ruta | Guardia |
+|---|---|
+| `GET /profesional` | — (marcador de vida) |
+| `POST /profesional/auth/login` | — (emite token opaco) |
+| `POST /profesional/auth/logout` | sesión viva |
+| `GET /profesional/session` | sesión viva · devuelve **las acciones permitidas del rol** |
+| `GET /profesional/auditoria` | `VIEW_AUDIT_LOG` (solo `supervisor`) |
+
+El resto responde `501` hasta `PR-011`…`PR-017`.
+
+**Decisiones del portal que afectan a la seguridad:**
+- El **token vive solo en memoria** (no en `localStorage`): un token accesible desde el
+  almacenamiento del navegador es accesible para cualquier XSS.
+- La **matriz no se replica** en el cliente: el servidor devuelve `accionesPermitidas` y el
+  portal la lee. Una sola fuente de verdad.
+- `src/auth/api.ts` es el **único** archivo que construye rutas de API → la frontera de
+  `PR-020` criterio 12 se audita leyendo un archivo, y hay una prueba que lo comprueba.
+- El portal **no compone** mensajes de error de credenciales: usa el del servidor, para no
+  romper el criterio 2 desde el cliente.
+- Un **fallo de red** no se presenta como un fallo de credenciales.
+- El portal **declara el entorno de demostración** (`PR-001` §8).
+
+**Provisional, pendiente del clínico (`PR-001` §5–§6):** el catálogo de `rationaleKeys` y la
+metodología del prompt.
+
+**Pendiente de A:** el adaptador real de Supabase Auth (necesita el cliente de `src/shared/**`),
+las cuatro variables de demostración en `.env.example`, y la guarda de secretos de `TASK-014`
+sobre `puente-red/**`.
 
 Lo que hace verificables los criterios:
 
