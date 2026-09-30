@@ -11,7 +11,7 @@
 |---|---|---|
 | **1** | `include(":feature:conversation")` y `include(":feature:signals")` | ✅ **hecho** (B puso `conversation`; A completó `signals`) |
 | **2** | Dependencias en `app/build.gradle.kts` | ✅ **hecho** |
-| **3** | **5 placeholders → pantallas reales** en `PuenteJovenNavHost.kt` | ⏳ **en curso en B** (lo tiene sin commitear). ⚠️ Colisión de nombres con `:core:navigation`: hay que aliasar |
+| **3** | **5 placeholders → pantallas reales** en `PuenteJovenNavHost.kt` | ✅ **hecho y verificado** (B lo escribió; A lo integró y comprobó a nivel de app) |
 | **4** | **Validar `promptId`** en `appendPuenteMessage` | ✅ **hecho** (criterio #2 de `TASK-004`) |
 | **5** | **D1** · Parametrizar la barra | ✅ **hecho**: el componente ya aceptaba `items`; lo que faltaba era el **catálogo de los 5 destinos del MVP** (P3), añadido como `PuenteNavDestinations.Mvp` |
 | **6** | **D2** · Home de 6 enlaces **+ corregir `OpenHelpSomeone`** | ⏳ **pendiente**: `HelpRoute`/`NextStepsRoute` son de `TASK-008`/`TASK-010`, aún sin implementar. Se aplicará cuando existan esas pantallas |
