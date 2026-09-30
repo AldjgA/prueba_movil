@@ -14,7 +14,7 @@ El núcleo del pipeline de triaje de Puente Red. Aquí viven las tareas `PR-005`
 | `PR-005` Clasificador LLM | `classification/` | ✅ implementado |
 | `PR-006` Extracción de características | `features/` | ✅ implementado |
 | `PR-007` Directorio de profesionales | `directory/` | ✅ implementado |
-| `PR-008` Motor de derivación | `routing/` | ⏳ |
+| `PR-008` Motor de derivación | `routing/` | ✅ implementado |
 | `PR-009` Cola, SLA y trazabilidad | `queue/` | ⏳ |
 
 **Fuera de este paquete** (dueño: Agente A, `CONTRATO-DE-INTEGRACION.md` §1.1):
@@ -30,7 +30,7 @@ directamente (type stripping nativo, estable desde Node 22.18).
 
 ```bash
 cd puente-red/backend/core
-npm test          # 61 pruebas: PR-005 (22) + PR-006 (18) + PR-007 (21)
+npm test          # 84 pruebas: PR-005 (22) + PR-006 (18) + PR-007 (21) + PR-008 (23)
 ```
 
 > **Limitación del type stripping:** no se pueden usar `enum`, `namespace` ni *parameter
@@ -130,6 +130,46 @@ escalonada por gravedad, así que hay **dos tipos de respondedor** con **nivel m
 
 ⚠️ **Provisional:** especialidades, zonas e idiomas (`PR-001` §7).
 **Datos de la demo ficticios** (brief §28, `PR-003` Q7): tres perfiles, todos `isFictional`.
+
+---
+
+## `routing/` — PR-008, motor de derivación
+
+**Propone, no asigna.** `RoutingProposal` no tiene campo `assignee`: el acto de tomar el caso
+es humano (`ACEPTADO`). Es el guardrail #2 puesto en código, y no una promesa de estilo.
+
+### Dos decisiones que conviene entender antes de tocarlo
+
+1. **D5 se aplica dos veces.** El directorio ya la hace cumplir, y el motor añade una segunda
+   barrera. Si alguien sustituye el directorio por otro que no la respete, un caso `ALTO`
+   sigue sin llegar a personal capacitado.
+2. **La equidad es una regla de ORDEN, no solo un peso.** Primero se ordena por **banda de
+   carga** (0: ≤ mediana · 1: ≤ 2× · 2: > 2×) y después por puntuación. Si fuera solo un peso,
+   un respondedor perfectamente emparejado pero desbordado podría seguir siendo el primero — y
+   eso es justo lo que `PLAN-PUENTE-RED.md` §3.3 prohíbe.
+
+### Otras decisiones
+
+- **Cobertura honesta:** `ALTO` + fuera de horario + nadie de guardia →
+  `REQUIRES_ON_CALL_ESCALATION`. No se asigna a quien no está (`PR-003` §15).
+- **Sin elegibles no es un error:** el resultado es `NO_ELIGIBLE_RESPONDER` con motivo, y el
+  caso **no** se queda sin ruta.
+- **Orden reproducible:** banda → puntuación → `id`. El tercer criterio evita que dos
+  respondedores empatados salgan en orden distinto.
+- **Pesos versionados**, no constantes: cambiarlos exige `weightsVersion` nueva.
+- **`FICTIONAL_PROFILE`** como contrapartida: una propuesta sobre datos de demostración **no**
+  es operativa, y el portal tiene que poder decirlo.
+
+### ⚠️ Dos cosas declaradas, no inventadas
+
+- **`protectiveCoverage` vale 0.** La spec lista un peso para *"factores protectores ya
+  cubiertos por el respondedor"*, pero **no define su semántica** y no hay en el contrato
+  ningún vínculo respondedor↔factores protectores. El peso queda **declarado y configurable**
+  para que el clínico lo active al responder **P6**. Inventarlo habría sido inventar una regla
+  de triaje.
+- **Idioma y zona solo puntúan si el caso los declara.** El Contrato A (`PR-003` §4) **no los
+  trae**: son datos que el joven tendría que declarar y hoy no declara. El motor no se los
+  inventa; si no llegan, esos pesos no se aplican.
 
 ---
 
