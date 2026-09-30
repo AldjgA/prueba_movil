@@ -103,13 +103,15 @@ ingesta acepta `ROJO`+`AMARILLO`, `sessionToken` sin caducidad, `caseToken` = UL
 
 **Hallazgos F1–F4**: los cuatro son de A (`REVISION-C.md` §6) y **ninguno exige rehacer una spec de C**.
 
-### 9.2 🆕 Nuevas — bloquean el arranque de la Fase 1
+### 9.2 Fase 1 — estado (actualizado 2026-09-30)
 
-| # | Pregunta | Bloquea |
+| # | Pregunta | Estado |
 |---|---|---|
-| **6** | **El backend no existe.** `puente-red/backend/` no tiene módulo ni esqueleto. `backend/main`, `shared/**` y el despliegue son de **A**, así que **C no puede compilar ni probar `backend/core/**` sin él**. ¿Lo crea A? | `PR-005`…`PR-009` |
-| **7** | ⚠️ **Go no está instalado en la máquina** (solo Node v22.22.2). `PR-INFRA` §3 permite **Go o Node/Bun + Hono**. C propone **Node/Bun + Hono**: no requiere instalar toolchain, encaja con el portal (TS) y la huella (~50–90 MB) cabe en 256 MB. ¿Se confirma? | `PR-005`…`PR-009` |
-| 8 | ¿Dónde vive el `go.mod`/`package.json` del backend: en la raíz `backend/` (A) o en `backend/core/` (C)? | `PR-005` |
+| 6 | **El backend no existe.** `puente-red/backend/` no tenía módulo. `backend/main` y `shared/**` son de **A** | ⚠️ **abierto**. C creó su parte (`backend/core/package.json` + `classification/`) pero **no puede exponer nada sin el servidor de A**. Detalle en `deliverables/PR-005/NECESIDADES.md` §7.2 |
+| 7 | ⚠️ **Go no está instalado** (solo Node v22.22.2) | ✅ **resuelto**: el dueño confirmó **Node/Bun + Hono** (2026-09-30), que `PR-INFRA` §3 ya permitía. Ventaja: sin toolchain extra y un solo lenguaje con el portal |
+| 8 | ¿Dónde vive el `package.json` del backend? | ⚠️ **abierto**. C creó el suyo en `backend/core/` (su árbol). Falta que A decida **cómo lo consume `main`**: workspace npm, `file:` o ruta relativa |
+| 9 | 🆕 ¿La **guarda de secretos de `TASK-014`** cubrirá `puente-red/backend/core/**`? | ⚠️ abierto — el criterio 9 de `PR-005` depende de esto (hallazgo **F2**) |
+| 10 | 🆕 ¿El **catálogo de `rationaleKeys`** y la **metodología del prompt** de `PR-001` §5–§6 ya existen? | ⚠️ pendiente del clínico. Hoy son `provisional` en `catalog.ts` y `prompt.ts`, derivados solo de lo ya escrito en el repo |
 
 ## 10. Lo que C se compromete a NO tocar
 

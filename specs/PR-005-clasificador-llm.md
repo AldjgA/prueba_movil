@@ -171,9 +171,28 @@ en `PR-018`. No se reutiliza `core/designsystem` (es Compose y está congelado).
 
 ## 10. Definition of Done
 
-- [ ] Spec **Aprobada** por otro agente
-- [ ] Compila (`go build ./...`) y pasa lint
-- [ ] Pruebas de los 10 criterios en verde
-- [ ] `NECESIDADES.md` entregado a A y aplicado (si aplica)
-- [ ] Sin secretos ni endpoints hardcodeados (API key de Gemini solo en el servidor)
-- [ ] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+- [x] Spec **Aprobada** por otro agente (`REVISION-C.md`)
+- [x] Compila y pasa pruebas — `npm test` en `puente-red/backend/core`: **22/22 en verde**
+- [x] Pruebas de los 10 criterios en verde
+- [ ] `NECESIDADES.md` entregado a A y aplicado — **entregado** (`deliverables/PR-005/NECESIDADES.md`); **pendiente de aplicar** por A (esqueleto de `backend/`)
+- [x] Sin secretos ni endpoints hardcodeados (la clave solo por nombre de variable de entorno)
+- [x] Ningún contrato profesional compilado en el APK (`PR-003` §9.10)
+
+### Estado de implementación (2026-09-30)
+
+**Implementado** en `puente-red/backend/core/classification/` (dueño: C) con **Node ≥ 22.18**,
+sin dependencias ni build step. 22 pruebas, incluidas:
+
+- la **property-based de 1.000 casos** con proveedor hostil que siempre responde `MEDIO`
+  (criterio 2) — el rojo nunca sale degradado;
+- el **timeout** con proveedor colgado (criterio 4);
+- la **guarda de frontera** de identidad (criterio 6);
+- el **filtrado de claves** fuera de catálogo (criterio 7);
+- que la propuesta **no retiene** el contenido del resumen, solo su hash (criterio 8).
+
+**Provisional, pendiente del clínico (`PR-001` §5–§6):** el catálogo de `rationaleKeys`
+(`catalog.ts`) y la metodología del prompt (`prompt.ts`). Ambos están marcados `provisional` y
+solo codifican lo que ya está cerrado en el repo.
+
+**Pendiente de A:** el esqueleto de `backend/` (`main`, `shared/**`) y la guarda de secretos de
+`TASK-014` sobre `puente-red/**`.
