@@ -26,8 +26,8 @@ tiene spec**. Es el índice del proyecto; si algo no está aquí, no existe.
 | `TASK-000` | Plantilla SDD + matriz de trazabilidad | juvenil | `specs/` | ✅ `_PLANTILLA-SPEC.md` |
 | `TASK-00A` | Contrato de integración | juvenil | `CONTRATO-DE-INTEGRACION.md` | ✅ |
 | `TASK-021` | Modelo de amenaza de privacidad | juvenil | `specs/TASK-021-...md` | ⏳ |
-| `TASK-003b` | Persistencia local (DataStore) | juvenil | `:core:data` | ⏳ |
-| `TASK-025` | Multi-perfil en dispositivo compartido | juvenil | `:core:data` | ⏳ |
+| `TASK-003b` | Persistencia local (DataStore) | juvenil | `:core:data` | ⏳ `specs/TASK-003b-...md` |
+| `TASK-025` | Multi-perfil en dispositivo compartido | juvenil | `:core:data` | ⏳ `specs/TASK-025-...md` |
 | `PR-001` | Protocolo de crisis | Red | `PR-001-PROTOCOLO-DE-CRISIS.md` | ✅ (autorizado) |
 | `PR-002` | Modelo de identidad y anonimato | Red | `PLAN-PUENTE-RED.md` §2.5 | ✅ (plegado en `PR-003`/`PR-004`) |
 | `PR-003` | Contrato de datos Joven ↔ Red | Red | `PR-003-CONTRATO-DATOS-JOVEN-RED.md` | ✅ |
