@@ -1,6 +1,6 @@
 # PR-005 · Servicio de clasificación con LLM (medio / alto, versionado)
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R1 · **Depende de:** `PR-001` §5–6, `PR-003` §3–4, `PR-004` · **Bloquea:** `PR-008`, `PR-012`
@@ -124,7 +124,7 @@ versionado. Evita que el modelo inyecte texto arbitrario hacia una superficie hu
 | 6 | El modelo nunca recibe `ProfileId` ni alias | contrato sobre el payload enviado al proveedor |
 | 7 | `RationaleKeys` solo contiene claves del catálogo vigente | unitaria contra el catálogo |
 | 8 | Un prompt no se conserva más allá de la ventana de auditoría (`PR-018`) | unitaria con reloj inyectable |
-| 9 | La API key de Gemini **no** está en el repositorio ni en el APK | revisión + `ModuleGraphGuardTest` |
+| 9 | La API key de Gemini **no** está en el repositorio ni en el APK | revisión + la **guarda de secretos para `puente-red/**`** que define `TASK-014`. ⚠️ **No vale `ModuleGraphGuardTest`**: solo escanea `app/`, `core/` y `feature/` (`REVISION-C.md` **F2**) |
 | 10 | El servicio transiciona `RECIBIDO → CLASIFICADO` y anexa versión | integración con `PR-009` |
 
 ---

@@ -1,6 +1,6 @@
 # PR-010 · Autenticación profesional y roles
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R2 · **Depende de:** `PR-003` §1, `PR-INFRA` §2, `PR-007` · **Bloquea:** `PR-011`–`PR-017`, `PR-018`
@@ -29,7 +29,11 @@ la autorización se apoya en **RLS de Postgres**.
 - **Autorización por rol** en dos capas:
   1. **RLS de Postgres** — la separación se hace en la BD, no en el código (`PR-INFRA` §2);
   2. **guardia en la API** — ninguna ruta de `/profesional` se ejecuta sin rol válido.
-- Sesión con expiración y cierre por inactividad.
+- Sesión con **expiración y refresh** vía Supabase Auth.
+- ⚠️ **El portal SÍ caduca.** El `sessionToken` **sin caducidad** es una decisión del dueño
+  **solo para la API Joven** (un dispositivo por joven, demo de ≤5 usuarios). La API Profesional
+  maneja datos de menores y permisos clínicos, así que usa la **sesión normal de Supabase Auth**,
+  que expira y se refresca (`REVISION-C.md` §5.2).
 - **Modo demo** (`demo@puentered.org`, brief §20) solo con datos ficticios. Con `PR-003` Q7, es el
   modo **por defecto** del MVP.
 - Registro de cada login y fallo en `audit_event` (`PR-018`).
@@ -113,6 +117,7 @@ const (
 | 4 | `ORIENTACION` no puede tomar casos ni escribir notas internas | autorización |
 | 5 | Un profesional de una institución no lee casos de otra | **RLS** |
 | 6 | Toda sesión expira y el portal cierra por inactividad | unitaria con reloj inyectable |
+| 6b | La política de sesión del portal **no** reutiliza el `sessionToken` sin caducidad de la API Joven | revisión + contrato (`REVISION-C.md` §5.2) |
 | 7 | Una sesión `IsDemo` no puede escribir sobre datos reales | autorización + integración |
 | 8 | Cada login exitoso y cada fallo quedan en `audit_event` | integración con `PR-018` |
 | 9 | Ninguna acción de `/profesional` se ejecuta sin `authorize()` previo | contrato (sin rutas sin guardia) |

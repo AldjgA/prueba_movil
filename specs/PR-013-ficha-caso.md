@@ -1,6 +1,6 @@
 # PR-013 · Ficha de caso estructurada (7 secciones)
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R2 · **Depende de:** `PR-003` §4, `PR-006`, `PR-009`, `PR-014` · **Bloquea:** `PR-015`, `PR-016`

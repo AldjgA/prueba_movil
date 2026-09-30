@@ -89,33 +89,36 @@ tiene spec**. Es el índice del proyecto; si algo no está aquí, no existe.
 
 ## 4. Agente C — Portal Puente Red (18)
 
-**Actualizado por C el 2026-09-30:** las 18 specs están redactadas con la plantilla de `TASK-000`
-y pasan a **🔍 en revisión** (esperan revisión de A y B, §3.0.3–0.4 de `PLAN-3-AGENTES.md`).
+**Actualizado por C el 2026-09-30:** las 18 specs están **✅ Aprobadas** por A (`REVISION-C.md`,
+veredicto "Aprobada con hallazgos"). Se incorporaron sus respuestas de §5 (`RESUELTO`/`CERRADO`,
+caducidad de sesión del portal, hallazgos F1 y F2).
 
 | ID | Tarea | Spec |
 |---|---|---|
-| `PR-005` | Clasificador LLM (medio/alto, versionado) | 🔍 `specs/PR-005-clasificador-llm.md` |
-| `PR-006` | Extracción de características | 🔍 `specs/PR-006-extraccion-caracteristicas.md` |
-| `PR-007` | Directorio de profesionales (dos tipos de respondedor) | 🔍 `specs/PR-007-directorio-profesionales.md` |
-| `PR-008` | Motor de derivación escalonado por gravedad | 🔍 `specs/PR-008-motor-derivacion.md` |
-| `PR-009` | Cola de asignación, SLA y trazabilidad | 🔍 `specs/PR-009-cola-sla-trazabilidad.md` |
-| `PR-010` | Autenticación profesional y roles (Supabase Auth) | 🔍 `specs/PR-010-auth-profesional-roles.md` |
-| `PR-011` | Home profesional | 🔍 `specs/PR-011-home-profesional.md` |
-| `PR-012` | Centro de alertas | 🔍 `specs/PR-012-centro-alertas.md` |
-| `PR-013` | Ficha de caso (7 secciones) | 🔍 `specs/PR-013-ficha-caso.md` |
-| `PR-014` | Separación «organizado por Puente» / «valoración profesional» | 🔍 `specs/PR-014-organizado-vs-valoracion.md` |
-| `PR-015` | Timeline y seguimiento | 🔍 `specs/PR-015-timeline-seguimiento.md` |
-| `PR-016` | Derivaciones | 🔍 `specs/PR-016-derivaciones.md` |
-| `PR-017` | Observatorio y reportes agregados | 🔍 `specs/PR-017-observatorio-reportes.md` |
-| `PR-018` | Auditoría y cumplimiento | 🔍 `specs/PR-018-auditoria-cumplimiento.md` |
-| `PR-019` | Consentimiento y revocación cross-producto | 🔍 `specs/PR-019-consentimiento-revocacion.md` |
-| `PR-020` | Pruebas de contrato entre productos | 🔍 `specs/PR-020-pruebas-contrato.md` |
-| `TASK-019` | Apoyo humano breve telefónico | 🔍 `specs/TASK-019-apoyo-humano-telefonico.md` |
-| `TASK-020` | Marco de evaluación de 7 dimensiones | 🔍 `specs/TASK-020-marco-evaluacion.md` |
+| `PR-005` | Clasificador LLM (medio/alto, versionado) | ✅ `specs/PR-005-clasificador-llm.md` |
+| `PR-006` | Extracción de características | ✅ `specs/PR-006-extraccion-caracteristicas.md` |
+| `PR-007` | Directorio de profesionales (dos tipos de respondedor) | ✅ `specs/PR-007-directorio-profesionales.md` |
+| `PR-008` | Motor de derivación escalonado por gravedad | ✅ `specs/PR-008-motor-derivacion.md` |
+| `PR-009` | Cola de asignación, SLA y trazabilidad | ✅ `specs/PR-009-cola-sla-trazabilidad.md` |
+| `PR-010` | Autenticación profesional y roles (Supabase Auth) | ✅ `specs/PR-010-auth-profesional-roles.md` |
+| `PR-011` | Home profesional | ✅ `specs/PR-011-home-profesional.md` |
+| `PR-012` | Centro de alertas | ✅ `specs/PR-012-centro-alertas.md` |
+| `PR-013` | Ficha de caso (7 secciones) | ✅ `specs/PR-013-ficha-caso.md` |
+| `PR-014` | Separación «organizado por Puente» / «valoración profesional» | ✅ `specs/PR-014-organizado-vs-valoracion.md` |
+| `PR-015` | Timeline y seguimiento | ✅ `specs/PR-015-timeline-seguimiento.md` |
+| `PR-016` | Derivaciones | ✅ `specs/PR-016-derivaciones.md` |
+| `PR-017` | Observatorio y reportes agregados | ✅ `specs/PR-017-observatorio-reportes.md` |
+| `PR-018` | Auditoría y cumplimiento | ✅ `specs/PR-018-auditoria-cumplimiento.md` |
+| `PR-019` | Consentimiento y revocación cross-producto | ✅ `specs/PR-019-consentimiento-revocacion.md` |
+| `PR-020` | Pruebas de contrato entre productos | ✅ `specs/PR-020-pruebas-contrato.md` |
+| `TASK-019` | Apoyo humano breve telefónico | ✅ `specs/TASK-019-apoyo-humano-telefonico.md` |
+| `TASK-020` | Marco de evaluación de 7 dimensiones | ✅ `specs/TASK-020-marco-evaluacion.md` |
 
 > **Nota de C:** `PR-000` (arquitectura de Puente Red) no es una tarea de la matriz; vive en
-> `puente-red/deliverables/PR-000-ARQUITECTURA-PUENTE-RED.md`. Declara el stack, la frontera y el
-> reparto del árbol `puente-red/backend/` (pendiente de ratificación de A).
+> `puente-red/deliverables/PR-000-ARQUITECTURA-PUENTE-RED.md`. **Ratificado por A** en
+> `REVISION-C.md` §4 (stack Go/Supabase/GenAI, frontera por superficie de API, `P10` desktop-first),
+> junto con el **reparto del árbol `puente-red/backend/`**, ya incorporado a
+> `CONTRATO-DE-INTEGRACION.md` §1.1.
 
 ## 5. Fuera de agentes (personas)
 

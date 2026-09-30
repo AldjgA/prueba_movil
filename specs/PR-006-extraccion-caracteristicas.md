@@ -1,6 +1,6 @@
 # PR-006 · Extracción de características del caso
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R1 · **Depende de:** `PR-001` §5–6, `PR-003` §4, `PR-004` · **Bloquea:** `PR-008`, `PR-013`

@@ -1,6 +1,6 @@
 # PR-009 · Cola de asignación, SLA y trazabilidad
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R1 · **Depende de:** `PR-003` §3, `PR-004`, `PR-008`, `PR-001` §7–8 · **Bloquea:** `PR-011`, `PR-012`, `PR-015`, `PR-019`
@@ -74,6 +74,16 @@ const (
     StateResuelto           CaseState = "RESUELTO"
     StateCerrado            CaseState = "CERRADO"
 )
+
+**Semántica de `RESUELTO` y `CERRADO`** — son **dos** estados, aclarado en `REVISION-C.md` §5.1:
+
+| Estado | Significa | Cómo se llega |
+|---|---|---|
+| `RESUELTO` | El objetivo del caso se cumplió (hubo acompañamiento) | Desde `EN_CURSO` |
+| `CERRADO` | Cierre **administrativo**, no necesariamente resuelto | Desde `RESUELTO` **o** sin resolver (revocación del joven / vencimiento) |
+
+Ambos proyectan a `CLOSED` del `SupportRequestState` del APK, con el motivo en `revocationReason`.
+**Un caso puede cerrarse sin resolverse** — y eso no es un error, es el camino de la revocación.
 
 type CaseTicket struct {
     CaseToken       string // ULID
@@ -163,7 +173,7 @@ psicólogo lo inicie. La proyección **nunca** incluye estado interno, carga ni 
 
 | # | Pregunta | Estado |
 |---|---|---|
-| — | ¿`RESUELTO` y `CERRADO` son dos estados o uno? `PR-003` §3.1 los escribe `RESUELTO→CERRADO` | ⏳ aclarar con A |
+| — | ¿`RESUELTO` y `CERRADO` son dos estados o uno? | ✅ **cerrado** (`REVISION-C.md` §5.1): son **dos**; `CERRADO` puede alcanzarse sin `RESUELTO` |
 | — | ¿Los tiempos de `PR-001` §7 se confirman? | ✅ **cerrado**: `PR-001` firmado. Si el clínico ajustó los tiempos, se actualizan aquí |
 
 ---

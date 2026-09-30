@@ -1,6 +1,6 @@
 # PR-008 · Motor de derivación escalonado por gravedad y equidad
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R1 · **Depende de:** `PR-005`, `PR-006`, `PR-007` · **Bloquea:** `PR-009`, `PR-016`

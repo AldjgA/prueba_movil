@@ -1,6 +1,6 @@
 # PR-020 · Pruebas de contrato entre los dos productos
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R3 · **Depende de:** `PR-003` §4–§9, `PR-004`, `PR-019` · **Bloquea:** `S5`
@@ -34,7 +34,9 @@ pruebas. Sin ellas, la primera modificación de cualquiera de los dos lados romp
 - `psicologo` es `null` **hasta** `ACEPTADO` y **no nulo desde** `ACEPTADO` (R5).
 - `canalContacto` es `null` **hasta** `CONTACTO_HABILITADO` (R1).
 - **Independencia:** que `psicologo` no sea nulo **no** implica que `canalContacto` lo sea.
-- Los estados mapean a `SupportRequestState` del APK sin huérfanos.
+- Los estados mapean a `SupportRequestState` del APK **según la proyección que define A**
+  (`REVISION-C.md` **F1**): los 9 estados del caso **colapsan** en los 7 del APK. `RESUELTO` y
+  `CERRADO` proyectan ambos a `CLOSED`, con el motivo en `revocationReason`.
 
 **Contrato C — Datos del psicólogo** · `PR-003` §6.1
 - `nombreVisible`, `rol`, `especialidad` — **nunca** datos personales del profesional.
@@ -113,7 +115,7 @@ una prueba que exige el rechazo. Una invariante sin prueba negativa **no está p
 | 5 | `psicologo` no nulo y `canalContacto` nulo en `ACEPTADO` | contrato (R1 vs R5) |
 | 6 | `canalContacto` no nulo solo desde `CONTACTO_HABILITADO` | contrato |
 | 7 | `ProfileId` y `caseToken` nunca aparecen juntos en un payload | aserción de exclusión |
-| 8 | Los 7 `SupportRequestState` del APK tienen mapeo, sin huérfanos | unitaria de tabla |
+| 8 | La proyección backend → `SupportRequestState` está definida y sin huérfanos | unitaria de tabla. **La define A** (`REVISION-C.md` **F1**); C verifica la tabla una vez publicada |
 | 9 | Una `contratoVersion` no soportada produce rechazo explícito | contrato |
 | 10 | Las pruebas corren en CI **sin** compilar APK y Puente Red juntos | configuración de CI |
 | 11 | Un cambio incompatible en `PR-003` hace fallar el CI antes del merge | mutación |

@@ -3,7 +3,7 @@
 **Producto:** Portal profesional / Puente Red
 **Agente:** C (`PLAN-3-AGENTES.md` §4.1)
 **Rama:** `agente/C-red` (rebasada sobre `main`)
-**Estado:** Fase 0 — especificación **reconciliada y migrada a la plantilla oficial**. Nada construido.
+**Estado:** Fase 0 **cerrada, aprobada y mergeada** (PR #1, `c979e4f`). Fase 1 pendiente del esqueleto del backend.
 
 ---
 
@@ -20,6 +20,7 @@ A publicó `TASK-000`, que fija la **plantilla y la ubicación** de las specs. C
 | Arquitectura de Puente Red | `puente-red/deliverables/PR-000-ARQUITECTURA-PUENTE-RED.md` |
 | Declaración de necesidades | `puente-red/deliverables/PR-000/NECESIDADES.md` (formato del contrato §2) |
 | Informe de revisión de A | `puente-red/deliverables/REVISION-A.md` |
+| **Revisión de A sobre la Fase 0 de C** | `REVISION-C.md` (raíz) — veredicto **"Aprobada con hallazgos"** |
 
 ## 2. Las 18 specs
 
@@ -30,8 +31,8 @@ A publicó `TASK-000`, que fija la **plantilla y la ubicación** de las specs. C
 | **R3** (transversal) | `PR-018`, `PR-019`, `PR-020` |
 | Transversales | `TASK-019`, `TASK-020` |
 
-Todas en estado **🔍 En revisión** — esperan la revisión cruzada de A y B (`PLAN-3-AGENTES.md`
-§3.0.3–0.4). **Nadie construye hasta que estén Aprobadas.**
+Todas **✅ Aprobadas** por A (`REVISION-C.md`). La Fase 0 queda cerrada y mergeada en `main`
+(PR #1, `c979e4f`).
 
 ## 3. Stack decidido por A (`PR-INFRA-RECOMENDACION`)
 
@@ -56,20 +57,22 @@ Todas en estado **🔍 En revisión** — esperan la revisión cruzada de A y B 
 
 ## 5. Bloqueos
 
-### ✅ Cerrados el 2026-09-30
+### ✅ Cerrados
 
 | Bloqueo | Cómo se cerró |
 |---|---|
-| Firma clínica de `PR-001` §5–7 | **firmado** (confirmado por el product owner) → desbloquea `PR-005`, `PR-006`, `PR-007`, `PR-009`, `TASK-019` |
+| Firma clínica de `PR-001` §5–7 | **firmado** (confirmado por el dueño). A deja constancia en `REVISION-C.md` §5.5: `PR-001` §5–§7 es **fuente de verdad vinculante** aunque el fichero siga rotulado `BORRADOR` |
 | Gemini de pago antes de casos reales | **asegurado** → resuelto el requisito de `PR-INFRA` §4 |
+| `PR-000` rev. 2, `P10`, reparto del backend, fixtures | ✅ **ratificados** (`REVISION-C.md` §4 y §5.3) |
+| Las 18 specs | ✅ **aprobadas** (`REVISION-C.md`) |
+| Hallazgos F1–F4 | de **A** (`REVISION-C.md` §6); ninguno exige rehacer una spec de C |
 
-### ⏳ Abiertos
+### ⏳ Abiertos — bloquean el arranque de la Fase 1
 
 | Bloqueo | Quién lo cierra |
 |---|---|
-| **Publicar `PR-001` firmado en `main`** — el repo lo tiene como `BORRADOR` con marcadores `[VALIDAR]` | A |
-| Ratificación de `PR-000` rev. 2 y del reparto del backend | A |
-| Revisión cruzada de las 18 specs | A y B |
-| P11 (responsable legal de datos de menores) — también `TASK-021` Q3 | legal |
+| **El backend no existe**: `puente-red/backend/` no tiene módulo. `backend/main` y `shared/**` son de A → **C no puede compilar `backend/core/**`** | A |
+| ⚠️ **Go no está instalado** (solo Node v22.22.2). C propone **Node/Bun + Hono** (`PR-INFRA` §3 lo permite) | A |
+| P11 (responsable legal) — también `TASK-021` Q3 | legal |
 | P12 y la revocación vs derivación en curso | legal |
-| ¿`RESUELTO` y `CERRADO` son dos estados o uno? | A |
+| F1 (proyección de estados) y F2/F4 (guarda de secretos y CI para `puente-red/**`) | A (`TASK-014`) |

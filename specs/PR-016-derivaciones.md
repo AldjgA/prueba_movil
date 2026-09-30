@@ -1,6 +1,6 @@
 # PR-016 · Módulo de derivaciones y directorio de apoyo
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R2 · **Depende de:** `PR-008`, `PR-013`, `PR-014` · **Bloquea:** `PR-017`

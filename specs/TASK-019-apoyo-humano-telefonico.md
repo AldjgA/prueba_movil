@@ -1,6 +1,6 @@
 # TASK-019 · Apoyo humano breve telefónico (modelo híbrido)
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R3 · **Depende de:** `PR-001` §7–8, `PR-003` §6.2, `PR-007`, `PR-009` · **Bloquea:** `TASK-020`

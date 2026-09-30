@@ -1,6 +1,6 @@
 # PR-012 · Centro de alertas con priorización y filtros
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R2 · **Depende de:** `PR-009`, `PR-010` · **Bloquea:** `PR-013`, `PR-017`

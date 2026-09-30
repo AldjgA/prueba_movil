@@ -1,6 +1,6 @@
 # PR-007 · Directorio de profesionales y modelo de perfil (dos tipos de respondedor)
 
-**Estado:** En revisión
+**Estado:** Aprobada (`REVISION-C.md` — "Aprobada con hallazgos"; incorpora sus respuestas §5)
 **Autor:** Agente C · **Revisor:** Agente A
 **Fecha:** 2026-09-30
 **Ola:** R1 · **Depende de:** `PR-001` §7, `PR-003` Q9, `PR-000` §3 · **Bloquea:** `PR-008`, `PR-010`, `PR-011`

@@ -40,22 +40,22 @@ extraídos del prototipo (brief §34: misma marca, distinta estructura).
 
 ## 7. Otros (permisos, flags, migraciones)
 
-### 7.1 🆕 Reparto del árbol `puente-red/backend/` — **requiere ratificación de A**
+### 7.1 ✅ Reparto del árbol `puente-red/backend/` — **RATIFICADO** (`REVISION-C.md` §5.3)
 
 `PR-003` §1 decide **una API con dos superficies**, lo que convierte `puente-red/backend/` en un
-**árbol compartido A+C**. `PLAN-3-AGENTES.md` §2.2 no lo preveía (sus 6 archivos —ahora 7— son
-todos del APK). Propuesta de C, en `PR-000` §1.1:
+**árbol compartido A+C**. A lo ratificó y ya está en `CONTRATO-DE-INTEGRACION.md` §1.1:
 
 | Ruta | Dueño |
 |---|---|
 | `backend/routes/joven/**` | **A** |
 | `backend/routes/profesional/**` | **C** |
 | `backend/core/**` | **C** |
-| `backend/shared/**` (modelos, cliente Supabase, middleware, `contratoVersion`) | **A** |
-| `backend/main`, despliegue | **A** |
+| `backend/shared/**` (modelos, cliente Supabase, middleware, `contratoVersion`, **fixtures del contrato**) | **A** |
+| `backend/main` y configuración de despliegue | **A** |
+| `puente-red/portal/**` | **C** |
 
-**Sin este reparto, A y C editan el mismo árbol sin regla** — que es exactamente el riesgo #2 de
-`PLAN-3-AGENTES.md` §8.
+**Aviso de A (§5.3):** el reparto **no** exime de la regla de declaración. `backend/shared/**` y
+`routes/joven/**` son de A: C **declara**, no aplica.
 
 ### 7.2 Tablas y RLS que C necesita crear en Supabase
 
@@ -67,9 +67,9 @@ rol (`PR-010`) y aislamiento por institución si hay multi-tenant (Q8 abierto).
 **varios `ProfileId`**. La correlación `caseToken ↔ ProfileId` debe soportar N perfiles por
 dispositivo (y `deleteAllLocalContent()` borra todos). A debe confirmarlo al implementar `TASK-025`.
 
-### 7.3 Ubicación de las fixtures del contrato
+### 7.3 Ubicación de las fixtures del contrato — ✅ **resuelto**
 
-C propone que vivan en `PR-003` (**A**), con C como consumidor (`specs/PR-020` §3).
+Viven con `PR-003` (**A**), dentro de `backend/shared/**` (`REVISION-C.md` §5.3). C es consumidor.
 
 ### 7.4 CI de las pruebas de contrato
 
@@ -89,15 +89,27 @@ ingesta acepta `ROJO`+`AMARILLO`, `sessionToken` sin caducidad, `caseToken` = UL
 - ✅ **`PR-001` tiene firma clínica** → desbloquea `PR-005`, `PR-006`, `PR-007`, `PR-009`, `TASK-019`.
 - ✅ **Se usará Gemini de pago** → el bloqueo legal de `PR-INFRA` §4 queda resuelto.
 
-## 9. Preguntas que C necesita que A cierre
+## 9. Respuestas recibidas y preguntas nuevas
+
+### 9.1 Resueltas por `REVISION-C.md` §5 ✅
+
+| # | Pregunta | Respuesta de A |
+|---|---|---|
+| 1 | ¿`RESUELTO` y `CERRADO` son dos estados o uno? | **Dos** (§5.1). `RESUELTO` = objetivo cumplido; `CERRADO` = cierre **administrativo**, alcanzable desde `RESUELTO` **o** por revocación/vencimiento. Ambos proyectan a `CLOSED`. Incorporado a `PR-009` y `PR-019` |
+| 2 | ¿El `sessionToken` sin caducidad vale para el portal? | **No** (§5.2). Es **solo para la API Joven**; el portal usa Supabase Auth con sesión normal que **sí caduca**. Incorporado a `PR-010` |
+| 3 | ¿Reparto del árbol del backend? | ✅ **Ratificado** (§5.3), con la precisión de que `backend/shared/**` incluye `contratoVersion` **y las fixtures del contrato**. Ya en `CONTRATO-DE-INTEGRACION.md` §1.1 |
+| 4 | ¿`PR-000` rev. 2 y `P10`? | ✅ **Ratificados** (§4) |
+| 5 | ¿Publicar `PR-001` firmado? | ⚠️ **A no puede**: el dueño decidió **no modificar ese fichero**. A deja constancia en `REVISION-C.md` §5.5 de que la firma existe y de que `PR-001` §5–§7 es **fuente de verdad vinculante**. C mantiene la postura correcta: **referenciar sin reestatear** |
+
+**Hallazgos F1–F4**: los cuatro son de A (`REVISION-C.md` §6) y **ninguno exige rehacer una spec de C**.
+
+### 9.2 🆕 Nuevas — bloquean el arranque de la Fase 1
 
 | # | Pregunta | Bloquea |
 |---|---|---|
-| 1 | ¿`RESUELTO` y `CERRADO` son dos estados o uno? (`PR-003` §3.1 los escribe `RESUELTO→CERRADO`) | `PR-009`, `PR-015` |
-| 2 | ¿El `sessionToken` sin caducidad es aceptable también para el portal, o solo para el APK? | `PR-010`, `PR-020` |
-| 3 | ¿A ratifica el reparto de §7.1? | arrancar la Fase 1 |
-| 4 | ¿A acepta `PR-000` rev. 2 (stack, `P10` web desktop-first)? | arrancar la Fase 1 |
-| **5** | ⚠️ **`PR-001` en el repo sigue marcado `BORRADOR` / "no está validado clínicamente" y conserva los marcadores `[VALIDAR]`.** El product owner confirma que **la firma existe fuera del repo**: ¿A publica la **versión firmada** en `main`? Mis specs referencian `PR-001` §5–§7 como fuente de verdad (medio/alto, tiempos de SLA, criterios de rojo) y **no reestatean los valores** — si el clínico los ajustó, hay que publicarlos | `PR-005`, `PR-006`, `PR-007`, `PR-009`, `TASK-019` |
+| **6** | **El backend no existe.** `puente-red/backend/` no tiene módulo ni esqueleto. `backend/main`, `shared/**` y el despliegue son de **A**, así que **C no puede compilar ni probar `backend/core/**` sin él**. ¿Lo crea A? | `PR-005`…`PR-009` |
+| **7** | ⚠️ **Go no está instalado en la máquina** (solo Node v22.22.2). `PR-INFRA` §3 permite **Go o Node/Bun + Hono**. C propone **Node/Bun + Hono**: no requiere instalar toolchain, encaja con el portal (TS) y la huella (~50–90 MB) cabe en 256 MB. ¿Se confirma? | `PR-005`…`PR-009` |
+| 8 | ¿Dónde vive el `go.mod`/`package.json` del backend: en la raíz `backend/` (A) o en `backend/core/` (C)? | `PR-005` |
 
 ## 10. Lo que C se compromete a NO tocar
 
@@ -108,10 +120,9 @@ Los **7 archivos** de `CONTRATO-DE-INTEGRACION.md` §1 · `core/designsystem/**`
 
 ## 11. Estado de sincronización
 
-C sigue en **Fase 0**. Entrega: **18 specs en `specs/`** (plantilla oficial), `PR-000` rev. 2,
-`REVISION-A.md` y esta declaración.
-**C no construye** hasta que (a) A ratifique `PR-000` y el reparto del backend, y (b) las specs sean
-revisadas por A y B (`PLAN-3-AGENTES.md` §3.0.3–0.4).
+C sigue en **Fase 0 → Fase 1**. Entrega: **18 specs ✅ Aprobadas** (`REVISION-C.md`),
+`PR-000` rev. 2 ✅ ratificado, `REVISION-A.md` y esta declaración.
 
-✅ **Los bloqueos clínicos y de proveedor LLM quedaron cerrados el 2026-09-30** (firma de `PR-001` y
-Gemini de pago), así que ya **no** son motivo de espera.
+**Estado (2026-09-30):** PR #1 **mergeado** por A. Los bloqueos clínicos y de proveedor LLM están
+cerrados. Lo que falta para construir es el **esqueleto del backend** y la **confirmación del
+runtime** (§9.2, preguntas 6 y 7).
