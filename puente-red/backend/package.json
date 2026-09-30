@@ -1,0 +1,18 @@
+{
+  "name": "puente-red-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "API compartida de Puente Joven y Puente Red: una API, dos superficies (PR-003 §1).",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.3",
+    "hono": "^4.13.11"
+  }
+}
