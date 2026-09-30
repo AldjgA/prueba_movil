@@ -4,7 +4,9 @@ import bo.puentejoven.core.common.Clock
 import bo.puentejoven.core.common.DefaultDispatcherProvider
 import bo.puentejoven.core.common.DispatcherProvider
 import bo.puentejoven.core.common.SystemClock
+import bo.puentejoven.core.data.local.DataStorePuenteLocalStore
 import bo.puentejoven.core.data.local.LocalPuenteRepository
+import bo.puentejoven.core.data.local.PuenteLocalStore
 import bo.puentejoven.core.data.repository.ChatAccessRepository
 import bo.puentejoven.core.data.repository.ConversationRepository
 import bo.puentejoven.core.data.repository.ContextCheckRepository
@@ -16,6 +18,7 @@ import bo.puentejoven.core.data.repository.SupportRepository
 import bo.puentejoven.core.data.repository.ToolsRepository
 import bo.puentejoven.core.data.repository.YouthRepository
 import android.content.Context
+import androidx.datastore.preferences.preferencesDataStore
 import bo.puentejoven.core.security.BiometricUnlock
 import bo.puentejoven.core.security.EncryptedPreferencesSecureLocalStore
 import bo.puentejoven.core.security.KeystoreAesGcmLocalCipher
@@ -31,6 +34,15 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+
+/**
+ * Dos almacenes DataStore (TASK-003b): sesión (pequeño, se lee al arrancar) y
+ * contenido (el grueso, lo que la retención destruye). Declarados como
+ * extensiones de `Context`, DataStore garantiza una única instancia por proceso
+ * y fichero.
+ */
+private val Context.sessionDataStore by preferencesDataStore(name = "puente_session")
+private val Context.contentDataStore by preferencesDataStore(name = "puente_content")
 
 /**
  * Contratos de plataforma transversales.
@@ -81,6 +93,25 @@ object SecurityModule {
     @Provides
     @Singleton
     fun provideBiometricUnlock(): BiometricUnlock = UnavailableBiometricUnlock()
+}
+
+/**
+ * Persistencia local del estado (TASK-003b).
+ *
+ * Enlaza [PuenteLocalStore] a la implementación DataStore. El repositorio la
+ * recibe por constructor, así las pruebas de JVM pueden usar la de memoria.
+ */
+@Module
+@InstallIn(SingletonComponent::class)
+object PersistenceModule {
+
+    @Provides
+    @Singleton
+    fun providePuenteLocalStore(@ApplicationContext context: Context): PuenteLocalStore =
+        DataStorePuenteLocalStore(
+            sessionStore = context.sessionDataStore,
+            contentStore = context.contentDataStore,
+        )
 }
 
 /**

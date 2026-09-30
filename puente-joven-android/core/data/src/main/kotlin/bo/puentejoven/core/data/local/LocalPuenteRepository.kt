@@ -13,7 +13,6 @@ import bo.puentejoven.core.data.repository.SupportRepository
 import bo.puentejoven.core.data.repository.ToolsRepository
 import bo.puentejoven.core.data.repository.YouthRepository
 import bo.puentejoven.core.model.AgeBand
-import bo.puentejoven.core.model.AssessmentId
 import bo.puentejoven.core.model.ChatAccessGrant
 import bo.puentejoven.core.model.ChatAccessGrantId
 import bo.puentejoven.core.model.ChatAccessPurpose
@@ -59,19 +58,28 @@ import bo.puentejoven.core.security.Pbkdf2PinHasher
 import bo.puentejoven.core.security.PinHasher
 import bo.puentejoven.core.security.PinSecret
 import bo.puentejoven.core.security.SecureLocalStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Implementación **local de demostración** de todos los contratos de repositorio.
+ * Implementación **local** de todos los contratos de repositorio.
  *
  * Características:
- * - Todo vive en memoria: no hay backend, ni red, ni persistencia real todavía.
- * - Contenido del chat cifrado con [LocalCipher] antes de guardarse.
+ * - Sin backend y sin red. El estado se **persiste** en [PuenteLocalStore]
+ *   (DataStore, dos almacenes — TASK-003b); el valor por defecto en memoria es
+ *   solo para pruebas de JVM.
+ * - Contenido de texto libre del joven cifrado con [LocalCipher] antes de guardarse:
+ *   el snapshot guarda **sobres**, nunca texto en claro.
  * - Datos sintéticos de [DemoFixtures]; nunca datos reales (guardrail #8).
  *
  * Al sustituirse por adaptadores remotos, la firma de los contratos no cambia.
@@ -86,6 +94,8 @@ class LocalPuenteRepository @Inject constructor(
      */
     private val secureStore: SecureLocalStore = InMemorySecureLocalStore(),
     private val pinHasher: PinHasher = Pbkdf2PinHasher(),
+    /** Persistencia del estado. En la app, DataStore; en pruebas, en memoria. */
+    private val store: PuenteLocalStore = InMemoryPuenteLocalStore(),
 ) : YouthRepository,
     ConversationRepository,
     ContextCheckRepository,
@@ -126,6 +136,97 @@ class LocalPuenteRepository @Inject constructor(
 
     private var idCounter = 0
 
+    /** `true` cuando el estado ya se cargó desde el almacén (una sola vez). */
+    private var loaded = false
+
+    /** Protege la carga para que dos accesos simultáneos no la dupliquen. */
+    private val loadMutex = Mutex()
+
+    /**
+     * Carga en segundo plano: un `Flow` observado antes de cualquier llamada
+     * `suspend` también acaba viendo el estado persistido.
+     */
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    init {
+        scope.launch { ensureLoaded() }
+    }
+
+    // -----------------------------------------------------------------------
+    // Persistencia (TASK-003b)
+    // -----------------------------------------------------------------------
+
+    /**
+     * Carga el estado persistido **una sola vez**.
+     *
+     * Reglas:
+     * - Un `schemaVersion` desconocido ⇒ se arranca en vacío (no hay datos de
+     *   producción que migrar en el MVP). No revienta.
+     * - Si no hay snapshot, se conserva el estado inicial de demostración, que es
+     *   el comportamiento que ya tenía la app.
+     * - No se vuelve a cargar tras un borrado: `deleteAllLocalContent` limpia el
+     *   almacén y el estado en memoria, y no se re-siembra.
+     */
+    private suspend fun ensureLoaded() {
+        if (loaded) return
+        loadMutex.withLock {
+            if (loaded) return@withLock
+            loadFromStore()
+            loaded = true
+        }
+    }
+
+    private suspend fun loadFromStore() {
+        val session = store.readSession()
+        if (session != null && session.schemaVersion != PUENTE_SCHEMA_VERSION) {
+            // Esquema que no entendemos: se ignora por completo.
+            return
+        }
+        session?.let {
+            it.profile?.let { dto -> profileState.value = dto.toDomain() }
+            lastChatAccessEpochMillis = it.lastChatAccessEpochMillis
+            idCounter = it.idCounter
+        }
+
+        val content = store.readContent() ?: return
+        conversationState.value = content.conversation?.toDomain()
+        responsesState.value = content.responses.map { it.toDomain() }
+        completionsState.value = content.completions.map { it.toDomain() }
+        summariesState.value = content.summaries.associateBy({ it.id }, { it.toDomain() })
+        summaryNotesState.value = content.summaryNotes
+        consentsState.value = content.consents.map { it.toDomain() }
+        requestsState.value = content.requests.map { it.toDomain() }
+        chatAccessRequestsState.value = content.chatAccessRequests.map { it.toDomain() }
+        chatAccessGrantsState.value = content.chatAccessGrants.map { it.toDomain() }
+    }
+
+    private suspend fun persistSession() {
+        store.writeSession(
+            SessionSnapshot(
+                schemaVersion = PUENTE_SCHEMA_VERSION,
+                profile = profileState.value?.toDto(),
+                lastChatAccessEpochMillis = lastChatAccessEpochMillis,
+                idCounter = idCounter,
+            ),
+        )
+    }
+
+    private suspend fun persistContent() {
+        store.writeContent(
+            ContentSnapshot(
+                conversation = conversationState.value?.toDto(),
+                responses = responsesState.value.map { it.toDto() },
+                completions = completionsState.value.map { it.toDto() },
+                summaries = summariesState.value.values.map { it.toDto() },
+                summaryNotes = summaryNotesState.value,
+                consents = consentsState.value.map { it.toDto() },
+                requests = requestsState.value.map { it.toDto() },
+                chatAccessRequests = chatAccessRequestsState.value.map { it.toDto() },
+                chatAccessGrants = chatAccessGrantsState.value.map { it.toDto() },
+            ),
+        )
+    }
+
     private fun nextId(prefix: String): String {
         idCounter += 1
         return "$prefix-${idCounter.toString().padStart(4, '0')}"
@@ -140,6 +241,7 @@ class LocalPuenteRepository @Inject constructor(
     override fun observeProfile(): Flow<YouthProfile?> = profileState.asStateFlow()
 
     override suspend fun getProfile(): AppResult<YouthProfile> {
+        ensureLoaded()
         val profile = profileState.value
             ?: return AppResult.Failure(UiError.NotFound(technical = "profile is null"))
         return AppResult.Success(profile)
@@ -150,6 +252,7 @@ class LocalPuenteRepository @Inject constructor(
         ageBand: AgeBand,
         pin: String,
     ): AppResult<YouthProfile> {
+        ensureLoaded()
         val trimmed = alias.trim()
         if (trimmed.isEmpty()) {
             return AppResult.Failure(UiError.Validation(technical = "alias blank"))
@@ -168,6 +271,7 @@ class LocalPuenteRepository @Inject constructor(
         persistPinSecret(pinHasher.createSecret(pin))
         // Crear perfil = empezar de cero: el cifrado debe quedar operativo.
         prepareCipher()
+        persistSession()
         return AppResult.Success(profile)
     }
 
@@ -185,6 +289,7 @@ class LocalPuenteRepository @Inject constructor(
     }
 
     override suspend fun isPinConfigured(): Boolean {
+        ensureLoaded()
         if (pinSecret != null) return true
         val salt = secureStore.read(SecureLocalStore.KEY_PIN_SALT) ?: return false
         val hash = secureStore.read(SecureLocalStore.KEY_PIN_HASH) ?: return false
@@ -196,6 +301,7 @@ class LocalPuenteRepository @Inject constructor(
     }
 
     override suspend fun unlockSession(pin: String): AppResult<Unit> {
+        ensureLoaded()
         if (!PinPolicy.isWellFormed(pin)) {
             return AppResult.Failure(UiError.Validation(technical = "pin malformed"))
         }
@@ -243,8 +349,11 @@ class LocalPuenteRepository @Inject constructor(
      * Excepción deliberada: los consentimientos NO se purgan solos. Son la
      * evidencia de que un acceso fue autorizado y no contienen texto libre;
      * solo se destruyen con [deleteAllLocalContent].
+     *
+     * El efecto de la purga se **persiste**: lo purgado no reaparece al reiniciar.
      */
     override suspend fun purgeExpired(nowEpochMillis: Long): AppResult<RetentionPurgeResult> {
+        ensureLoaded()
         val policy = RetentionPolicy.MVP_DEFAULT
 
         // 1) Chat personal: la ventana corre desde el último acceso.
@@ -301,6 +410,9 @@ class LocalPuenteRepository @Inject constructor(
         val purgedGrants = chatAccessGrantsState.value.size - keptGrants.size
         chatAccessGrantsState.value = keptGrants
 
+        persistContent()
+        persistSession()
+
         return AppResult.Success(
             RetentionPurgeResult(
                 policy = policy,
@@ -317,6 +429,7 @@ class LocalPuenteRepository @Inject constructor(
     }
 
     override suspend fun retentionStatus(nowEpochMillis: Long): AppResult<RetentionStatus> {
+        ensureLoaded()
         val policy = RetentionPolicy.MVP_DEFAULT
         val lastAccess = lastChatAccessEpochMillis
             ?: return AppResult.Success(
@@ -342,6 +455,7 @@ class LocalPuenteRepository @Inject constructor(
     override suspend fun deleteAllLocalContent(): AppResult<Unit> {
         // Orden deliberado: primero el contenido, después el material de claves.
         // Así un "borrar todo" no deja derivados huérfanos.
+        ensureLoaded()
         conversationState.value = null
         responsesState.value = emptyList()
         completionsState.value = emptyList()
@@ -360,6 +474,8 @@ class LocalPuenteRepository @Inject constructor(
         // Guardrail #4: sin clave, lo que quedara cifrado es irrecuperable.
         cipher.destroyKeyMaterial()
         sessionUnlocked.value = false
+        // Los DOS almacenes quedan vacíos; no se re-siembra el perfil de demo.
+        store.clearAll()
         return AppResult.Success(Unit)
     }
 
@@ -425,6 +541,7 @@ class LocalPuenteRepository @Inject constructor(
         }
 
     override suspend fun startConversation(): AppResult<Conversation> {
+        ensureLoaded()
         val youthId = currentYouthId()
             ?: return AppResult.Failure(UiError.NotFound(technical = "no profile"))
         val now = clock.nowEpochMillis()
@@ -436,6 +553,8 @@ class LocalPuenteRepository @Inject constructor(
         )
         conversationState.value = conversation
         lastChatAccessEpochMillis = now
+        persistContent()
+        persistSession()
         return AppResult.Success(conversation)
     }
 
@@ -443,6 +562,7 @@ class LocalPuenteRepository @Inject constructor(
         conversationId: ConversationId,
         content: String,
     ): AppResult<ConversationMessage> {
+        ensureLoaded()
         if (content.isBlank()) {
             return AppResult.Failure(UiError.Validation(technical = "empty youth message"))
         }
@@ -463,6 +583,8 @@ class LocalPuenteRepository @Inject constructor(
             lastAccessEpochMillis = now,
         )
         lastChatAccessEpochMillis = now
+        persistContent()
+        persistSession()
         // Se devuelve el texto legible; lo guardado es el sobre cifrado.
         return AppResult.Success(message.copy(content = content))
     }
@@ -472,6 +594,7 @@ class LocalPuenteRepository @Inject constructor(
         content: String,
         promptId: String,
     ): AppResult<ConversationMessage> {
+        ensureLoaded()
         val conversation = conversationState.value
         if (conversation == null || conversation.id != conversationId) {
             return AppResult.Failure(UiError.NotFound(technical = "conversation mismatch"))
@@ -490,15 +613,19 @@ class LocalPuenteRepository @Inject constructor(
             lastAccessEpochMillis = now,
         )
         lastChatAccessEpochMillis = now
+        persistContent()
+        persistSession()
         return AppResult.Success(message.copy(content = content))
     }
 
     override suspend fun closeConversation(conversationId: ConversationId): AppResult<Unit> {
+        ensureLoaded()
         val conversation = conversationState.value
         if (conversation == null || conversation.id != conversationId) {
             return AppResult.Failure(UiError.NotFound(technical = "conversation mismatch"))
         }
         conversationState.value = null
+        persistContent()
         return AppResult.Success(Unit)
     }
 
@@ -521,6 +648,7 @@ class LocalPuenteRepository @Inject constructor(
         optionKey: String,
         conversationId: ConversationId?,
     ): AppResult<ContextResponse> {
+        ensureLoaded()
         val youthId = currentYouthId()
             ?: return AppResult.Failure(UiError.NotFound(technical = "no profile"))
         if (questionKey.isBlank() || optionKey.isBlank()) {
@@ -535,6 +663,7 @@ class LocalPuenteRepository @Inject constructor(
             conversationId = conversationId,
         )
         responsesState.value = responsesState.value + response
+        persistContent()
         return AppResult.Success(response)
     }
 
@@ -563,6 +692,7 @@ class LocalPuenteRepository @Inject constructor(
         toolKey: ToolKey,
         reflection: String?,
     ): AppResult<ToolCompletion> {
+        ensureLoaded()
         val youthId = currentYouthId()
             ?: return AppResult.Failure(UiError.NotFound(technical = "no profile"))
         if (DemoFixtures.briefTools.none { it.key == toolKey }) {
@@ -578,6 +708,7 @@ class LocalPuenteRepository @Inject constructor(
             reflection = plainReflection?.let(::encryptStored),
         )
         completionsState.value = completionsState.value + completion
+        persistContent()
         return AppResult.Success(completion.copy(reflection = plainReflection))
     }
 
@@ -589,6 +720,7 @@ class LocalPuenteRepository @Inject constructor(
     // -----------------------------------------------------------------------
 
     override suspend fun getPersonalReport(): AppResult<PersonalReport> {
+        ensureLoaded()
         val youthId = currentYouthId()
             ?: return AppResult.Failure(UiError.NotFound(technical = "no profile"))
         return AppResult.Success(
@@ -615,6 +747,7 @@ class LocalPuenteRepository @Inject constructor(
         scope: Set<ShareScopeEntry>,
         note: SummaryNote?,
     ): AppResult<ShareableSummary> {
+        ensureLoaded()
         val youthId = currentYouthId()
             ?: return AppResult.Failure(UiError.NotFound(technical = "no profile"))
         // La nota es texto libre del joven: se guarda cifrada y aparte.
@@ -632,6 +765,7 @@ class LocalPuenteRepository @Inject constructor(
             summaryNotesState.value =
                 summaryNotesState.value + (stored.id.value to encryptStored(plainNote))
         }
+        persistContent()
         return AppResult.Success(stored.copy(note = plainNote?.let(::SummaryNote)))
     }
 
@@ -648,6 +782,7 @@ class LocalPuenteRepository @Inject constructor(
         scope: Set<ShareScopeEntry>,
         granted: Boolean,
     ): AppResult<ConsentRecord> {
+        ensureLoaded()
         val youthId = currentYouthId()
             ?: return AppResult.Failure(UiError.NotFound(technical = "no profile"))
         if (scope.isEmpty()) {
@@ -670,6 +805,7 @@ class LocalPuenteRepository @Inject constructor(
             recordedAtEpochMillis = clock.nowEpochMillis(),
         )
         consentsState.value = consentsState.value + record
+        persistContent()
         return AppResult.Success(record)
     }
 
@@ -683,6 +819,7 @@ class LocalPuenteRepository @Inject constructor(
         consentRecordId: ConsentId,
         summaryId: SummaryId,
     ): AppResult<SupportRequest> {
+        ensureLoaded()
         val youthId = currentYouthId()
             ?: return AppResult.Failure(UiError.NotFound(technical = "no profile"))
         val grantedConsent = consentsState.value
@@ -704,10 +841,12 @@ class LocalPuenteRepository @Inject constructor(
             stateNote = "Tu solicitud está en borrador. Tú decides cuándo autorizarla.",
         )
         requestsState.value = requestsState.value + request
+        persistContent()
         return AppResult.Success(request)
     }
 
     override suspend fun authorizeRequest(requestId: SupportRequestId): AppResult<SupportRequest> {
+        ensureLoaded()
         val current = requestsState.value.firstOrNull { it.id == requestId }
             ?: return AppResult.Failure(UiError.NotFound(technical = "request not found"))
         if (current.state != SupportRequestState.DRAFT) {
@@ -719,10 +858,12 @@ class LocalPuenteRepository @Inject constructor(
             stateNote = "Autorizaste esta solicitud. Aquí verás su estado.",
         )
         requestsState.value = requestsState.value.map { if (it.id == requestId) updated else it }
+        persistContent()
         return AppResult.Success(updated)
     }
 
     override suspend fun revokeRequest(requestId: SupportRequestId): AppResult<SupportRequest> {
+        ensureLoaded()
         val current = requestsState.value.firstOrNull { it.id == requestId }
             ?: return AppResult.Failure(UiError.NotFound(technical = "request not found"))
         if (current.state == SupportRequestState.CLOSED) {
@@ -739,6 +880,7 @@ class LocalPuenteRepository @Inject constructor(
                 "Si la ley obliga a conservar algo ya recibido, se te explicará por separado.",
         )
         requestsState.value = requestsState.value.map { if (it.id == requestId) updated else it }
+        persistContent()
         return AppResult.Success(updated)
     }
 
@@ -758,6 +900,7 @@ class LocalPuenteRepository @Inject constructor(
         chatAccessGrantsState.asStateFlow()
 
     override suspend fun acceptRequest(requestId: ChatAccessRequestId): AppResult<ChatAccessGrant> {
+        ensureLoaded()
         val current = chatAccessRequestsState.value.firstOrNull { it.id == requestId }
             ?: return AppResult.Failure(UiError.NotFound(technical = "chat access request not found"))
         if (current.status != ChatAccessRequestStatus.PENDING) {
@@ -791,10 +934,12 @@ class LocalPuenteRepository @Inject constructor(
                 it
             }
         }
+        persistContent()
         return AppResult.Success(grant)
     }
 
     override suspend fun declineRequest(requestId: ChatAccessRequestId): AppResult<ChatAccessRequest> {
+        ensureLoaded()
         val current = chatAccessRequestsState.value.firstOrNull { it.id == requestId }
             ?: return AppResult.Failure(UiError.NotFound(technical = "chat access request not found"))
         if (current.status != ChatAccessRequestStatus.PENDING) {
@@ -804,10 +949,12 @@ class LocalPuenteRepository @Inject constructor(
         chatAccessRequestsState.value = chatAccessRequestsState.value.map {
             if (it.id == requestId) updated else it
         }
+        persistContent()
         return AppResult.Success(updated)
     }
 
     override suspend fun revokeGrant(grantId: ChatAccessGrantId): AppResult<ChatAccessGrant> {
+        ensureLoaded()
         val current = chatAccessGrantsState.value.firstOrNull { it.id == grantId }
             ?: return AppResult.Failure(UiError.NotFound(technical = "grant not found"))
         if (current.revokedAtEpochMillis != null) {
@@ -820,12 +967,16 @@ class LocalPuenteRepository @Inject constructor(
         chatAccessRequestsState.value = chatAccessRequestsState.value.map {
             if (it.id == current.requestId) it.copy(status = ChatAccessRequestStatus.REVOKED) else it
         }
+        persistContent()
         return AppResult.Success(updated)
     }
 
     /**
      * Crea una solicitud de acceso sintética para demostración (no hay backend).
      * Solo existe para que TASK-008 criterio #5 pueda simular aceptar/rechazar/revocar.
+     *
+     * Nota: no persiste aquí (no es `suspend`); el estado se guardará en la
+     * siguiente escritura de contenido.
      */
     fun seedDemoChatAccessRequest() {
         val youthId = currentYouthId() ?: return

@@ -1,7 +1,9 @@
 # TASK-003b · Persistencia local (DataStore)
 
-**Estado:** Borrador · **Autor:** Agente A — Núcleo y contratos · **Revisor:** (pendiente)
+**Estado:** Implementada (2026-09-30) · **Autor:** Agente A — Núcleo y contratos · **Revisor:** (pendiente)
 **Fecha:** 2026-09-30
+**Implementación:** `:core:data` — `PuenteLocalStore`, `PersistenceModels` y `LocalPuenteRepository`.
+**Verificado:** `./gradlew :core:data:test` → **18 pruebas en verde** (5 nuevas de persistencia + 13 existentes); `:app:compileDemoDebugKotlin` → `BUILD SUCCESSFUL`.
 **Ola:** 1 · **Depende de:** `TASK-003`, `TASK-021` · **Bloquea:** `TASK-004`…`TASK-011`, `TASK-025` (**S2**)
 
 ---
