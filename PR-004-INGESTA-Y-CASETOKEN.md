@@ -4,7 +4,7 @@
 **Autor:** Agente A — Núcleo y contratos
 **Ola:** R1 (backend) · **Depende de:** `PR-002` (identidad), `PR-003` (contrato Joven↔Red)
 **Bloquea:** `PR-005` (clasificador), `PR-008` (derivación), `PR-009` (cola/SLA)
-**Estado:** borrador para revisión
+**Estado:** decisiones cerradas (2026-09-30)
 
 > El modelo de identidad de `PR-002` está **resuelto en diseño** (`PLAN-PUENTE-RED.md` §2.5 y
 > `PR-003` §7); este documento lo **formaliza** en su parte de backend (correlación). No hace
@@ -48,7 +48,13 @@ POST /joven/registro
 ```
 
 - El `ProfileId` viaja **solo aquí** — nunca junto al contenido.
-- `deviceKey`: clave pública del dispositivo (o un secreto generado en el primer arranque).
+- `deviceKey`: **par de claves del Android Keystore** (recomendado). El registro envía la
+  **clave pública**; la privada **nunca sale del dispositivo**. Para la demo puede bastar un
+  **secreto aleatorio** guardado en `SecureLocalStore` (cifrado con Keystore).
+
+> **La MAC no se usa** — no es una preferencia, es una **imposibilidad técnica**: Android no la
+> entrega a las apps desde API 23/24, es dato personal, falsificable e inestable (MAC aleatoria
+> desde Android 10). Ver `PLAN-PUENTE-RED.md` §2.2 y `PR-003` §7.
 
 ### 2.2 Ingesta del reporte
 
@@ -60,6 +66,7 @@ Idempotency-Key: <uuid>
 ```
 
 - **El cuerpo NO contiene `ProfileId`.** El vínculo lo hace el servidor **desde la sesión**.
+- Acepta reportes de nivel **`ROJO` y `AMARILLO`** (Q2).
 - `Idempotency-Key` evita duplicados en reintentos offline.
 
 ### 2.3 Estado del caso
@@ -75,7 +82,7 @@ Authorization: Bearer <sessionToken>   →  200 { …Contrato B de PR-003… }
 
 ## 3. Emisión del `caseToken`
 
-- **Opaco**: ULID aleatorio (ordenable por tiempo, no derivable).
+- **Opaco**: **ULID** aleatorio (ordenable por tiempo, no derivable) — confirmado en Q4.
 - **Nunca** derivado del `ProfileId`, alias ni MAC.
 - Emitido en la primera ingesta; si el APK llegó offline con un token provisional, el backend
   **reconcilia** por `Idempotency-Key` y devuelve el token definitivo.
@@ -147,11 +154,16 @@ Quién / cuándo / qué caso / qué acción. **Sin** contenido sensible.
 
 ---
 
-## 8. Preguntas abiertas
+## 8. Decisiones cerradas (2026-09-30)
 
-| # | Pregunta |
-|---|---|
-| **Q1** | ¿El `deviceKey` es una clave del Keystore o un secreto simple? (afecta al registro) |
-| **Q2** | ¿La ingesta acepta casos **amarillo** además de rojo, o solo rojo en el MVP? |
-| **Q3** | ¿El `sessionToken` caduca? ¿Cómo se renueva sin que el servidor conozca alias+PIN? |
-| **Q4** | Formato de `caseToken`: ¿ULID o UUIDv4? |
+| # | Pregunta | Decisión |
+|---|---|---|
+| **Q1** | `deviceKey` | **Par de claves del Android Keystore** (pública en el registro, privada en el dispositivo). La **MAC queda descartada** por imposibilidad técnica. En la demo basta un secreto en `SecureLocalStore` |
+| **Q2** | ¿Amarillo además de rojo? | **Ambos**: `ROJO` y `AMARILLO` |
+| **Q3** | ¿Caduca el `sessionToken`? | **No caduca** (ver nota de riesgo) |
+| **Q4** | Formato de `caseToken` | **ULID** (el recomendado: opaco, ordenable por tiempo, no derivable) |
+
+> ⚠️ **Nota de riesgo (Q3).** Un `sessionToken` que **no caduca** es un token de vida
+> ilimitada: si se filtra, sirve para siempre. Es aceptable para la **demo de ≤5 usuarios**,
+> pero **antes de tratar datos reales** conviene, como mínimo, que sea **revocable** y ligado al
+> `deviceKey`. Queda anotado como **deuda de seguridad**, no como olvido.
