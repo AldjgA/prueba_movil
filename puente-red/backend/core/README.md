@@ -15,7 +15,7 @@ El núcleo del pipeline de triaje de Puente Red. Aquí viven las tareas `PR-005`
 | `PR-006` Extracción de características | `features/` | ✅ implementado |
 | `PR-007` Directorio de profesionales | `directory/` | ✅ implementado |
 | `PR-008` Motor de derivación | `routing/` | ✅ implementado |
-| `PR-009` Cola, SLA y trazabilidad | `queue/` | ⏳ |
+| `PR-009` Cola, SLA y trazabilidad | `queue/` | ✅ implementado |
 
 **Fuera de este paquete** (dueño: Agente A, `CONTRATO-DE-INTEGRACION.md` §1.1):
 `backend/routes/joven/**`, `backend/shared/**` (modelos, cliente Supabase, `contratoVersion`,
@@ -30,8 +30,10 @@ directamente (type stripping nativo, estable desde Node 22.18).
 
 ```bash
 cd puente-red/backend/core
-npm test          # 84 pruebas: PR-005 (22) + PR-006 (18) + PR-007 (21) + PR-008 (23)
+npm test          # 114 pruebas: PR-005 (22) + PR-006 (18) + PR-007 (21) + PR-008 (23) + PR-009 (30)
 ```
+
+**La ola R1 está completa**: clasificación → características → directorio → derivación → cola.
 
 > **Limitación del type stripping:** no se pueden usar `enum`, `namespace` ni *parameter
 > properties*. Por eso los "enums" son uniones de literales + objetos `as const`. Los imports
@@ -170,6 +172,54 @@ es humano (`ACEPTADO`). Es el guardrail #2 puesto en código, y no una promesa d
 - **Idioma y zona solo puntúan si el caso los declara.** El Contrato A (`PR-003` §4) **no los
   trae**: son datos que el joven tendría que declarar y hoy no declara. El motor no se los
   inventa; si no llegan, esos pesos no se aplican.
+
+---
+
+## `queue/` — PR-009, cola, SLA y trazabilidad
+
+Es la pieza que hace **honesto** al sistema: si el APK promete *"una persona lo está
+revisando"*, esta cola es la que debe poder cumplirlo.
+
+### Tres cosas que garantiza y que conviene no romper
+
+1. **`ACEPTADO` exige un actor humano.** El LLM propone, la persona decide: es el guardrail #2
+   puesto en código. Se prueba que el **sistema** no puede aceptar un caso.
+2. **La proyección al joven tiene ocho campos exactos.** El estado interno, la carga del
+   profesional y las notas internas **no tienen dónde ir**. Se prueba con `Object.keys` y
+   buscando fugas por nombre de campo.
+3. **El SLA se calcula al leer, no se almacena.** Un incumplimiento depende del reloj;
+   guardarlo obligaría a un proceso que recorriera la cola cada minuto.
+
+### Decisiones que conviene entender
+
+- **`RESUELTO` y `CERRADO` son distintos** (`REVISION-C.md` §5.1). Cerrar **no** es resolver: un
+  caso puede cerrarse sin resolverse (revocación o vencimiento), y el motivo queda registrado.
+- **El SLA se recalcula al clasificar.** En `RECIBIDO` la categoría no se conoce, así que las
+  fechas límite se estiman con ventanas de `MEDIO`. Sin recalcular, un caso `ALTO` tendría
+  4 horas de margen en vez de 5 minutos.
+- **Fuera de horario el reloj del SLA no corre.** No se puede reprochar a nadie no haber
+  atendido cuando no había nadie de turno (`PR-003` §15, P5 de `PR-001`).
+- **El canal es un HECHO, no un estado.** El psicólogo puede trabajar el caso (`EN_CURSO`) sin
+  abrir nunca el canal in-app, porque el canal es **baja prioridad** (R2). Se guarda
+  `contactChannelOpenedAtEpochMillis`; deducirlo del estado daría canal a quien no lo abrió.
+  Al cerrar el caso, el canal deja de estar disponible.
+- **`ACEPTADO → EN_CURSO` sin pasar por `CONTACTO_HABILITADO` es deliberado.** Sin esa
+  transición, un caso aceptado cuyo profesional decide no usar el canal **no tendría forma de
+  avanzar** — que es el caso más frecuente.
+- **Idempotencia por `idempotencyKey`**: el APK encola el reporte sin red y reintenta al
+  reconectar; sin esto, cada reintento crearía un caso nuevo.
+
+### ⚠️ Hueco declarado, no inventado
+
+**El flujo de rechazo no está en el contrato.** `PR-003` §3.1 no dice qué pasa si un
+profesional asignado **rechaza** el caso: `ASIGNADO` no tiene vuelta a `EN_COLA`. No lo he
+inventado; está declarado en `deliverables/PR-009/NECESIDADES.md` §7.2 con una propuesta.
+
+### Persistencia
+
+Se accede por el puerto `CaseStore`. La implementación real será **Supabase** (RLS +
+`audit_event`, `PR-004` §4); aquí va una en memoria para que la lógica sea demostrable sin base
+de datos.
 
 ---
 
