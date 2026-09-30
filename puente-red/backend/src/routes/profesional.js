@@ -13,8 +13,14 @@ import {
 import { CONTRATO_VERSION } from '../shared/contract.js';
 import { leerJson } from '../shared/middleware.js';
 import { DEMO_SEED, Directory } from '../core/directory/index.ts';
+import {
+  ALERT_FILTERS,
+  DEFAULT_PAGE_SIZE,
+  buildAlertPage,
+  isAlertFilter,
+} from '../core/alerts/index.ts';
 import { buildTodayBoard, DEFAULT_SERVICE_WINDOW, isOutOfHours, seedDemoCases } from '../core/home/index.ts';
-import { CaseQueue, InMemoryCaseStore } from '../core/queue/index.ts';
+import { CaseQueue, InMemoryCaseStore, humanActor } from '../core/queue/index.ts';
 
 /**
  * API Profesional — dueño: **C** (`PR-010`…`PR-017`).
@@ -62,10 +68,6 @@ export function createProfesionalRoutes({
   // Sumidero de auditoría en memoria. En producción será la tabla `audit_event` (`PR-004` §4.3),
   // que necesita el cliente de Supabase de `src/shared/**` (de A).
   const auditoria = audit ?? new InMemoryAuthAuditSink();
-  // Sin `authService` inyectado se usa el adaptador de DEMOSTRACIÓN, que falla cerrado si no
-  // hay contraseña en el entorno (`core/auth/demoAuthPort.ts`).
-  const auth =
-    authService ?? new AuthService({ port: createDemoAuthPort(env), audit: auditoria, clock: reloj });
 
   // ---------------------------------------------------------------------------
   // Estado del portal: directorio y cola.
@@ -83,6 +85,19 @@ export function createProfesionalRoutes({
     seedDemoCases({ queue: cola, directory: directorio, nowEpochMillis: reloj.nowEpochMillis() });
   }
   const ventanaServicio = env['PUENTE_HORARIO_SERVICIO'] ?? DEFAULT_SERVICE_WINDOW;
+
+  // La sesión de demostración tiene que apuntar a un perfil que **exista** en el directorio:
+  // si no, `takeCase` devolvería `UNKNOWN_RESPONDER` y la demo no funcionaría.
+  const primerPerfil = directorio.list()[0];
+  // Sin `authService` inyectado se usa el adaptador de DEMOSTRACIÓN, que falla cerrado si no
+  // hay contraseña en el entorno (`core/auth/demoAuthPort.ts`).
+  const auth =
+    authService ??
+    new AuthService({
+      port: createDemoAuthPort({ PUENTE_DEMO_RESPONDER_ID: primerPerfil?.id ?? '', ...env }),
+      audit: auditoria,
+      clock: reloj,
+    });
 
   /** Token del portal, de `Authorization: Bearer <token>`. */
   const tokenDe = (c) => {
@@ -247,20 +262,101 @@ export function createProfesionalRoutes({
   });
 
   // ---------------------------------------------------------------------------
-  // PR-012…PR-017 — pendientes
+  // PR-012 · Centro de alertas
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Lista de alertas con los filtros del brief §23, búsqueda y paginación.
+   *
+   * ⚠️ **El filtro `RED` filtra por el nivel del joven** (`origenNivel`, reglas del APK), **no**
+   * por la categoría del LLM. Son dos ejes independientes (`PLAN-PUENTE-RED.md` §7).
+   */
+  profesional.get('/alertas', exigirAccion('VIEW_ALERTS'), (c) => {
+    const filtroCrudo = c.req.query('filtro') ?? 'ALL';
+    if (!isAlertFilter(filtroCrudo)) {
+      // Un filtro desconocido se rechaza en vez de ignorarse: silenciarlo haría creer que el
+      // portal está filtrando cuando en realidad muestra todo.
+      return c.json(
+        { error: 'filtro_invalido', message: `Filtros válidos: ${ALERT_FILTERS.join(', ')}.` },
+        400,
+      );
+    }
+
+    const ahora = reloj.nowEpochMillis();
+    return c.json(
+      buildAlertPage({
+        queue: cola,
+        directory: directorio,
+        nowEpochMillis: ahora,
+        outOfHours: isOutOfHours(ahora, ventanaServicio),
+        filter: filtroCrudo,
+        search: c.req.query('busqueda'),
+        page: numeroDeQuery(c.req.query('pagina'), 1),
+        pageSize: numeroDeQuery(c.req.query('tamano'), DEFAULT_PAGE_SIZE),
+        demoData: demoCasos,
+      }),
+      200,
+    );
+  });
+
+  /**
+   * **Tomar un caso** (`PR-012` criterio 8).
+   *
+   * Es el **único** endpoint que toma un caso, y lo usan tanto el centro de alertas como la ficha
+   * (`PR-013`). Si hubiera dos, «tomar» podría significar dos cosas distintas según la pantalla.
+   *
+   * Exige actor humano: el identificador sale de la **sesión**, nunca del cuerpo. Si viniera del
+   * cliente, cualquiera podría tomar un caso en nombre de otro.
+   */
+  profesional.post('/casos/:caseToken/tomar', exigirAccion('TAKE_CASE'), (c) => {
+    const sesion = c.get('sesion');
+    const resultado = cola.takeCase(
+      c.req.param('caseToken'),
+      sesion.responderId,
+      humanActor(sesion.responderId),
+    );
+
+    if (!resultado.ok) {
+      const codigo = resultado.reason === 'UNKNOWN_CASE' ? 404 : 409;
+      return c.json({ error: 'no_se_pudo_tomar', reason: resultado.reason }, codigo);
+    }
+
+    return c.json(
+      { caseToken: resultado.ticket.caseToken, estado: resultado.ticket.state },
+      200,
+    );
+  });
+
+  // ---------------------------------------------------------------------------
+  // PR-013…PR-017 — pendientes
   // ---------------------------------------------------------------------------
   profesional.all('*', (c) =>
     c.json(
       {
         error: 'not_implemented',
-        message: 'Superficie profesional pendiente (PR-012…PR-017).',
-        implementado: ['/auth/login', '/auth/logout', '/session', '/auditoria', '/home'],
+        message: 'Superficie profesional pendiente (PR-013…PR-017).',
+        implementado: [
+          '/auth/login',
+          '/auth/logout',
+          '/session',
+          '/auditoria',
+          '/home',
+          '/alertas',
+          'POST /casos/:caseToken/tomar',
+        ],
       },
       501,
     ),
   );
 
   return profesional;
+}
+
+/** Lee un entero de la query. Devuelve el respaldo si no es un número. */
+function numeroDeQuery(valor, respaldo) {
+  if (valor === undefined) return respaldo;
+  const numero = Number.parseInt(valor, 10);
+  return Number.isFinite(numero) ? numero : respaldo;
 }
 
 /**

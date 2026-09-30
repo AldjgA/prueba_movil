@@ -18,7 +18,7 @@ El segundo producto de Puente Joven. El brief §34 lo define así:
 |---|---|---|
 | `PR-010` | Autenticación profesional y roles | ✅ **implementado** |
 | `PR-011` | Home profesional | ✅ **implementado** |
-| `PR-012` | Centro de alertas | ⏳ |
+| `PR-012` | Centro de alertas | ✅ **implementado** |
 | `PR-013` | Ficha de caso (7 secciones) | ⏳ |
 | `PR-014` | «Organizado por Puente» / «valoración profesional» | ⏳ |
 | `PR-015` | Timeline y seguimiento | ⏳ |
@@ -117,6 +117,20 @@ Si el tablero llega con `demoData: true`, la pantalla lo dice. Si llega `outOfHo
 de que los tiempos de respuesta **no corren**. Y la CTA *"Revisar"* está **deshabilitada** con su
 `title` explicando que depende de `PR-013`: no se finge una pantalla que no existe.
 
+### El portal **no filtra** en memoria
+
+`PR-012` manda el filtro, la búsqueda y la página al **servidor**. Si filtrara el cliente, los
+contadores por filtro no cuadrarían con la lista, porque solo tendría la página cargada.
+
+Y un filtro desconocido se rechaza con **400** en vez de ignorarse: silenciarlo haría creer que el
+portal está filtrando cuando en realidad muestra todo.
+
+### Los dos ejes que no hay que confundir
+
+`youthLevel` (`VERDE | AMARILLO | ROJO`, reglas del APK) y `category` (`MEDIO | ALTO`, LLM) son
+**ejes independientes**. El filtro «Rojo» usa el **primero**. Un caso puede ser `ROJO` para el
+joven y `MEDIO` operativamente.
+
 ---
 
 ## Estructura
@@ -137,13 +151,19 @@ src/
     format.ts        formateo del tiempo esperando (puro)
     useTodayBoard.ts carga del tablero + reloj de la interfaz
     Home.tsx         «¿Qué necesita nuestra atención ahora?»
+  alerts/            PR-012
+    api.ts           cliente de /profesional/alertas y de tomar caso
+    Alerts.tsx       lista con filtros, búsqueda y paginación
+  api/
+    parse.ts         ayudantes de parseo compartidos (no confiar en la red)
   shell/
     AppShell.tsx     barra lateral (brief §33)
   App.tsx
   main.tsx
 ```
 
-`src/auth/api.ts` y `src/home/api.ts` son los **únicos** archivos que construyen rutas de API.
+`src/auth/api.ts`, `src/home/api.ts` y `src/alerts/api.ts` son los **únicos** archivos que
+construyen rutas de API, y los tres usan `src/api/parse.ts`.
 
 ---
 

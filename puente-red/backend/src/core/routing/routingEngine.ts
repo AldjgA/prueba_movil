@@ -37,7 +37,7 @@ import {
   type EquityThresholds,
   type RoutingWeights,
 } from "./weights.ts";
-import type { Candidate, Clock, RoutingContext, RoutingOutcome, RoutingProposal } from "./types.ts";
+import type { Clock, RoutingContext, RoutingOutcome, RoutingProposal } from "./types.ts";
 
 export const ENGINE_VERSION = "routing-engine/1.0.0";
 

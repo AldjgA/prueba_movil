@@ -241,6 +241,36 @@ export class CaseQueue {
     });
   }
 
+  /**
+   * **El profesional toma el caso** (`PR-012` criterio 8).
+   *
+   * Compone **dos transiciones que ya existen** — no añade ninguna:
+   * - si el caso está en `EN_COLA`, lo asigna a sí mismo (`EN_COLA → ASIGNADO`);
+   * - y después lo acepta (`ASIGNADO → ACEPTADO`), que **exige actor humano**.
+   *
+   * Es el **único** camino para tomar un caso, y lo usan tanto el centro de alertas
+   * (`PR-012`) como la ficha (`PR-013`). Si hubiera dos implementaciones, podrían divergir y
+   * «tomar» significaría dos cosas distintas según la pantalla.
+   */
+  takeCase(caseToken: string, responderId: string, actor: Actor): QueueResult {
+    if (actor.kind !== "HUMAN" || actor.id.trim() === "") {
+      return { ok: false, reason: "HUMAN_ACTOR_REQUIRED" };
+    }
+
+    const ticket = this.#store.get(caseToken);
+    if (ticket === null) return { ok: false, reason: "UNKNOWN_CASE" };
+
+    if (ticket.state === "EN_COLA") {
+      const asignado = this.assign(caseToken, responderId, actor);
+      if (!asignado.ok) return asignado;
+    } else if (ticket.state !== "ASIGNADO") {
+      // Ya aceptado, en curso o cerrado: tomar no aplica.
+      return { ok: false, reason: "ILLEGAL_TRANSITION" };
+    }
+
+    return this.accept(caseToken, responderId, actor);
+  }
+
   startWork(caseToken: string, actor: Actor): QueueResult {
     return this.#transition(caseToken, "EN_CURSO", actor, null);
   }

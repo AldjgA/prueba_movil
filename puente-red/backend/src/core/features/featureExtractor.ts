@@ -21,7 +21,6 @@ import {
   SITUATION_TYPES,
   URGENCY_LEVELS,
   VOCABULARY_VERSION,
-  isAgeBand,
   isDomain,
   isProtectiveFactor,
   isSignalTag,
@@ -29,10 +28,7 @@ import {
   isUrgencyLevel,
   type AgeBand,
   type ConfidenceBand,
-  type Domain,
-  type ProtectiveFactor,
   type Provenance,
-  type SignalTag,
   type SituationType,
   type UrgencyLevel,
 } from "./vocabulary.ts";

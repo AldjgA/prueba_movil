@@ -84,13 +84,13 @@ export const KEY_TO_FEATURES: Readonly<Record<string, readonly FeatureHint[]>> =
   soledad: [{ kind: "signal", value: "ISOLATION" }],
   se_aleja: [{ kind: "signal", value: "ISOLATION" }],
   impacto_escolar: [{ kind: "signal", value: "SCHOOL_IMPACT" }],
-  deterioro_escolar: [{ kind: "signal", value: "SCHOOL_IMPACT" }],
+  // `deterioro_escolar` ya está en el catálogo canónico: repetirlo aquí lo sobrescribiría en
+  // silencio (gana la última clave del literal). Ese duplicado lo detectó `tsc` — el backend no
+  // comprueba tipos por sí solo, así que sin esta pasada habría pasado inadvertido.
   evita_recreo: [{ kind: "signal", value: "SCHOOL_IMPACT" }],
   dificultad_para_asistir: [{ kind: "signal", value: "SCHOOL_IMPACT" }],
-  autolesion: [{ kind: "signal", value: "SELF_HARM" }],
   ansiedad: [{ kind: "signal", value: "ANXIETY" }],
   preocupacion_constante: [{ kind: "signal", value: "ANXIETY" }],
-  ideacion_activa: [{ kind: "signal", value: "SELF_HARM" }],
 
   // --- Factores protectores --------------------------------------------------
   adulto_de_confianza: [{ kind: "protective", value: "TRUSTED_ADULT" }],

@@ -7,7 +7,9 @@
  * ordenara el cliente, la prioridad dependería de la pantalla que la muestra.
  */
 
-export type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
+import { leerJson, listaDeTexto, noNulo, numero, texto, type FetchLike } from "../api/parse.ts";
+
+export type { FetchLike };
 
 export type AttentionReason =
   | "HIGH_WAITING"
@@ -68,15 +70,8 @@ export function createHomeApi(options: HomeApiOptions = {}): HomeApi {
       }
       if (!respuesta.ok) return null;
 
-      let cuerpo: unknown;
-      try {
-        cuerpo = await respuesta.json();
-      } catch {
-        return null;
-      }
-      if (cuerpo === null || typeof cuerpo !== "object" || Array.isArray(cuerpo)) return null;
-
-      return parseBoard(cuerpo as Record<string, unknown>);
+      const cuerpo = await leerJson(respuesta);
+      return cuerpo === null ? null : parseBoard(cuerpo);
     },
   };
 }
@@ -114,18 +109,4 @@ function parseCard(valor: unknown): AttentionCard | null {
     slaBreached: raw["slaBreached"] === true,
     outOfHours: raw["outOfHours"] === true,
   };
-}
-
-const noNulo = <T>(valor: T | null): valor is T => valor !== null;
-
-function numero(valor: unknown): number {
-  return typeof valor === "number" && Number.isFinite(valor) ? valor : 0;
-}
-
-function texto(valor: unknown): string | null {
-  return typeof valor === "string" ? valor : null;
-}
-
-function listaDeTexto(valor: unknown): string[] {
-  return Array.isArray(valor) ? valor.filter((v): v is string => typeof v === "string") : [];
 }

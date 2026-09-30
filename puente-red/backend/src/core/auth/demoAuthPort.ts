@@ -27,6 +27,8 @@ export const DEMO_DEFAULTS = {
   email: "demo@puentered.org",
   role: "supervisor",
   institutionId: "ong-demo",
+  /** Debe existir en el directorio, o «tomar caso» daría `UNKNOWN_RESPONDER`. */
+  responderId: "demo-psicologa-trauma",
 } as const;
 
 /** Comparación de tiempo constante. Longitudes distintas se resuelven sin cortocircuitar. */
@@ -64,7 +66,7 @@ export function createDemoAuthPort(env: EnvLike): AuthPort {
       }
       return {
         ok: true,
-        responderId: "demo-responder",
+        responderId: env["PUENTE_DEMO_RESPONDER_ID"] ?? DEMO_DEFAULTS.responderId,
         role: rol,
         institutionId: institucion,
         isDemo: true,

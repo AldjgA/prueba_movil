@@ -5,10 +5,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { Directory, ZERO_LOAD_SOURCE } from "../directory.ts";
+import { Directory, ZERO_LOAD_SOURCE, type LoadSource } from "../directory.ts";
 import { InMemoryAuditSink } from "../audit.ts";
 import { DEMO_SEED, seedIsEntirelyFictional } from "../seed.ts";
-import type { Clock, LoadSource, ResponderProfile } from "../types.ts";
+import type { Clock, ResponderProfile } from "../types.ts";
 
 const FIXED_CLOCK: Clock = { nowEpochMillis: () => 1_700_000_000_000 };
 const AT = new Date(FIXED_CLOCK.nowEpochMillis()).toISOString();

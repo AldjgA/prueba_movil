@@ -273,14 +273,195 @@ test('el logout sin token se rechaza', async () => {
 // ---------------------------------------------------------------------------
 // Superficie pendiente y frontera
 // ---------------------------------------------------------------------------
-test('las rutas de PR-011…PR-017 responden 501 y enumeran lo implementado', async () => {
+test('las rutas de PR-013…PR-017 responden 501 y enumeran lo implementado', async () => {
   const app = makeApp();
-  const respuesta = await app.request('/profesional/alertas');
+  // La ficha de caso es PR-013: todavía no existe.
+  const respuesta = await app.request('/profesional/casos/PJ-001');
 
   assert.equal(respuesta.status, 501);
   const cuerpo = await respuesta.json();
   assert.equal(cuerpo.error, 'not_implemented');
   assert.ok(cuerpo.implementado.includes('/auth/login'));
+  assert.ok(cuerpo.implementado.includes('/alertas'));
+});
+
+// ---------------------------------------------------------------------------
+// PR-012 · Centro de alertas
+// ---------------------------------------------------------------------------
+test('el centro de alertas está guardado', async () => {
+  const app = makeApp();
+  const respuesta = await app.request('/profesional/alertas');
+
+  assert.equal(respuesta.status, 401);
+  assert.equal((await respuesta.json()).reason, 'authz.no_session');
+});
+
+test('por defecto el centro de alertas está vacío (PR-003 Q7)', async () => {
+  const app = makeApp();
+  const { cuerpo } = await login(app);
+
+  const respuesta = await app.request('/profesional/alertas', conToken(cuerpo.token));
+  const board = await respuesta.json();
+
+  assert.equal(respuesta.status, 200);
+  assert.deepEqual(board.rows, []);
+  assert.equal(board.total, 0);
+  assert.equal(board.filter, 'ALL');
+  assert.equal(board.counts.ALL, 0);
+  assert.deepEqual(Object.keys(board.counts).sort(), [
+    'ALL',
+    'IN_FOLLOWUP',
+    'RED',
+    'REFERRED',
+    'UNASSIGNED',
+    'YELLOW',
+  ]);
+});
+
+test('un filtro desconocido se rechaza con 400 en vez de ignorarse', async () => {
+  const app = makeApp();
+  const { cuerpo } = await login(app);
+
+  const respuesta = await app.request('/profesional/alertas?filtro=INVENTADO', conToken(cuerpo.token));
+  assert.equal(respuesta.status, 400);
+  assert.equal((await respuesta.json()).error, 'filtro_invalido');
+});
+
+test('con casos ficticios el centro de alertas devuelve filas', async () => {
+  const app = makeApp({
+    env: { PUENTE_DEMO_PASSWORD: PASSWORD, PUENTE_DEMO_EMAIL: EMAIL, PUENTE_DEMO_CASOS: 'on' },
+  });
+  const { cuerpo } = await login(app);
+
+  const respuesta = await app.request('/profesional/alertas', conToken(cuerpo.token));
+  const board = await respuesta.json();
+
+  assert.equal(respuesta.status, 200);
+  assert.equal(board.demoData, true);
+  assert.ok(board.rows.length > 0);
+  assert.equal(board.total, board.counts.ALL);
+});
+
+test('criterio 2: el filtro RED usa youthLevel, no category', async () => {
+  const app = makeApp({
+    env: { PUENTE_DEMO_PASSWORD: PASSWORD, PUENTE_DEMO_EMAIL: EMAIL, PUENTE_DEMO_CASOS: 'on' },
+  });
+  const { cuerpo } = await login(app);
+
+  const respuesta = await app.request('/profesional/alertas?filtro=RED', conToken(cuerpo.token));
+  const board = await respuesta.json();
+
+  assert.equal(respuesta.status, 200);
+  assert.ok(board.rows.length > 0);
+  for (const fila of board.rows) {
+    assert.equal(fila.youthLevel, 'ROJO');
+  }
+});
+
+// ---------------------------------------------------------------------------
+// PR-012 criterio 8 · Tomar caso
+// ---------------------------------------------------------------------------
+test('tomar caso está guardado', async () => {
+  const app = makeApp();
+  const respuesta = await app.request('/profesional/casos/PJ-001/tomar', { method: 'POST' });
+  assert.equal(respuesta.status, 401);
+});
+
+/**
+ * App con una sesión **real** (`isDemo: false`).
+ *
+ * Hace falta porque la sesión de demostración es de **solo lectura** (`PR-010` criterio 7): no
+ * puede tomar casos. Es correcto, y significa que `PR-012` criterio 8 se prueba con una sesión
+ * real, no con la demo.
+ */
+function makeAppSesionReal({ env } = {}) {
+  const reloj = makeReloj();
+  const port = {
+    signIn: async () => ({
+      ok: true,
+      responderId: 'demo-psicologa-trauma',
+      role: 'psicologo',
+      institutionId: 'ong-1',
+      isDemo: false,
+      refreshToken: 'r',
+    }),
+    refresh: async () => ({ ok: false, reason: 'PROVIDER_ERROR' }),
+    signOut: async () => {},
+  };
+  return makeApp({
+    env,
+    authService: new AuthService({ port, clock: reloj.clock }),
+    clock: reloj.clock,
+  });
+}
+
+test('criterio 8: tomar un caso lo deja ACEPTADO, con el profesional de la sesión', async () => {
+  const app = makeAppSesionReal({
+    env: { PUENTE_DEMO_PASSWORD: PASSWORD, PUENTE_DEMO_EMAIL: EMAIL, PUENTE_DEMO_CASOS: 'on' },
+  });
+  const { cuerpo } = await login(app);
+
+  const respuesta = await app.request('/profesional/casos/DEMO-MEDIO-NUEVO/tomar', {
+    method: 'POST',
+    ...conToken(cuerpo.token),
+  });
+  const resultado = await respuesta.json();
+
+  assert.equal(respuesta.status, 200);
+  assert.equal(resultado.estado, 'ACEPTADO');
+
+  // Y el caso sale de «sin responsable»: el responsable es el profesional de la sesión.
+  const alertas = await (
+    await app.request('/profesional/alertas?filtro=UNASSIGNED', conToken(cuerpo.token))
+  ).json();
+  assert.ok(!alertas.rows.some((r) => r.caseToken === 'DEMO-MEDIO-NUEVO'));
+});
+
+test('una sesión de demostración NO puede tomar casos (solo lectura)', async () => {
+  const app = makeApp({
+    env: { PUENTE_DEMO_PASSWORD: PASSWORD, PUENTE_DEMO_EMAIL: EMAIL, PUENTE_DEMO_CASOS: 'on' },
+  });
+  const { cuerpo } = await login(app);
+
+  const respuesta = await app.request('/profesional/casos/DEMO-MEDIO-NUEVO/tomar', {
+    method: 'POST',
+    ...conToken(cuerpo.token),
+  });
+
+  assert.equal(respuesta.status, 403);
+  assert.equal((await respuesta.json()).reason, 'authz.demo_read_only');
+});
+
+test('tomar dos veces el mismo caso se rechaza con 409', async () => {
+  const app = makeAppSesionReal({
+    env: { PUENTE_DEMO_PASSWORD: PASSWORD, PUENTE_DEMO_EMAIL: EMAIL, PUENTE_DEMO_CASOS: 'on' },
+  });
+  const { cuerpo } = await login(app);
+
+  await app.request('/profesional/casos/DEMO-MEDIO-NUEVO/tomar', {
+    method: 'POST',
+    ...conToken(cuerpo.token),
+  });
+  const segunda = await app.request('/profesional/casos/DEMO-MEDIO-NUEVO/tomar', {
+    method: 'POST',
+    ...conToken(cuerpo.token),
+  });
+
+  assert.equal(segunda.status, 409);
+  assert.equal((await segunda.json()).reason, 'ILLEGAL_TRANSITION');
+});
+
+test('tomar un caso inexistente devuelve 404', async () => {
+  const app = makeAppSesionReal();
+  const { cuerpo } = await login(app);
+
+  const respuesta = await app.request('/profesional/casos/NO-EXISTE/tomar', {
+    method: 'POST',
+    ...conToken(cuerpo.token),
+  });
+
+  assert.equal(respuesta.status, 404);
+  assert.equal((await respuesta.json()).reason, 'UNKNOWN_CASE');
 });
 
 // ---------------------------------------------------------------------------

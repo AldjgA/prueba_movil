@@ -521,6 +521,72 @@ test("una revocación puede cerrar el caso desde cualquier estado no terminal", 
 });
 
 // ---------------------------------------------------------------------------
+// takeCase — el único camino para tomar un caso (PR-012 criterio 8)
+// ---------------------------------------------------------------------------
+test("takeCase toma un caso EN_COLA: lo asigna y lo acepta", () => {
+  const { queue } = makeQueue();
+  queue.enqueue({ caseToken: "C", originLevel: "AMARILLO", rulesetVersion: "r1", category: "MEDIO" }, "k");
+  queue.markClassified("C", "MEDIO");
+  queue.enqueueForRouting("C");
+
+  const resultado = queue.takeCase("C", PSY.id, humanActor("psy-1"));
+
+  assert.equal(resultado.ok, true);
+  assert.equal(queue.get("C")?.state, "ACEPTADO");
+  assert.equal(queue.get("C")?.assignee, PSY.id);
+});
+
+test("takeCase funciona también sobre un caso ya ASIGNADO", () => {
+  const { queue } = makeQueue();
+  queue.enqueue({ caseToken: "C", originLevel: "AMARILLO", rulesetVersion: "r1", category: "MEDIO" }, "k");
+  queue.markClassified("C", "MEDIO");
+  queue.enqueueForRouting("C");
+  queue.assign("C", PSY.id, SYSTEM_ACTOR);
+
+  assert.equal(queue.takeCase("C", PSY.id, humanActor("psy-1")).ok, true);
+  assert.equal(queue.get("C")?.state, "ACEPTADO");
+});
+
+test("takeCase exige actor humano: el sistema no puede tomar un caso", () => {
+  const { queue } = makeQueue();
+  queue.enqueue({ caseToken: "C", originLevel: "AMARILLO", rulesetVersion: "r1", category: "MEDIO" }, "k");
+  queue.markClassified("C", "MEDIO");
+  queue.enqueueForRouting("C");
+
+  const resultado = queue.takeCase("C", PSY.id, SYSTEM_ACTOR);
+  assert.equal(resultado.ok, false);
+  assert.equal(resultado.ok === false && resultado.reason, "HUMAN_ACTOR_REQUIRED");
+  assert.equal(queue.get("C")?.state, "EN_COLA", "no debe haber cambiado nada");
+});
+
+test("takeCase rechaza un caso ya aceptado", () => {
+  const { queue } = makeQueue();
+  toAccepted(queue);
+  const resultado = queue.takeCase("CASE-1", PSY.id, humanActor("psy-1"));
+  assert.equal(resultado.ok, false);
+  assert.equal(resultado.ok === false && resultado.reason, "ILLEGAL_TRANSITION");
+});
+
+test("takeCase rechaza un respondedor inexistente", () => {
+  const { queue } = makeQueue();
+  queue.enqueue({ caseToken: "C", originLevel: "AMARILLO", rulesetVersion: "r1", category: "MEDIO" }, "k");
+  queue.markClassified("C", "MEDIO");
+  queue.enqueueForRouting("C");
+
+  const resultado = queue.takeCase("C", "no-existe", humanActor("no-existe"));
+  assert.equal(resultado.ok, false);
+  assert.equal(resultado.ok === false && resultado.reason, "UNKNOWN_RESPONDER");
+  assert.equal(queue.get("C")?.state, "EN_COLA");
+});
+
+test("takeCase rechaza un caso inexistente", () => {
+  const { queue } = makeQueue();
+  const resultado = queue.takeCase("no-existe", PSY.id, humanActor("psy-1"));
+  assert.equal(resultado.ok, false);
+  assert.equal(resultado.ok === false && resultado.reason, "UNKNOWN_CASE");
+});
+
+// ---------------------------------------------------------------------------
 // Casos inexistentes
 // ---------------------------------------------------------------------------
 test("operar sobre un caso inexistente se rechaza sin romper", () => {

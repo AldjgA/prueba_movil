@@ -6,7 +6,8 @@
  * Observatorio · Directorio · Configuración.
  *
  * **Lo que este archivo NO hace:** no inventa pantallas. Cada destino declara **qué tarea lo
- * implementa** y si está pendiente, para que nadie confunda una maqueta con un producto.
+ * implementa**, y los que aún no existen aparecen **deshabilitados** con su tarea a la vista. Es
+ * la diferencia entre «producto a medias» y «maqueta».
  */
 
 import type { ReactNode } from "react";
@@ -15,34 +16,39 @@ import { Orb } from "../design/Orb.tsx";
 import { brand, surface, text } from "../design/tokens.ts";
 import { useSession } from "../auth/SessionProvider.tsx";
 
+/** Vistas que existen hoy. */
+export type Vista = "inicio" | "alertas";
+
 interface Destino {
   readonly etiqueta: string;
   readonly icono: string;
-  /** Tarea que lo implementa. `null` = aún sin dueño declarado. */
+  /** Vista a la que navega. `null` = todavía no existe. */
+  readonly vista: Vista | null;
+  /** Tarea que lo implementa. `null` = sin dueño declarado. */
   readonly tarea: string | null;
 }
 
 /** Orden del brief §33. */
 const DESTINOS: readonly Destino[] = [
-  { etiqueta: "Inicio", icono: "M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z", tarea: "PR-011" },
-  { etiqueta: "Alertas", icono: "M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0", tarea: "PR-012" },
-  { etiqueta: "Casos", icono: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8", tarea: "PR-013" },
-  { etiqueta: "Seguimientos", icono: "M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z", tarea: "PR-015" },
-  { etiqueta: "Derivaciones", icono: "M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3", tarea: "PR-016" },
-  { etiqueta: "Reportes", icono: "M18 20V10M12 20V4M6 20v-6", tarea: "PR-017" },
-  { etiqueta: "Observatorio", icono: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z", tarea: "PR-017" },
-  { etiqueta: "Directorio", icono: "M4 6h16M4 10h16M4 14h16M4 18h16", tarea: "PR-016" },
-  { etiqueta: "Configuración", icono: "M12 15a3 3 0 100-6 3 3 0 000 6z", tarea: "PR-018" },
+  { etiqueta: "Inicio", icono: "M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z", vista: "inicio", tarea: "PR-011" },
+  { etiqueta: "Alertas", icono: "M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0", vista: "alertas", tarea: "PR-012" },
+  { etiqueta: "Casos", icono: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8", vista: null, tarea: "PR-013" },
+  { etiqueta: "Seguimientos", icono: "M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z", vista: null, tarea: "PR-015" },
+  { etiqueta: "Derivaciones", icono: "M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3", vista: null, tarea: "PR-016" },
+  { etiqueta: "Reportes", icono: "M18 20V10M12 20V4M6 20v-6", vista: null, tarea: "PR-017" },
+  { etiqueta: "Observatorio", icono: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z", vista: null, tarea: "PR-017" },
+  { etiqueta: "Directorio", icono: "M4 6h16M4 10h16M4 14h16M4 18h16", vista: null, tarea: "PR-016" },
+  { etiqueta: "Configuración", icono: "M12 15a3 3 0 100-6 3 3 0 000 6z", vista: null, tarea: "PR-018" },
 ];
 
 export interface AppShellProps {
   readonly children: ReactNode;
-  readonly activo?: string;
+  readonly vista: Vista;
+  readonly onNavegar: (vista: Vista) => void;
 }
 
-export function AppShell({ children, activo = "Inicio" }: AppShellProps) {
+export function AppShell({ children, vista, onNavegar }: AppShellProps) {
   const { sesion, logout } = useSession();
-
   const iniciales = sesion?.institucion.slice(0, 2).toUpperCase() ?? "PR";
 
   return (
@@ -65,17 +71,26 @@ export function AppShell({ children, activo = "Inicio" }: AppShellProps) {
           <span className="label">Plataforma profesional</span>
         </div>
 
-        <nav style={{ flex: 1, padding: "1rem 0.75rem", display: "flex", flexDirection: "column", gap: 2 }}>
+        <nav
+          style={{ flex: 1, padding: "1rem 0.75rem", display: "flex", flexDirection: "column", gap: 2 }}
+          aria-label="Navegación principal"
+        >
           {DESTINOS.map((destino) => {
-            const esActivo = destino.etiqueta === activo;
+            const activo = destino.vista === vista;
+            const disponible = destino.vista !== null;
             return (
-              <div
+              <button
                 key={destino.etiqueta}
-                aria-current={esActivo ? "page" : undefined}
+                type="button"
+                disabled={!disponible}
+                aria-current={activo ? "page" : undefined}
+                onClick={() => {
+                  if (destino.vista !== null) onNavegar(destino.vista);
+                }}
                 title={
-                  destino.tarea === null
-                    ? "Sin tarea asignada"
-                    : `Pendiente: ${destino.tarea}`
+                  disponible
+                    ? destino.etiqueta
+                    : `Pendiente: ${destino.tarea ?? "sin tarea asignada"}`
                 }
                 style={{
                   display: "flex",
@@ -83,11 +98,19 @@ export function AppShell({ children, activo = "Inicio" }: AppShellProps) {
                   gap: "0.75rem",
                   padding: "0.625rem 0.75rem",
                   borderRadius: "0.75rem",
-                  background: esActivo ? `color-mix(in srgb, ${brand.primary} 12%, transparent)` : "transparent",
-                  color: esActivo ? text.primary : text.muted,
+                  border: 0,
+                  width: "100%",
+                  textAlign: "left",
+                  fontFamily: "inherit",
+                  background: activo
+                    ? `color-mix(in srgb, ${brand.primary} 12%, transparent)`
+                    : "transparent",
+                  color: activo ? text.primary : text.muted,
                   fontSize: "0.875rem",
-                  fontWeight: esActivo ? 600 : 400,
-                  opacity: 0.75,
+                  fontWeight: activo ? 600 : 400,
+                  // Los pendientes se ven atenuados y **no** se pueden pulsar.
+                  opacity: disponible ? 1 : 0.45,
+                  cursor: disponible ? "pointer" : "not-allowed",
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -100,12 +123,12 @@ export function AppShell({ children, activo = "Inicio" }: AppShellProps) {
                   />
                 </svg>
                 <span style={{ flex: 1 }}>{destino.etiqueta}</span>
-                {destino.tarea !== null && (
-                  <span className="mono" style={{ fontSize: "0.5625rem", opacity: 0.7 }}>
+                {!disponible && destino.tarea !== null && (
+                  <span className="mono" style={{ fontSize: "0.5625rem", opacity: 0.8 }}>
                     {destino.tarea}
                   </span>
                 )}
-              </div>
+              </button>
             );
           })}
         </nav>
@@ -158,7 +181,12 @@ export function AppShell({ children, activo = "Inicio" }: AppShellProps) {
             </div>
           )}
 
-          <button type="button" className="button-link" onClick={() => void logout()} style={{ padding: "0 0.75rem" }}>
+          <button
+            type="button"
+            className="button-link"
+            onClick={() => void logout()}
+            style={{ padding: "0 0.75rem" }}
+          >
             Cerrar sesión
           </button>
         </div>
