@@ -33,6 +33,9 @@ import bo.puentejoven.feature.onboarding.OnboardingRoute as OnboardingScreenRout
 import bo.puentejoven.feature.home.HomeRoute as HomeScreenRoute
 import bo.puentejoven.feature.conversation.ConversationRoute as ConversationScreenRoute
 import bo.puentejoven.feature.conversation.ContextCheckRoute as ContextCheckScreenRoute
+import bo.puentejoven.feature.signals.SignalsRoute as SignalsScreenRoute
+import bo.puentejoven.feature.signals.SituationMapRoute as SituationMapScreenRoute
+import bo.puentejoven.feature.signals.AttentionRoute as AttentionScreenRoute
 
 /**
  * Grafo de navegación del joven.
@@ -89,35 +92,22 @@ fun PuenteJovenNavHost(
             ContextCheckScreenRoute(navigator = navigator)
         }
 
-        // --- Resto del grafo joven (placeholders hasta sus tareas) ---
+        // --- TASK-005: señales, mapa de situación y prioridad preliminar (B) ---
         composable<SignalsRoute> {
-            DestinationPlaceholder(
-                destination = SignalsRoute,
-                title = "Señales",
-                note = "Señales detectadas con su evidencia. Se implementa en TASK-005.",
-                navigator = navigator,
-            )
+            SignalsScreenRoute(navigator = navigator)
         }
 
         composable<SituationMapRoute> {
-            DestinationPlaceholder(
-                destination = SituationMapRoute,
-                title = "Mapa de situación",
-                note = "Constelación de nodos de la situación. Se implementa en TASK-005.",
-                navigator = navigator,
-            )
+            SituationMapScreenRoute(navigator = navigator)
         }
 
-        composable<AttentionRoute> { backStackEntry ->
-            val route = backStackEntry.toRoute<AttentionRoute>()
-            DestinationPlaceholder(
-                destination = route,
-                title = "Prioridad preliminar de revisión",
-                note = "Nunca un diagnóstico. Se implementa en TASK-005.",
-                navigator = navigator,
-            )
+        composable<AttentionRoute> {
+            // El `assessmentId` de la ruta tipada no se usa todavía: la prioridad se
+            // deriva del estado actual, no se almacena. Ver TASK-005 §9.
+            AttentionScreenRoute(navigator = navigator)
         }
 
+        // --- Resto del grafo joven (placeholders hasta sus tareas) ---
         composable<ToolsRoute> {
             DestinationPlaceholder(
                 destination = ToolsRoute,
