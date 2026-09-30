@@ -65,6 +65,27 @@ tiene spec**. Es el índice del proyecto; si algo no está aquí, no existe.
 >
 > **Necesidades declaradas:** `puente-joven-android/deliverables/FASE-0-B/NECESIDADES.md`.
 > **Revisión de B sobre el plan y la Fase 0 de A:** `REVISION-B.md` (10 hallazgos, 3 rojos).
+> **Revisión de B sobre la Fase 0 de C:** `REVISION-C-POR-B.md` (10 hallazgos, **7 de frontera
+> Joven↔Red**). Las specs `TASK-011`, `TASK-015` y `TASK-016` quedan **corregidas** por esa revisión
+> (addenda §11 en cada una).
+
+### 3.1 Pendiente de decisión de A (contrato `PR-003`)
+
+| # | Qué | Hallazgo | Bloquea |
+|---|---|---|---|
+| D6 | Catálogo de `motivo` (no existe en ningún documento) | K2 | `TASK-015` |
+| D7 | Forma canónica de las claves de señal (APK `"isolation"` vs backend `ISOLATION`) | K1 | `TASK-015`, `TASK-013` |
+| D8 | `fueraDeHorario` en el Contrato B | K5 | `TASK-016` |
+| D9 | Copy visible de `rol`/`especialidad` (hoy llegarían claves de enum al adolescente) | K6 | `TASK-016` |
+
+### 3.2 Pendiente de C (tras rebasar sobre `main`)
+
+| # | Qué | Hallazgo |
+|---|---|---|
+| — | `PR-013` §2: la sección 5 (herramientas) se construye del `scope` autorizado, no del paquete | K3 |
+| — | `PR-006`: consumir `respuestasChequeo` o quitarlo del Contrato A | K4 |
+| — | `PR-018` §2: `metadataWithoutSensitiveContent` **no existe** en el APK | K9 |
+| — | Rebasar y aplicar `REVISION-C.md` F1–F4 (las specs en `49fbe0a` son previas) | K8 |
 
 ## 4. Agente C — Portal Puente Red (18)
 

@@ -26,6 +26,21 @@ Sin estas cinco respuestas, B **no puede empezar `TASK-004`**. Detalle en `REVIS
 | **D4** | ¿Un **método nuevo** en un `Repository` existente se declara por `NECESIDADES.md`? B asume que sí | `TASK-005`, `TASK-006b`, `TASK-007` |
 | **D5** | **Dueño de `TASK-018`** (H3): B la escribe, A la dispara en S5 | `TASK-018` |
 
+### 0.1 Bloqueantes nuevos, detectados al revisar la cola de C
+
+Ver `REVISION-C-POR-B.md` (10 hallazgos). Los cuatro que necesitan decisión de **A** son de
+`PR-003`, su contrato:
+
+| # | Decisión | Hallazgo | Bloquea |
+|---|---|---|---|
+| **D6** | **Catálogo de `motivo`**: `PR-003` §4 exige claves de catálogo, `PR-005` §9 lo delega a `PR-001`, y `PR-001` §4.3 da criterios en prosa. **El catálogo no existe.** A debe publicarlo y versionarlo | K2 | `TASK-015` |
+| **D7** | **Forma canónica de las claves de señal**: el APK emite `SignalKey("frequency")` / `"isolation"` (minúsculas, verificado en `DemoFixtures.kt`); `PR-006` §4 espera `SignalTag` en MAYÚSCULAS y sin `frequency`. **No hay tabla de correspondencia** | K1 | `TASK-015`, `TASK-013` |
+| **D8** | **`fueraDeHorario: boolean` en el Contrato B**: `PR-009` §6 lo menciona y `PR-011` lo usa, pero `YouthVisibleCaseStatus` (`PR-009` §4) no lo tiene. Sin él, `TASK-016` no puede ser honesta sobre los tiempos (`PR-001` P5 / §9) | K5 | `TASK-016` |
+| **D9** | **Copy de `rol` y `especialidad`**: `PR-003` §6.1 dice `psicologo`/`trabajador_social`…, `PR-007` §4 dice `PSICOLOGIA`/`TRABAJO_SOCIAL`…, `PR-009` §4 lo tipa como `string` libre. Y nadie define la etiqueta visible, que **el APK muestra al adolescente desde `ACEPTADO`** (R5) | K6 | `TASK-016` |
+
+**Nota de B:** las cuatro son de contrato, no de diseño, y las cuatro se resuelven en **una sola
+pasada** sobre `PR-003`. Ninguna exige rehacer trabajo de C.
+
 ---
 
 ## 1. Módulos nuevos

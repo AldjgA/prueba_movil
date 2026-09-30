@@ -166,3 +166,66 @@ profesional, **no** notas internas.
 - [ ] `NECESIDADES.md` entregado a A y aplicado
 - [ ] Sin secretos ni endpoints hardcodeados (`ModuleGraphGuardTest`)
 - [ ] Cero literales de copy en Kotlin (regla de la casa #2)
+
+---
+
+## 11. Addendum — correcciones tras revisar la cola de C (2026-09-30)
+
+`PR-009` §4 ya define el Contrato B como `YouthVisibleCaseStatus` (C lo tiene bien tipado, y su §6
+explica el `fuera_de_horario` correctamente). Al compararlo con lo que mi pantalla necesita aparecen
+**tres huecos**. Ver `REVISION-C-POR-B.md` hallazgos **K5** y **K6**.
+
+### C1 · 🔴 Falta `fueraDeHorario` en el Contrato B (K5)
+
+`PR-009` §6 dice, con buen criterio: *"La cola marca `fuera_de_horario` para que `PR-011`/`PR-012` no
+pinten un SLA incumplido como si hubiera alguien."*
+
+Pero el `YouthVisibleCaseStatus` de `PR-009` §4 **no tiene ese campo**: solo `CaseToken`,
+`ContratoVersion`, `Estado`, `Categoria`, `ActualizadoEn`, `Psicologo`, `CanalContacto`,
+`MensajesNoLeidos`.
+
+**Sin ese campo no puedo cumplir `PR-001` §9** (fila *"Fuera de horario: Igual + aviso de
+cobertura"*). Y la alternativa —que el APK **infiera** el horario del equipo— sería peor: una copia
+local de una regla de negocio ajena, desincronizada el primer día.
+
+**Propuesta:** añadir `fueraDeHorario: boolean` al Contrato B. Un booleano evita que el APK tenga que
+adivinar, y es la única forma de que la pantalla sea honesta (`PR-001` P5, `PR-003` §15 / Q8).
+
+### C2 · 🟠 `rol` y `especialidad` llegarían como claves de enum (K6)
+
+| Documento | `rol` |
+|---|---|
+| `PR-003` §6.1 y `PR-020` criterio 3 | `psicologo` · `trabajador_social` · `orientador` · `supervisor` |
+| **`PR-007` §4** | `PSICOLOGIA` · `TRABAJO_SOCIAL` · `ORIENTACION` · `SUPERVISION` |
+
+Dos vocabularios distintos para el mismo campo, y `PR-009` §4 lo tipa como `string` sin restricción.
+Además, `PR-007` §4 define `Specialty` = `TRAUMA | GRIEF | BULLYING | FAMILY | SUBSTANCE`.
+
+**Lo que me toca a mí:** esta pantalla **muestra `rol` y `especialidad` al adolescente desde
+`ACEPTADO`** (R5). Si el contrato entrega `BULLYING` y `TRABAJO_SOCIAL`, la app le mostraría claves
+de enum en mayúsculas a un chico de 15 años.
+
+**Propuesta:** A fija en `PR-003` §6.1 (a) la forma canónica de `rol`, (b) si `especialidad` es clave
+cerrada o texto libre, y (c) **dónde vive el copy visible**. Si son claves, B necesita el catálogo de
+etiquetas en el `strings.xml` del APK; si es texto libre, hay que decidir quién lo escribe y con qué
+revisión —`PR-001` §6.2 prohíbe que llegue texto generado a una superficie del joven.
+
+### C3 · 🟠 Multi-perfil en la correlación (confirmación pedida por C)
+
+`PR-019` §8 pide que la correlación `caseToken ↔ ProfileId` soporte **varios `ProfileId` por
+instalación**. Confirmado desde el APK: `TASK-025` ya lo permite (`observeProfiles()`,
+`switchProfile()`, `unlockSessionFor(alias, pin)`), y `TASK-009` le da UI. Si la correlación asumiera
+un `ProfileId` por instalación, un dispositivo compartido rompería el vínculo del caso.
+
+**Efecto en esta spec:** ninguno en el contrato; se añade a la KDoc del consumidor. Lo anoto porque
+es el tipo de suposición que se cuela sin que nadie la escriba.
+
+### Efecto sobre los criterios de aceptación
+
+- El criterio **#3** (el par R1/R5) sigue igual y es el más importante.
+- El criterio **#7** (*"el copy no promete contacto inmediato"*) ahora **depende de C1**: sin
+  `fueraDeHorario` la app no puede saber cuándo prometer y cuándo no.
+- Se añade un criterio implícito: **ninguna clave de enum llega a la pantalla sin etiqueta**
+  (regla de la casa #2), lo que depende de C2.
+
+**Estado de la spec:** sigue bloqueada por `TASK-013`, y ahora también por C1 y C2.

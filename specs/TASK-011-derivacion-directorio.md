@@ -154,3 +154,42 @@ interface ReferralRepository {
 - [ ] `NECESIDADES.md` entregado a A y aplicado
 - [ ] Sin secretos ni endpoints hardcodeados (`ModuleGraphGuardTest`)
 - [ ] Cero literales de copy en Kotlin (regla de la casa #2)
+
+---
+
+## 11. Addendum — corrección tras revisar la cola de C (2026-09-30)
+
+Al revisar `PR-016` encontré que **el directorio ya tiene dueño: C**, y que mi §4 apuntaba al lado
+equivocado. Ver `REVISION-C-POR-B.md` hallazgo **K7**.
+
+**Lo que dice `PR-016`:**
+
+- §3: el catálogo vive en `puente-red/backend/core/directory-services` — **dueño C**.
+- §4: `SupportService` ya tiene los campos que yo iba a inventar, incluido **`IsFictional bool`**.
+- §2.B: las **5 categorías** son las mismas del brief §28 (`PSICOLOGIA · SALUD · PROTECCION ·
+  ORIENTACION_ESCOLAR · SERVICIOS_COMUNITARIOS`).
+- §2 «Fuera»: el canal de contacto es de `PR-003` §6.2, ola posterior.
+
+**Corrección a §4 (contrato de datos):**
+
+| Antes (mi propuesta) | Ahora (corregido) |
+|---|---|
+| Fixtures locales en `feature:referral` | **Se consume del backend.** El directorio es de C |
+| Sin contrato nuevo | Contrato nuevo `DirectoryRepository` que **envuelve la llamada al endpoint `/joven`** — pero **lo define A**, porque es borde con `:core:network` (`TASK-013`) |
+
+**Consecuencia en dependencias:** `TASK-011` pasa de «Ola 2 sin red» a **bloqueada por `TASK-013`**
+(`:core:network`, de A) igual que `TASK-016`. Se puede construir la UI contra un doble local, pero
+**no se puede cerrar** hasta que A publique la capa de red y el endpoint.
+
+**Consecuencia en Q1:** queda **resuelta** — el directorio es **uno solo**, de C, servido por el
+backend. Lo que sigue siendo de B es la **pantalla del joven** y la **marca de ficción visible**
+(criterio #3), que el brief §28 exige en la superficie que ve el adolescente.
+
+**Consecuencia en Q2:** la alternativa «fixtures locales» queda **descartada** por duplicación. Dos
+directorios con el mismo contenido y dos marcas de ficción distintas es exactamente el patrón que
+`PLAN-PUENTE-RED.md` §2.4 prohíbe para el consentimiento.
+
+**Lo que NO cambia:** los criterios de aceptación #2 (ningún servicio real), #3 (declaración de
+datos de ejemplo), #6 (el APK no deriva) y #7 (sin marcador ni `Intent` externo) siguen vigentes y
+son más importantes que nunca: ahora el dato **viene de fuera** y la app debe seguir siendo honesta
+sobre él.
