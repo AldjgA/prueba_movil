@@ -345,10 +345,12 @@ automático. No es necesariamente incompatible —clasificar prioridad no es dia
 pero **exige una decisión explícita y documentada**, revisión clínica y un plan para
 cuando el modelo falle, no esté disponible o se equivoque.
 
-**c) El APK juvenil no tiene red por diseño.**
-`ModuleGraphGuardTest` **falla a propósito** si alguien añade `:core:network`. Clasificación
-y derivación tienen que vivir fuera del APK. El APK solo puede *producir* el paquete y
-*mostrar* el estado.
+**c) El APK juvenil tiene red acotada (actualizado 2026-09-30).**
+Ya **no** es "sin red": necesita conectarse a la **API Joven** para recibir el estado del caso
+y, tras la aceptación, los datos del psicólogo (`PR-003` §10). `ModuleGraphGuardTest` se
+reescribe para vigilar que el APK hable **solo** con la API Joven y **nunca** con contratos
+profesionales. Clasificación y derivación siguen viviendo fuera del APK: el APK *produce* el
+paquete y *muestra* el estado.
 
 **d) Nadie ha definido el "más apropiado".**
 Emparejar caso ↔ profesional exige un perfilado del profesional (especialidad, carga,

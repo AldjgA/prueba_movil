@@ -4,6 +4,8 @@
 **Alcance:** portal profesional, backend de triaje y derivación
 **Relación:** producto hermano de `puente-joven-android`. Ver `puente-joven-android/deliverables/PLAN-TRABAJO-SDD.md`
 **Estado:** propuesta para revisión. Nace del protocolo de alerta roja decidido el 2026-09-29.
+**Actualizado:** 2026-09-30 — guardrails revisados según `PR-003`. El APK juvenil deja de ser
+"sin red" (habla con la **API Joven** del backend compartido); el contrato Joven↔Red vive en `PR-003`.
 
 ---
 
@@ -17,8 +19,9 @@ La decisión del protocolo de alerta roja lo convierte en **necesario para que e
 tenga sentido**: sin alguien al otro lado que reciba, clasifique y derive, el nivel rojo no
 es más que un color.
 
-Este documento planifica ese segundo producto. **No modifica el APK juvenil**, que sigue sin
-permisos de red y sin ninguna referencia a Puente Red.
+Este documento planifica ese segundo producto. **El APK juvenil cambia (2026-09-30):** deja de
+ser "sin red" y habla con la **API Joven** del backend compartido (ver `PR-003` §10); sigue sin
+conocer ni navegar al panel profesional.
 
 ---
 
@@ -46,7 +49,7 @@ prioridad preliminar = ROJA
                                         └─► coordina con el paciente
                                                     │
 JOVEN (APK) ◄───────────────────────  estado del caso
-   muestra el estado, nunca la identidad del profesional
+   muestra el estado; tras la aceptación, los datos del psicólogo (nunca su identidad privada)
 ```
 
 ---
@@ -55,10 +58,12 @@ JOVEN (APK) ◄─────────────────────�
 
 ### 2.1 Lo decidido
 
-- El joven se identifica con **alias + contraseña + MAC del dispositivo**.
+- El joven se identifica con un **`ProfileId` opaco**; alias + PIN son solo **desbloqueo local**.
+  **La MAC no se usa** (§2.2).
 - El reporte que ve el profesional **no contiene información de identificación**: solo el
   reporte anónimo.
-- El psicólogo, en Puente Red, **acepta y coordina con el paciente**.
+- El psicólogo, en Puente Red, **acepta** el caso y **coordina** con el paciente a través de la
+  app — **solo si decide comunicarse** (`PR-003` §6).
 
 ### 2.2 Problema bloqueante: la MAC del dispositivo no se puede usar
 
@@ -91,7 +96,11 @@ Además, tres problemas de fondo:
 reporte. Recibe el `caseToken`; la correspondencia vive en una tabla separada con acceso
 restringido. Así "anónimo para el profesional" es verificable, no una promesa.
 
-### 2.4 La contradicción que sigue abierta
+### 2.4 La contradicción, resuelta (2026-09-30)
+
+> **Resuelto en `PR-003` §6–§7:** el canal de retorno es **mensajería in-app** (opción A), y se
+> abre **solo si el psicólogo decide comunicarse** (R1). El joven permanece seudónimo. Se
+> conserva el análisis de opciones que sigue, por trazabilidad.
 
 *"Reporte anónimo"* y *"el psicólogo coordina con el paciente"* exigen un **canal de retorno**.
 Sin él, coordinar es imposible. Las opciones reales:
@@ -182,14 +191,14 @@ deben conocerse.**
 | Elemento | Joven (APK) | Puente Red |
 |---|---|---|
 | Permisos de red | **Ninguno** (guardrail) | Sí |
-| Conoce la existencia del otro | **No** (guardrail #6) | Sí, recibe de él |
+| Conoce la existencia del otro | **No** (solo ve "tu caso") | Sí, recibe de él |
 | Identidad del joven | `ProfileId` + alias local | Solo `caseToken` |
 | Contenido del reporte | Lo genera desde el chat cifrado | Lo recibe ya anonimizado |
 | Consentimiento | `ConsentRecord` + `ShareableSummary` | Lo consume, no lo crea |
 
-**Regla de oro:** el contrato se define **una vez** y se versiona. El APK juvenil no puede
-depender de `:core:network` (`ModuleGraphGuardTest` falla a propósito), así que la
-transmisión real la hace un componente intermedio, no la app.
+**Regla de oro:** el contrato se define **una vez** y se versiona en `PR-003`. El APK juvenil
+habla **solo** con la **API Joven** (no con el panel profesional), así que la separación se
+garantiza por contrato y por superficie de API, no por ausencia de red.
 
 ---
 
@@ -268,8 +277,9 @@ Referencia visual: las 8 pantallas `Pro*` del prototipo web
    igual en el panel profesional: la ficha debe repetir el encuadre.
 2. **La IA no diagnostica ni decide sola.** El LLM propone; el psicólogo acepta. Ese acto
    es la validación humana obligatoria.
-3. **El joven nunca ve la identidad del profesional**, y el profesional nunca ve la identidad
-   del joven salvo que se decida lo contrario en P3.
+3. **El joven ve los datos del profesional solo desde la aceptación**, y **solo si el psicólogo
+   decide comunicarse** obtiene un canal de contacto (R1/R5 de `PR-003`). El profesional **nunca**
+   ve la identidad del joven: este permanece **seudónimo**.
 4. **Las notas internas profesionales no llegan al joven** (brief §25).
 5. **El chat completo nunca entra en el reporte.** Solo lo autorizado por el joven.
 6. **Ningún contrato de Puente Red se compila en el APK juvenil.**

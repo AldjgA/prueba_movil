@@ -3,6 +3,8 @@
 **Fecha:** 2026-09-29
 **Distribuye:** las 46 tareas de `PLAN-TRABAJO-SDD.md` (26 juveniles) y `PLAN-PUENTE-RED.md` (20)
 **Base:** decisiones cerradas el 2026-09-29
+**Actualizado:** 2026-09-30 — guardrails revisados según `PR-003` (ver §2.4). El APK juvenil
+ya **no** es "sin red": habla con la **API Joven** del backend compartido.
 
 ---
 
@@ -85,7 +87,7 @@ A los aplica, y avisa cuando está listo. **A es el único que hace merge.**
 
 - `Repositories.kt`: cambios solo por solicitud escrita.
 - `core/designsystem/**`: si falta un componente, se pide. No se improvisa uno nuevo.
-- Nada de `:core:network` en el APK juvenil. `ModuleGraphGuardTest` falla a propósito.
+- **Red acotada (actualizado 2026-09-30):** el APK solo habla con la **API Joven**. `:core:network` se permite **solo** en el flavor `remote`. `ModuleGraphGuardTest` se reescribe para vigilar eso (nunca contratos profesionales). Ver `PR-003` §10.
 
 ---
 
